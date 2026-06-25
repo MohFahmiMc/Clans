@@ -1,7 +1,9 @@
+"use client";
+
 import React from 'react';
 
 export default function Home() {
-  // 2. List Member Clan (Tanpa Emoji)
+  // List Member Clan (Tanpa Emoji)
   const members = [
     { name: "FreedomLeader", role: "Clan Leader", rank: "Tier I" },
     { name: "GhostSniper", role: "Co-Leader", rank: "Tier I" },
@@ -18,17 +20,17 @@ export default function Home() {
       <nav className="border-b border-slate-900 bg-slate-950/80 backdrop-blur-md sticky top-0 z-50 px-4 sm:px-8 py-4">
         <div className="max-w-7xl mx-auto flex justify-between items-center">
           <div className="flex items-center gap-3">
-            {/* 3. Logo dari src/assets/logo.png */}
+            {/* Logo dari src/assets/logo.png */}
             <img 
               src="/src/assets/logo.png" 
               alt="Freedom Logo" 
               className="h-9 w-9 sm:h-11 sm:w-11 object-contain"
               onError={(e) => {
-                // Fallback jika file logo belum di-upload ke folder assets
+                // Sekarang aman digunakan karena sudah menjadi Client Component
                 e.currentTarget.style.display = 'none';
               }}
             />
-            {/* 1. Nama Clan: Freedom */}
+            {/* Nama Clan: Freedom */}
             <span className="text-xl sm:text-2xl font-black tracking-tighter text-transparent bg-clip-text bg-gradient-to-r from-white to-slate-400">
               FREEDOM
             </span>
@@ -103,7 +105,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* 2. & 5. LIST MEMBER ROSTER SECTION (Responsive Monitor & HP) */}
+      {/* LIST MEMBER ROSTER SECTION (Responsive Monitor & HP) */}
       <section id="roster" className="max-w-7xl mx-auto py-16 sm:py-24 px-4 sm:px-6 w-full border-t border-slate-900">
         <div className="text-center mb-16">
           <h2 className="text-3xl sm:text-5xl font-black uppercase tracking-tight text-white">
@@ -131,24 +133,4 @@ export default function Home() {
                 </h3>
               </div>
               <div className="mt-6 pt-3 border-t border-slate-900/80 flex items-center justify-between">
-                <span className="text-xs font-semibold text-slate-400 uppercase tracking-wide">
-                  {member.role}
-                </span>
-                <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse"></span>
-              </div>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* FOOTER */}
-      <footer className="border-t border-slate-900 bg-slate-950/50 py-8 text-center text-slate-600 text-xs sm:text-sm w-full px-4">
-        <div className="max-w-7xl mx-auto flex flex-col sm:flex-row justify-between items-center gap-4">
-          <p>&copy; {new Date().getFullYear()} FREEDOM CLAN. All rights reserved.</p>
-          <p className="text-slate-700">Dibuat dan Dioptimalkan untuk Mobile & Desktop.</p>
-        </div>
-      </footer>
-      
-    </div>
-  );
-}
+                <span className="
