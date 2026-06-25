@@ -38,7 +38,7 @@ export default function Home() {
       })
       .catch((err) => {
         console.error("Gagal load member:", err);
-        setMembers([{ name: "Belum ada data roster", role: "System" }]);
+        setMembers([{ name: "Belum ada data roster!", role: "System" }]);
         setLoadingMembers(false);
       });
   }, []);
