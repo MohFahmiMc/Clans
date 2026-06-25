@@ -59,7 +59,7 @@ export default function Home() {
       id: Date.now(),
       name: newName,
       text: newComment,
-      time: "Baru saja"
+      time: "Baru saja!"
     };
     
     // INFO: Baris ini hanya menyimpan komentar di layar saat ini.
