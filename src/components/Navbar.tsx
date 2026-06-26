@@ -34,8 +34,8 @@ export default function Navbar({ logoSrc }: { logoSrc: string }) {
 
           {/* KANAN: Menu Desktop (Disembunyikan di layar kecil) */}
           <div className="hidden md:flex gap-8 text-xs font-bold text-slate-300 uppercase tracking-widest">
-            <Link href="/main" className="hover:text-orange-500 transition-colors">Base</Link>
-            <Link href="/members" className="hover:text-orange-500 transition-colors">Members</Link>
+            <Link href="/freedom/main" className="hover:text-orange-500 transition-colors">Base</Link>
+            <Link href="/freedom/members" className="hover:text-orange-500 transition-colors">Members</Link>
           </div>
         </div>
       </nav>
