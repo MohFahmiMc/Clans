@@ -2,9 +2,8 @@
 
 import React, { useState, useEffect } from 'react';
 
-// IMPORT GAMBAR
+// IMPORT GAMBAR DARI ASSETS (Kecuali Background yang sekarang pakai link)
 import logoAsset from '../assets/logo.png';
-import backgroundAsset from '../assets/background.png';
 import logoPnAsset from '../assets/logo_pn.png';
 import mcProwAsset from '../assets/mc_prow.png';
 
@@ -19,11 +18,13 @@ export default function Home() {
   const getSrc = (asset: any) => asset?.src || (typeof asset === 'string' ? asset : '');
   
   const logoSrc = getSrc(logoAsset);
-  const bgSrc = getSrc(backgroundAsset);
   const logoPnSrc = getSrc(logoPnAsset);
   const mcProwSrc = getSrc(mcProwAsset);
+  
+  // LINK BACKGROUND IMGUR LANGSUNG
+  const bgSrc = "https://i.imgur.com/U2eVJEi.png";
 
-  // FUNGSI MEMBACA LIST MEMBER (SUDAH DIPERBAIKI!)
+  // FUNGSI MEMBACA LIST MEMBER
   useEffect(() => {
     fetch(`/listmember.txt?t=${new Date().getTime()}`)
       .then((res) => {
@@ -65,15 +66,13 @@ export default function Home() {
   return (
     <div className="bg-[#0a0a0a] text-slate-200 min-h-screen font-sans selection:bg-orange-500 selection:text-black">
       
-      {/* 1. BACKGROUND IMAGE (DIJAMIN MUNCUL & LEBIH CLEAN) */}
+      {/* 1. BACKGROUND IMAGE IMGUR (DIJAMIN MUNCUL & LEBIH CLEAN) */}
       <div className="fixed inset-0 z-[-1] overflow-hidden bg-[#050505]">
-        {bgSrc && (
-          <img 
-            src={bgSrc} 
-            alt="Background" 
-            className="absolute inset-0 w-full h-full object-cover opacity-25"
-          />
-        )}
+        <img 
+          src={bgSrc} 
+          alt="Background" 
+          className="absolute inset-0 w-full h-full object-cover opacity-30"
+        />
         <div className="absolute inset-0 bg-gradient-to-t from-[#0a0a0a] via-[#0a0a0a]/80 to-transparent"></div>
         {/* Subtle accent colors (Tidak terlalu lebay kayak AI) */}
         <div className="absolute top-0 right-0 w-[80vw] md:w-[40vw] h-[40vw] bg-orange-600/10 rounded-full blur-[100px]"></div>
