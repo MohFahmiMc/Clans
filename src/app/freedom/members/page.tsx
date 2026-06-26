@@ -3,12 +3,12 @@
 import React, { useState, useEffect } from 'react';
 
 // IMPORT ICON ROLE MINECRAFT KAMU
-import redstonerAsset from '../../assets/redstoner.png';
-import builderAsset from '../../assets/builder.png';
-import pvpAsset from '../../assets/pvp.png';
-import farmerAsset from '../../assets/farmer.png';
-import adventureAsset from '../../assets/adventure.png';
-import minecraftAsset from '../../assets/Minecraft.png';
+import redstonerAsset from '../../../assets/redstoner.png';
+import builderAsset from '../../../assets/builder.png';
+import pvpAsset from '../../../assets/pvp.png';
+import farmerAsset from '../../../assets/farmer.png';
+import adventureAsset from '../../../assets/adventure.png';
+import minecraftAsset from '../../../assets/Minecraft.png';
 
 interface Member { name: string; role: string; specialRole: string | null; }
 
