@@ -8,7 +8,7 @@ export const metadata: Metadata = {
   metadataBase: new URL('https://clans.scarily.my.id/freedom'),
   
   title: 'FREEDOM CLAN | ProwNetwork',
-  description: 'Fraksi elit yang mendominasi server Minecraft Bedrock ProwNetwork. Simbol Kebebasan dan Kekuatan.',
+  description: 'Clan resmi pertama di server Minecraft Bedrock ProwNetwork. Simbol Kebebasan dan Kekuatan.',
   keywords: ['Freedom Clan', 'ProwNetwork', 'Minecraft Bedrock', 'Clan Elite', 'PVP'],
   authors: [{ name: 'MohFahmi', url: 'https://mifahmi.my.id' }],
   
