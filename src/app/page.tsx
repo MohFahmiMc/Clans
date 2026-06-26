@@ -7,18 +7,36 @@ import logoAsset from '../assets/logo.png';
 import logoPnAsset from '../assets/logo_pn.png';
 import mcProwAsset from '../assets/mc_prow.png';
 
-interface Member { name: string; role: string; }
+// IMPORT ICON ROLE MINECRAFT KAMU
+import redstonerAsset from '../assets/redstoner.png';
+import builderAsset from '../assets/builder.png';
+import pvpAsset from '../assets/pvp.png';
+import farmerAsset from '../assets/farmer.png';
+import adventureAsset from '../assets/adventure.png';
+import minecraftAsset from '../assets/Minecraft.png';
+
+// Tipe data member diupdate untuk membaca role khusus dalam kurung
+interface Member { name: string; role: string; specialRole: string | null; }
 
 export default function Home() {
   const [members, setMembers] = useState<Member[]>([]);
   const [loadingMembers, setLoadingMembers] = useState(true);
   const [errorMembers, setErrorMembers] = useState(false);
 
-  // Fungsi ambil gambar
+  // Fungsi ambil gambar yang aman untuk Next.js
   const getSrc = (asset: any) => asset?.src || (typeof asset === 'string' ? asset : '');
+  
   const logoSrc = getSrc(logoAsset);
   const logoPnSrc = getSrc(logoPnAsset);
   const mcProwSrc = getSrc(mcProwAsset);
+  
+  // Icon Role Src
+  const redstonerSrc = getSrc(redstonerAsset);
+  const builderSrc = getSrc(builderAsset);
+  const pvpSrc = getSrc(pvpAsset);
+  const farmerSrc = getSrc(farmerAsset);
+  const adventureSrc = getSrc(adventureAsset);
+  const minecraftSrc = getSrc(minecraftAsset);
   
   // Link Imgur
   const bgSrc = "https://i.imgur.com/U2eVJEi.png";
@@ -40,9 +58,28 @@ export default function Home() {
           if (knownRoles.includes(line.toLowerCase())) {
             currentRole = line;
           } else {
+            // Memecah berdasarkan koma
             const tags = line.split(',').map(t => t.trim()).filter(Boolean);
+            
             tags.forEach(tag => {
-              parsedMembers.push({ name: tag, role: currentRole });
+              // LOGIKA BARU: Mengecek apakah ada teks di dalam kurung (contoh: MohFahmiMc (redstoner))
+              const match = tag.match(/(.*?)\s*\((.*?)\)/);
+              
+              if (match) {
+                // Jika ada kurung
+                parsedMembers.push({ 
+                  name: match[1].trim(), 
+                  role: currentRole, 
+                  specialRole: match[2].trim().toLowerCase() 
+                });
+              } else {
+                // Jika cuma nama biasa tanpa kurung
+                parsedMembers.push({ 
+                  name: tag, 
+                  role: currentRole, 
+                  specialRole: null 
+                });
+              }
             });
           }
         });
@@ -58,7 +95,7 @@ export default function Home() {
       });
   }, []);
 
-  // Fungsi Warna Berdasarkan Role
+  // Fungsi Warna Berdasarkan Role Utama (Leader, Admin, dll)
   const getRoleColor = (role: string) => {
     const r = role.toLowerCase();
     if (r === 'leader' || r === 'owner') return 'text-red-500 border-red-500/30 bg-red-500/10';
@@ -66,19 +103,30 @@ export default function Home() {
     return 'text-yellow-500 border-yellow-500/30 bg-yellow-500/10';
   };
 
+  // Fungsi Memanggil Gambar Berdasarkan Role Minecraft Khusus
+  const getSpecialIcon = (specialRole: string | null) => {
+    if (!specialRole) return null;
+    switch (specialRole) {
+      case 'redstoner': return redstonerSrc;
+      case 'builder': return builderSrc;
+      case 'pvp': return pvpSrc;
+      case 'farmer': return farmerSrc;
+      case 'adventure': return adventureSrc;
+      default: return minecraftSrc; // Icon default jika ada role di kurung tapi gak dikenali
+    }
+  };
+
   return (
     <div className="relative min-h-screen font-sans text-slate-200 selection:bg-orange-500 selection:text-black bg-[#050505]">
       
-      {/* 1. BACKGROUND IMGUR (DIJAMIN MUNCUL 100%) */}
-      {/* Menggunakan div fixed di layer paling bawah z-0 */}
+      {/* 1. BACKGROUND IMGUR */}
       <div 
         className="fixed inset-0 z-0 bg-cover bg-center bg-no-repeat opacity-40"
         style={{ backgroundImage: `url(${bgSrc})` }}
       ></div>
-      {/* Overlay Hitam Gradasi agar teks tetap terbaca */}
       <div className="fixed inset-0 z-0 bg-gradient-to-b from-black/40 via-[#0a0a0a]/80 to-[#050505]"></div>
       
-      {/* Pembungkus Konten Utama (z-10 agar selalu di atas background) */}
+      {/* Pembungkus Konten Utama */}
       <div className="relative z-10">
 
         {/* 2. NAVIGATION BAR */}
@@ -88,18 +136,12 @@ export default function Home() {
               <img src={logoSrc} alt="Freedom" className="h-9 w-9 md:h-10 md:w-10 object-contain drop-shadow-lg" />
               <span className="text-xl md:text-2xl font-black tracking-tighter text-white">FREEDOM</span>
             </div>
-            
-            {/* Navigasi Kanan & Icon Discord Mini */}
             <div className="flex items-center gap-6">
               <div className="hidden md:flex gap-8 text-xs font-bold text-slate-300 uppercase tracking-widest">
                 <a href="#home" className="hover:text-orange-500 transition-colors">Base</a>
                 <a href="#server" className="hover:text-orange-500 transition-colors">Server</a>
                 <a href="#roster" className="hover:text-orange-500 transition-colors">Members</a>
               </div>
-              <a href="https://discord.gg/2veK4TDWtF" target="_blank" rel="noreferrer" className="flex items-center gap-2 bg-[#5865F2]/20 hover:bg-[#5865F2]/40 text-[#5865F2] hover:text-white px-3 py-1.5 rounded border border-[#5865F2]/30 transition-all text-xs font-bold">
-                <svg className="w-4 h-4 fill-current" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M20.317 4.3698a19.7913 19.7913 0 00-4.8851-1.5152.0741.0741 0 00-.0785.0371c-.211.3753-.4447.8648-.6083 1.2495-1.8447-.2762-3.68-.2762-5.4868 0-.1636-.3933-.4058-.8742-.6177-1.2495a.077.077 0 00-.0785-.037 19.7363 19.7363 0 00-4.8852 1.515.0699.0699 0 00-.0321.0277C.5334 9.0458-.319 13.5799.0992 18.0578a.0824.0824 0 00.0312.0561c2.0528 1.5076 4.0413 2.4228 5.9929 3.0294a.0777.0777 0 00.0842-.0276c.4616-.6304.8731-1.2952 1.226-1.9942a.076.076 0 00-.0416-.1057c-.6528-.2476-1.2743-.5495-1.8722-.8923a.077.077 0 01-.0076-.1277c.1258-.0943.2517-.1923.3718-.2914a.0743.0743 0 01.0776-.0105c3.9278 1.7933 8.18 1.7933 12.0614 0a.0739.0739 0 01.0785.0095c.1202.099.246.1981.3728.2924a.077.077 0 01-.0066.1276 12.2986 12.2986 0 01-1.873.8914.0766.0766 0 00-.0407.1067c.3604.698.7719 1.3628 1.225 1.9932a.076.076 0 00.0842.0286c1.961-.6067 3.9495-1.5219 6.0023-3.0294a.077.077 0 00.0313-.0552c.5004-5.177-.8382-9.6739-3.5485-13.6604a.061.061 0 00-.0312-.0286zM8.02 15.3312c-1.1825 0-2.1569-1.0857-2.1569-2.419 0-1.3332.9555-2.4189 2.157-2.4189 1.2108 0 2.1757 1.0952 2.1568 2.419 0 1.3332-.9555 2.4189-2.1569 2.4189zm7.9748 0c-1.1825 0-2.1569-1.0857-2.1569-2.419 0-1.3332.9554-2.4189 2.1569-2.4189 1.2108 0 2.1757 1.0952 2.1568 2.419 0 1.3332-.946 2.4189-2.1568 2.4189z"/></svg>
-                Join
-              </a>
             </div>
           </div>
         </nav>
@@ -108,7 +150,6 @@ export default function Home() {
         <header id="home" className="pt-20 pb-16 md:pt-32 md:pb-24 px-4 text-center flex flex-col items-center">
           <div className="max-w-4xl mx-auto w-full flex flex-col items-center">
             
-            {/* Badge */}
             <div className="flex items-center gap-2 mb-6 bg-black/40 px-4 py-1.5 rounded-full border border-orange-500/30 backdrop-blur-md">
               <img src={logoPnSrc} alt="PN Logo" className="h-4 w-4 md:h-5 md:w-5 object-contain" />
               <span className="text-[10px] md:text-xs font-bold uppercase tracking-widest text-orange-500">
@@ -124,15 +165,15 @@ export default function Home() {
               Welcome to the official website of Clan Freedom, the first clan in <span className="text-yellow-500 font-bold">ProwNetwork</span>.
             </p>
             
-            {/* Tombol Discord Raksasa */}
-            <a href="https://discord.gg/2veK4TDWtF" target="_blank" rel="noreferrer" className="flex items-center gap-3 w-full sm:w-auto px-8 py-4 bg-orange-600 hover:bg-orange-500 text-white font-bold rounded shadow-[0_0_20px_rgba(234,88,12,0.4)] transition-all uppercase tracking-widest text-xs md:text-sm">
+            {/* PERBAIKAN: Tombol Discord sekarang dijamin rapi ke tengah (tambah justify-center) */}
+            <a href="https://discord.gg/2veK4TDWtF" target="_blank" rel="noreferrer" className="flex items-center justify-center gap-3 w-full sm:w-auto px-8 py-4 bg-orange-600 hover:bg-orange-500 text-white font-bold rounded shadow-[0_0_20px_rgba(234,88,12,0.4)] transition-all uppercase tracking-widest text-xs md:text-sm">
               <svg className="w-5 h-5 fill-current" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M20.317 4.3698a19.7913 19.7913 0 00-4.8851-1.5152.0741.0741 0 00-.0785.0371c-.211.3753-.4447.8648-.6083 1.2495-1.8447-.2762-3.68-.2762-5.4868 0-.1636-.3933-.4058-.8742-.6177-1.2495a.077.077 0 00-.0785-.037 19.7363 19.7363 0 00-4.8852 1.515.0699.0699 0 00-.0321.0277C.5334 9.0458-.319 13.5799.0992 18.0578a.0824.0824 0 00.0312.0561c2.0528 1.5076 4.0413 2.4228 5.9929 3.0294a.0777.0777 0 00.0842-.0276c.4616-.6304.8731-1.2952 1.226-1.9942a.076.076 0 00-.0416-.1057c-.6528-.2476-1.2743-.5495-1.8722-.8923a.077.077 0 01-.0076-.1277c.1258-.0943.2517-.1923.3718-.2914a.0743.0743 0 01.0776-.0105c3.9278 1.7933 8.18 1.7933 12.0614 0a.0739.0739 0 01.0785.0095c.1202.099.246.1981.3728.2924a.077.077 0 01-.0066.1276 12.2986 12.2986 0 01-1.873.8914.0766.0766 0 00-.0407.1067c.3604.698.7719 1.3628 1.225 1.9932a.076.076 0 00.0842.0286c1.961-.6067 3.9495-1.5219 6.0023-3.0294a.077.077 0 00.0313-.0552c.5004-5.177-.8382-9.6739-3.5485-13.6604a.061.061 0 00-.0312-.0286zM8.02 15.3312c-1.1825 0-2.1569-1.0857-2.1569-2.419 0-1.3332.9555-2.4189 2.157-2.4189 1.2108 0 2.1757 1.0952 2.1568 2.419 0 1.3332-.9555 2.4189-2.1569 2.4189zm7.9748 0c-1.1825 0-2.1569-1.0857-2.1569-2.419 0-1.3332.9554-2.4189 2.1569-2.4189 1.2108 0 2.1757 1.0952 2.1568 2.419 0 1.3332-.946 2.4189-2.1568 2.4189z"/></svg>
                  Join Server Discord
             </a>
           </div>
         </header>
 
-        {/* 4. SERVER INFO (KOTAK RAPI + ICON) */}
+        {/* 4. SERVER INFO */}
         <section id="server" className="py-16 md:py-24 border-y border-white/5 bg-black/50 backdrop-blur-md">
           <div className="max-w-5xl mx-auto px-4 text-center">
             
@@ -143,7 +184,6 @@ export default function Home() {
             />
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto">
-              {/* Kotak IP Server */}
               <div className="bg-[#0f0f0f] border border-white/10 p-8 rounded-lg flex flex-col items-center justify-center group hover:border-orange-500 hover:bg-orange-500/5 transition-all">
                 <svg className="w-8 h-8 text-orange-500 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9"></path></svg>
                 <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest block mb-2">Bedrock IP Server</span>
@@ -152,9 +192,9 @@ export default function Home() {
                 </span>
               </div>
               
-              {/* Kotak Discord PN */}
+              {/* PERBAIKAN: Logo Discord ProwNetwork aslinya dikembalikan di sini */}
               <a href="https://discord.gg/8X4rz7eARM" target="_blank" rel="noreferrer" className="bg-[#0f0f0f] border border-white/10 p-8 rounded-lg flex flex-col items-center justify-center group hover:border-[#5865F2] hover:bg-[#5865F2]/5 transition-all">
-                <svg className="w-8 h-8 text-[#5865F2] mb-4 fill-current" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M20.317 4.3698a19.7913 19.7913 0 00-4.8851-1.5152... (discord path is same as above)... M8.02 15.3312c-1.1825 0-2.1569-1.0857-2.1569-2.419 0-1.3332.9555-2.4189 2.157-2.4189 1.2108 0 2.1757 1.0952 2.1568 2.419 0 1.3332-.9555 2.4189-2.1569 2.4189zm7.9748 0c-1.1825 0-2.1569-1.0857-2.1569-2.419 0-1.3332.9554-2.4189 2.1569-2.4189 1.2108 0 2.1757 1.0952 2.1568 2.419 0 1.3332-.946 2.4189-2.1568 2.4189z"/></svg>
+                <svg className="w-8 h-8 text-[#5865F2] mb-4 fill-current" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M20.317 4.3698a19.7913 19.7913 0 00-4.8851-1.5152.0741.0741 0 00-.0785.0371c-.211.3753-.4447.8648-.6083 1.2495-1.8447-.2762-3.68-.2762-5.4868 0-.1636-.3933-.4058-.8742-.6177-1.2495a.077.077 0 00-.0785-.037 19.7363 19.7363 0 00-4.8852 1.515.0699.0699 0 00-.0321.0277C.5334 9.0458-.319 13.5799.0992 18.0578a.0824.0824 0 00.0312.0561c2.0528 1.5076 4.0413 2.4228 5.9929 3.0294a.0777.0777 0 00.0842-.0276c.4616-.6304.8731-1.2952 1.226-1.9942a.076.076 0 00-.0416-.1057c-.6528-.2476-1.2743-.5495-1.8722-.8923a.077.077 0 01-.0076-.1277c.1258-.0943.2517-.1923.3718-.2914a.0743.0743 0 01.0776-.0105c3.9278 1.7933 8.18 1.7933 12.0614 0a.0739.0739 0 01.0785.0095c.1202.099.246.1981.3728.2924a.077.077 0 01-.0066.1276 12.2986 12.2986 0 01-1.873.8914.0766.0766 0 00-.0407.1067c.3604.698.7719 1.3628 1.225 1.9932a.076.076 0 00.0842.0286c1.961-.6067 3.9495-1.5219 6.0023-3.0294a.077.077 0 00.0313-.0552c.5004-5.177-.8382-9.6739-3.5485-13.6604a.061.061 0 00-.0312-.0286zM8.02 15.3312c-1.1825 0-2.1569-1.0857-2.1569-2.419 0-1.3332.9555-2.4189 2.157-2.4189 1.2108 0 2.1757 1.0952 2.1568 2.419 0 1.3332-.9555 2.4189-2.1569 2.4189zm7.9748 0c-1.1825 0-2.1569-1.0857-2.1569-2.419 0-1.3332.9554-2.4189 2.1569-2.4189 1.2108 0 2.1757 1.0952 2.1568 2.419 0 1.3332-.946 2.4189-2.1568 2.4189z"/></svg>
                 <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest block mb-2">PN Official Community</span>
                 <span className="text-xl md:text-3xl font-black text-white uppercase tracking-wider group-hover:text-[#5865F2]">
                   Join Prow Discord
@@ -184,7 +224,7 @@ export default function Home() {
           </div>
         </section>
 
-        {/* 6. ROSTER SECTION (BERFUNGSI NORMAL & CARD COMPACT) */}
+        {/* 6. ROSTER SECTION */}
         <section id="roster" className="max-w-5xl mx-auto py-16 md:py-24 px-4 w-full mb-10">
           <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-10 gap-4">
             <div>
@@ -218,6 +258,9 @@ export default function Home() {
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 md:gap-6">
               {members.map((member, index) => {
                 const roleStyle = getRoleColor(member.role);
+                // Eksekusi pemanggilan icon spesial jika member punya tag khusus di dalam kurung
+                const specialIcon = getSpecialIcon(member.specialRole);
+                
                 return (
                   <div 
                     key={index} 
@@ -231,8 +274,17 @@ export default function Home() {
                       <span className={`text-[9px] md:text-[10px] font-black uppercase tracking-widest inline-block px-2 py-0.5 rounded border mb-1 ${roleStyle}`}>
                         {member.role}
                       </span>
-                      <h3 className="text-base md:text-xl font-black tracking-tight text-white truncate">
+                      {/* Nama Member & Icon Role Minecraft Muncul Bersebelahan! */}
+                      <h3 className="text-base md:text-xl font-black tracking-tight text-white truncate flex items-center gap-2">
                         {member.name}
+                        {specialIcon && (
+                          <img 
+                            src={specialIcon} 
+                            alt={member.specialRole || 'role'} 
+                            title={`Role: ${member.specialRole}`} 
+                            className="w-5 h-5 object-contain opacity-80 group-hover:opacity-100 transition-opacity" 
+                          />
+                        )}
                       </h3>
                     </div>
                   </div>
@@ -256,7 +308,7 @@ export default function Home() {
           </p>
         </footer>
 
-      </div> {/* End of Relative Z-10 Wrapper */}
+      </div>
     </div>
   );
 }
