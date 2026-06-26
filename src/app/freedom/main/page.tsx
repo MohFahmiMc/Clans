@@ -1,6 +1,6 @@
 import React from 'react';
-import logoPnAsset from '../../assets/logo_pn.png';
-import mcProwAsset from '../../assets/mc_prow.png';
+import logoPnAsset from '../../../assets/logo_pn.png';
+import mcProwAsset from '../../../assets/mc_prow.png';
 
 const getSrc = (asset: any) => asset?.src || (typeof asset === 'string' ? asset : '');
 
