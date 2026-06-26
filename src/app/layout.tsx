@@ -2,27 +2,33 @@ import './globals.css'
 import React from 'react'
 import type { Metadata, Viewport } from 'next'
 
-// SEO & Meta Tags untuk Discord Embed, WhatsApp, dan Browser
+// SEO & Meta Tags
 export const metadata: Metadata = {
+  // 1. INI KUNCI UTAMANYA: Memberi tahu sistem domain asli kamu
+  metadataBase: new URL('https://clans.scarily.my.id'),
+  
   title: 'FREEDOM CLAN | ProwNetwork',
   description: 'Fraksi elit yang mendominasi server Minecraft Bedrock ProwNetwork. Simbol Kebebasan dan Kekuatan.',
   keywords: ['Freedom Clan', 'ProwNetwork', 'Minecraft Bedrock', 'Clan Elite', 'PVP'],
   authors: [{ name: 'MohFahmi', url: 'https://mifahmi.my.id' }],
   
-  // Memanggil Favicon dari folder public
+  // Favicon
   icons: {
     icon: '/favicon.png', 
+    shortcut: '/favicon.png', // Tambahan agar lebih pasti terbaca browser
+    apple: '/favicon.png',
   },
 
-  // Konfigurasi Embed Preview (Discord, WhatsApp, Facebook)
+  // Konfigurasi Embed Preview
   openGraph: {
     title: 'FREEDOM CLAN | ProwNetwork',
     description: 'Fraksi elit yang mendominasi server Minecraft Bedrock ProwNetwork.',
-    url: 'https://clans.scarily.my.id/freedom',
+    url: '/freedom',
     siteName: 'Freedom Clan',
     images: [
       {
-        url: '/preview.png', // Memanggil gambar preview dari folder public
+        // Berkat metadataBase di atas, ini otomatis menjadi https://clans.scarily.my.id/preview.png
+        url: '/preview.png', 
         width: 1200,
         height: 630,
         alt: 'Freedom Clan Preview',
@@ -32,7 +38,6 @@ export const metadata: Metadata = {
     type: 'website',
   },
 
-  // Konfigurasi Embed khusus untuk Twitter / X
   twitter: {
     card: 'summary_large_image',
     title: 'FREEDOM CLAN | ProwNetwork',
@@ -41,9 +46,8 @@ export const metadata: Metadata = {
   },
 }
 
-// Mengatur warna garis samping embed (Discord) dan warna header browser mobile menjadi Kuning
 export const viewport: Viewport = {
-  themeColor: '#eab308', // Kode warna kuning (Yellow 500)
+  themeColor: '#eab308', // Garis kuning di Discord
 }
 
 export default function RootLayout({
