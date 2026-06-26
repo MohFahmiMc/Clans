@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 
 // IMPORT ICON ROLE MINECRAFT KAMU
 import redstonerAsset from '../../../assets/redstoner.png';
+import minerAsset from '../../../assets/miner.png';
 import builderAsset from '../../../assets/builder.png';
 import pvpAsset from '../../../assets/pvp.png';
 import farmerAsset from '../../../assets/farmer.png';
