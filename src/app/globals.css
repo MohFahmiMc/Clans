@@ -3,6 +3,27 @@
 @tailwind utilities;
 
 body {
-  background-color: #111827;
+  /* Ganti warna biru bawaan jadi hitam pekat sesuai tema E-Sports */
+  background-color: #050505; 
   color: #f3f4f6;
+  
+  /* PENTING: Mencegah web kebesaran dan meluber ke samping saat dibuka di HP */
+  overflow-x: hidden; 
+  margin: 0;
+  padding: 0;
+}
+
+/* Memperhalus scroll bar biar lebih premium */
+::-webkit-scrollbar {
+  width: 8px;
+}
+::-webkit-scrollbar-track {
+  background: #050505;
+}
+::-webkit-scrollbar-thumb {
+  background: #ea580c; /* Warna Oranye */
+  border-radius: 10px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #f59e0b; /* Warna Kuning */
 }
