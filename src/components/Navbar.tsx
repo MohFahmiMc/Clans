@@ -69,7 +69,7 @@ export default function Navbar({ logoSrc }: { logoSrc: string }) {
           {/* List Menu Laci */}
           <div className="flex flex-col gap-2">
             <Link 
-              href="/main" 
+              href="/freedom/main" 
               onClick={() => setIsSidebarOpen(false)}
               className="text-slate-300 hover:text-orange-400 hover:bg-white/5 px-4 py-4 rounded-lg font-bold uppercase tracking-widest text-sm transition-all flex items-center gap-3"
             >
@@ -77,7 +77,7 @@ export default function Navbar({ logoSrc }: { logoSrc: string }) {
               Base / Home
             </Link>
             <Link 
-              href="/members" 
+              href="/freedom/members" 
               onClick={() => setIsSidebarOpen(false)}
               className="text-slate-300 hover:text-orange-400 hover:bg-white/5 px-4 py-4 rounded-lg font-bold uppercase tracking-widest text-sm transition-all flex items-center gap-3"
             >
