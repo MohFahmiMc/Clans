@@ -5,7 +5,7 @@ import type { Metadata, Viewport } from 'next'
 // SEO & Meta Tags
 export const metadata: Metadata = {
   // 1. INI KUNCI UTAMANYA: Memberi tahu sistem domain asli kamu
-  metadataBase: new URL('https://clans.scarily.my.id'),
+  metadataBase: new URL('https://clans.scarily.my.id/freedom'),
   
   title: 'FREEDOM CLAN | ProwNetwork',
   description: 'Fraksi elit yang mendominasi server Minecraft Bedrock ProwNetwork. Simbol Kebebasan dan Kekuatan.',
