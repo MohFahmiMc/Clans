@@ -121,7 +121,7 @@ export default function Home() {
             </h1>
             
             <p className="text-sm md:text-lg text-slate-300 max-w-xl mx-auto font-medium leading-relaxed mb-8 px-2">
-              Clans pertama di dirikan 2/1/2023 resmi di <span className="text-yellow-500 font-bold">ProwNetwork</span>.
+              Welcome to the official website of Clan Freedom, the first clan in <span className="text-yellow-500 font-bold">ProwNetwork</span>.
             </p>
             
             {/* Tombol Discord Raksasa */}
@@ -252,7 +252,7 @@ export default function Home() {
             FREEDOM CLAN
           </h2>
           <p className="text-slate-600 text-[9px] font-bold uppercase tracking-widest">
-            &copy; {new Date().getFullYear()} Prownetwork server.
+            &copy; {new Date().getFullYear()} ScarilyId Teams.
           </p>
         </footer>
 
