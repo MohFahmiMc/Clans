@@ -2,13 +2,15 @@
 
 import React, { useState, useEffect } from 'react';
 
-// Tipe data untuk member
+// MENGAMBIL GAMBAR DARI FOLDER SRC/ASSETS
+// @ts-ignore - (Digunakan agar GitHub/TypeScript tidak error saat membaca file manual)
+import logoAsset from '../assets/logo.png';
+
 interface Member { name: string; role: string; }
 
 export default function Home() {
   const [members, setMembers] = useState<Member[]>([]);
   const [loadingMembers, setLoadingMembers] = useState(true);
-  const [logoError, setLogoError] = useState(false); // Deteksi error logo
 
   // FUNGSI MEMBACA LIST MEMBER DARI public/listmember.txt
   useEffect(() => {
@@ -38,107 +40,120 @@ export default function Home() {
       })
       .catch((err) => {
         console.error("Gagal load member:", err);
-        setMembers([{ name: "Belum ada data roster!", role: "System" }]);
+        setMembers([{ name: "Roster Not Found", role: "System" }]);
         setLoadingMembers(false);
       });
   }, []);
 
   return (
-    <div className="text-slate-100 min-h-screen font-sans selection:bg-yellow-500 selection:text-slate-950 scroll-smooth relative">
+    <div className="bg-black text-slate-200 min-h-screen font-sans selection:bg-amber-500 selection:text-black scroll-smooth">
       
-      {/* ANIMATED BACKGROUND TEMA KUNING EMAS */}
-      <div className="fixed inset-0 z-[-1] bg-slate-950 overflow-hidden">
-        {/* Grid Pattern */}
-        <div className="absolute inset-0 opacity-[0.03] bg-[linear-gradient(to_right,#eab308_1px,transparent_1px),linear-gradient(to_bottom,#eab308_1px,transparent_1px)] bg-[size:32px_32px]"></div>
-        {/* Glow Effects */}
-        <div className="absolute top-0 left-1/4 w-[500px] h-[500px] bg-yellow-600/10 rounded-full blur-[120px] animate-pulse"></div>
-        <div className="absolute bottom-0 right-1/4 w-[600px] h-[600px] bg-yellow-800/10 rounded-full blur-[150px] animate-pulse" style={{ animationDelay: '3s' }}></div>
+      {/* PREMIUM BACKGROUND EFFECTS */}
+      <div className="fixed inset-0 z-[-1] overflow-hidden pointer-events-none">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(20,20,20,1)_0%,rgba(0,0,0,1)_100%)]"></div>
+        {/* Abstract Gold Glows */}
+        <div className="absolute top-[-10%] left-[-10%] w-[40vw] h-[40vw] bg-amber-600/10 rounded-full blur-[120px] animate-pulse"></div>
+        <div className="absolute bottom-[-10%] right-[-10%] w-[50vw] h-[50vw] bg-amber-800/10 rounded-full blur-[150px] animate-pulse" style={{ animationDelay: '2s' }}></div>
       </div>
 
-      {/* NAVIGATION BAR */}
-      <nav className="border-b border-yellow-900/40 bg-slate-950/70 backdrop-blur-xl sticky top-0 z-50 px-4 sm:px-8 py-4">
+      {/* VIP NAVIGATION BAR */}
+      <nav className="border-b border-white/5 bg-black/40 backdrop-blur-2xl sticky top-0 z-50 px-6 py-4">
         <div className="max-w-7xl mx-auto flex justify-between items-center">
-          <div className="flex items-center gap-3">
-            {/* LOGO FALLBACK SYSTEM */}
-            {!logoError ? (
+          <div className="flex items-center gap-4">
+            {/* LOGO DARI SRC/ASSETS DIMUNCULKAN DI SINI */}
+            <div className="relative">
+              <div className="absolute inset-0 bg-amber-500 blur-md opacity-30 rounded-full"></div>
               <img 
-                src="/logo.png" 
+                src={logoAsset?.src || logoAsset} 
                 alt="Freedom Logo" 
-                className="h-10 w-10 object-contain drop-shadow-[0_0_8px_rgba(234,179,8,0.5)]"
-                onError={() => setLogoError(true)} // Jika gagal, ganti ke icon perisai
+                className="relative h-10 w-10 sm:h-12 sm:w-12 object-contain"
               />
-            ) : (
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-10 h-10 text-yellow-500 drop-shadow-[0_0_8px_rgba(234,179,8,0.5)]">
-                <path fillRule="evenodd" d="M12.516 2.17a.75.75 0 00-1.032 0 11.209 11.209 0 01-7.877 3.08.75.75 0 00-.722.515A12.74 12.74 0 002.25 9.75c0 5.942 4.064 10.933 9.563 12.348a.749.749 0 00.374 0c5.499-1.415 9.563-6.406 9.563-12.348 0-1.39-.223-2.73-.635-3.985a.75.75 0 00-.722-.516l-.143.001c-2.996 0-5.717-1.17-7.734-3.08zm3.094 8.016a.75.75 0 10-1.22-.872l-3.236 4.53L9.53 12.22a.75.75 0 00-1.06 1.06l2.25 2.25a.75.75 0 001.14-.094l3.75-5.25z" clipRule="evenodd" />
-              </svg>
-            )}
-            <span className="text-2xl font-black tracking-tighter text-white">FREEDOM</span>
+            </div>
+            <span className="text-2xl sm:text-3xl font-black tracking-tighter text-white drop-shadow-[0_2px_10px_rgba(251,191,36,0.2)]">
+              FREEDOM
+            </span>
           </div>
-          <div className="hidden md:flex gap-8 text-sm font-bold text-slate-400 uppercase tracking-wider">
-            <a href="#home" className="hover:text-yellow-400 transition">Home</a>
-            <a href="#stats" className="hover:text-yellow-400 transition">Stats</a>
-            <a href="#roster" className="hover:text-yellow-400 transition">Roster</a>
-            <a href="#matches" className="hover:text-yellow-400 transition">Matches</a>
+          <div className="hidden lg:flex gap-10 text-xs font-bold text-slate-400 uppercase tracking-[0.2em]">
+            <a href="#home" className="hover:text-amber-500 transition-colors">Base</a>
+            <a href="#stats" className="hover:text-amber-500 transition-colors">Intel</a>
+            <a href="#roster" className="hover:text-amber-500 transition-colors">Squad</a>
+            <a href="#matches" className="hover:text-amber-500 transition-colors">Operations</a>
           </div>
         </div>
       </nav>
 
-      {/* HERO SECTION */}
-      <header id="home" className="relative py-32 sm:py-48 text-center px-4 flex flex-col items-center justify-center">
+      {/* HERO SECTION - CINEMATIC ESPORTS VIBE */}
+      <header id="home" className="relative pt-32 pb-20 sm:pt-48 sm:pb-32 text-center px-4 flex flex-col items-center justify-center min-h-[85vh]">
         <div className="relative z-10 max-w-5xl mx-auto">
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-yellow-500/10 border border-yellow-500/20 mb-8">
-            <span className="w-2 h-2 rounded-full bg-yellow-500 animate-pulse"></span>
-            <span className="text-xs sm:text-sm font-bold uppercase tracking-[0.2em] text-yellow-400">
-              Elite Gaming Syndicate
+          {/* Live Status Badge */}
+          <div className="inline-flex items-center gap-3 px-5 py-2 rounded-sm bg-black/50 border border-white/10 mb-8 backdrop-blur-sm">
+            <span className="w-2.5 h-2.5 rounded-full bg-amber-500 animate-[ping_1.5s_ease-in-out_infinite]"></span>
+            <span className="w-2.5 h-2.5 rounded-full bg-amber-500 absolute"></span>
+            <span className="text-[10px] sm:text-xs font-black uppercase tracking-[0.3em] text-amber-500">
+              Professional E-Sports Syndicate
             </span>
           </div>
-          <h1 className="text-6xl sm:text-[9rem] font-black tracking-tighter uppercase leading-none text-transparent bg-clip-text bg-gradient-to-b from-white via-yellow-100 to-yellow-600 mb-6 drop-shadow-2xl">
+          
+          <h1 className="text-6xl sm:text-[10rem] font-black tracking-tighter uppercase leading-none text-transparent bg-clip-text bg-gradient-to-b from-white via-amber-100 to-amber-700 mb-6 drop-shadow-[0_0_40px_rgba(217,119,6,0.3)]">
             FREEDOM
           </h1>
-          <p className="text-lg sm:text-2xl text-slate-300 max-w-3xl mx-auto font-light leading-relaxed mb-12">
-            Lebih dari sekadar klan. Kami adalah simbol dominasi, strategi tanpa cela, dan kekuatan absolut di arena pertempuran.
+          
+          <p className="text-base sm:text-xl text-slate-400 max-w-2xl mx-auto font-light leading-relaxed mb-12">
+            Kekuatan bukan sekadar gelar, ia adalah hasil dari strategi mutlak, dedikasi tanpa batas, dan dominasi penuh di setiap arena.
           </p>
+          
           <div className="flex flex-col sm:flex-row justify-center gap-6">
-            <a href="#roster" className="px-10 py-4 bg-yellow-500 hover:bg-yellow-400 text-slate-950 font-black rounded-sm shadow-[0_0_30px_rgba(234,179,8,0.4)] transition-all transform hover:scale-105 uppercase tracking-widest">
-              Lihat Pasukan
+            <a href="#roster" className="px-12 py-5 bg-gradient-to-r from-amber-600 to-amber-500 hover:from-amber-500 hover:to-amber-400 text-black font-black rounded-sm shadow-[0_0_30px_rgba(245,158,11,0.3)] transition-all transform hover:-translate-y-1 uppercase tracking-widest text-sm">
+              Deploy Squad
             </a>
-            <a href="https://discord.gg" target="_blank" rel="noreferrer" className="px-10 py-4 bg-transparent border-2 border-yellow-500/50 hover:border-yellow-400 text-yellow-400 font-black rounded-sm transition-all hover:bg-yellow-500/10 uppercase tracking-widest">
-              Join Discord
+            <a href="https://discord.gg" target="_blank" rel="noreferrer" className="px-12 py-5 bg-black/50 backdrop-blur-md border border-amber-500/30 hover:border-amber-400 text-amber-400 font-black rounded-sm transition-all hover:bg-amber-500/10 uppercase tracking-widest text-sm">
+              Comm Link
             </a>
           </div>
         </div>
       </header>
 
-      {/* STATS & ACHIEVEMENTS SECTION (Fitur Baru) */}
-      <section id="stats" className="py-20 px-4 sm:px-6 w-full border-t border-yellow-900/30 bg-slate-900/50">
+      {/* PARTNERS / SPONSORS (FAKE BUT PREMIUM LOOK) */}
+      <section className="py-10 border-y border-white/5 bg-black/30 backdrop-blur-md">
+        <div className="max-w-7xl mx-auto px-6 flex flex-wrap justify-center items-center gap-10 sm:gap-20 opacity-40 grayscale hover:grayscale-0 transition-all duration-700">
+          <span className="text-xl sm:text-2xl font-black tracking-widest uppercase">Republic of Gamers</span>
+          <span className="text-xl sm:text-2xl font-black tracking-widest uppercase">Secretlab</span>
+          <span className="text-xl sm:text-2xl font-black tracking-widest uppercase">Logitech G</span>
+          <span className="text-xl sm:text-2xl font-black tracking-widest uppercase">NVIDIA</span>
+        </div>
+      </section>
+
+      {/* STATS & INTEL */}
+      <section id="stats" className="py-24 px-4 sm:px-6 w-full relative">
         <div className="max-w-7xl mx-auto">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-8">
             {[
-              { value: "85%", label: "Win Rate" },
-              { value: "24", label: "Tournaments Won" },
-              { value: "50+", label: "Active Members" },
-              { value: "Top 10", label: "Regional Rank" }
+              { value: "92.4%", label: "Global Win Rate" },
+              { value: "38", label: "Championships" },
+              { value: "100+", label: "Elite Operators" },
+              { value: "#1", label: "Server Rank" }
             ].map((stat, i) => (
-              <div key={i} className="text-center">
-                <h3 className="text-4xl sm:text-6xl font-black text-yellow-500 mb-2 drop-shadow-[0_0_10px_rgba(234,179,8,0.3)]">{stat.value}</h3>
-                <p className="text-slate-400 uppercase tracking-widest text-xs sm:text-sm font-bold">{stat.label}</p>
+              <div key={i} className="text-center p-8 bg-white/[0.02] border border-white/5 rounded-sm hover:border-amber-500/30 transition-colors group">
+                <h3 className="text-4xl sm:text-6xl font-black text-white group-hover:text-amber-500 transition-colors mb-2">{stat.value}</h3>
+                <p className="text-slate-500 uppercase tracking-[0.2em] text-[10px] sm:text-xs font-bold">{stat.label}</p>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* ROSTER SECTION */}
+      {/* ROSTER / SQUAD SECTION */}
       <section id="roster" className="max-w-7xl mx-auto py-24 px-4 sm:px-6 w-full">
-        <div className="flex flex-col md:flex-row justify-between items-end mb-16 border-b border-yellow-900/30 pb-6 gap-6">
+        <div className="flex flex-col md:flex-row justify-between items-end mb-16 gap-6">
           <div>
-            <h2 className="text-4xl sm:text-6xl font-black uppercase tracking-tighter text-white">
-              CLAN <span className="text-yellow-500">ROSTER</span>
+            <h2 className="text-5xl sm:text-7xl font-black uppercase tracking-tighter text-white">
+              SQUAD <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-600 to-amber-400">ROSTER</span>
             </h2>
-            <p className="text-slate-400 mt-2 text-lg">Prajurit garis depan yang siap bertempur.</p>
+            <p className="text-slate-400 mt-2 text-lg font-light tracking-wide">Prajurit garis depan Freedom E-Sports.</p>
           </div>
-          <div className="text-yellow-500 font-bold uppercase tracking-widest text-sm bg-yellow-500/10 px-4 py-2 rounded border border-yellow-500/20">
-            {loadingMembers ? "Syncing Database..." : "Database Synced"}
+          <div className="text-amber-500 font-bold uppercase tracking-[0.2em] text-[10px] bg-amber-500/10 px-4 py-2 rounded-sm border border-amber-500/20 flex items-center gap-2">
+            <span className={`w-1.5 h-1.5 rounded-full ${loadingMembers ? 'bg-red-500' : 'bg-green-500'}`}></span>
+            {loadingMembers ? "Syncing Network..." : "Network Synced"}
           </div>
         </div>
 
@@ -146,45 +161,52 @@ export default function Home() {
           {members.map((member, index) => (
             <div 
               key={index} 
-              className="bg-slate-900/80 backdrop-blur-md p-6 border-l-4 border-slate-800 hover:border-yellow-500 hover:bg-slate-800 transition-all duration-300 group relative overflow-hidden"
+              className="bg-white/[0.03] backdrop-blur-sm p-8 border border-white/5 hover:border-amber-500/50 transition-all duration-500 group relative overflow-hidden flex flex-col justify-between min-h-[160px]"
             >
-              <div className="absolute -right-10 -top-10 w-32 h-32 bg-yellow-500/5 rounded-full blur-2xl group-hover:bg-yellow-500/20 transition-all"></div>
+              {/* Gold Accent Line */}
+              <div className="absolute left-0 top-0 w-1 h-full bg-gradient-to-b from-amber-400 to-amber-700 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+              
               <div className="relative z-10">
-                <span className="text-[10px] font-bold text-yellow-500 uppercase tracking-widest block mb-2">
-                  // {member.role}
+                <span className="text-[10px] font-black text-amber-500 uppercase tracking-[0.2em] block mb-3 opacity-80">
+                  {member.role}
                 </span>
-                <h3 className="text-2xl font-black tracking-tight text-white group-hover:text-yellow-400 transition truncate">
+                <h3 className="text-2xl font-black tracking-tight text-white group-hover:text-amber-400 transition-colors truncate">
                   {member.name}
                 </h3>
+              </div>
+              
+              <div className="relative z-10 mt-6 flex justify-between items-center border-t border-white/10 pt-4 opacity-50 group-hover:opacity-100 transition-opacity">
+                <span className="text-[10px] uppercase tracking-widest text-slate-400">Status</span>
+                <span className="text-[10px] uppercase tracking-widest text-amber-400 font-bold">Active</span>
               </div>
             </div>
           ))}
         </div>
       </section>
 
-      {/* RECENT MATCHES SECTION (Fitur Baru) */}
-      <section id="matches" className="max-w-7xl mx-auto py-20 px-4 sm:px-6 w-full mb-20">
-        <h2 className="text-3xl sm:text-5xl font-black uppercase tracking-tighter text-white text-center mb-12">
-          Recent <span className="text-yellow-500">Matches</span>
+      {/* RECENT MATCHES / OPERATIONS */}
+      <section id="matches" className="max-w-7xl mx-auto py-24 px-4 sm:px-6 w-full mb-10">
+        <h2 className="text-4xl sm:text-6xl font-black uppercase tracking-tighter text-white text-center mb-16">
+          Recent <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-600 to-amber-400">Operations</span>
         </h2>
         
-        <div className="space-y-4 max-w-4xl mx-auto">
+        <div className="space-y-3 max-w-5xl mx-auto">
           {[
             { enemy: "Team Phantom", result: "VICTORY", score: "3 - 0", date: "Hari Ini" },
             { enemy: "Apex Legends E-Sports", result: "VICTORY", score: "2 - 1", date: "Kemarin" },
             { enemy: "Vanguard Syndicate", result: "DEFEAT", score: "1 - 2", date: "3 Hari Lalu" },
             { enemy: "Rogue Warriors", result: "VICTORY", score: "3 - 0", date: "Minggu Lalu" },
           ].map((match, i) => (
-            <div key={i} className="flex flex-col sm:flex-row items-center justify-between bg-slate-900/60 p-6 border border-slate-800 hover:border-yellow-500/30 transition-colors">
-              <div className="flex items-center gap-6 w-full sm:w-auto mb-4 sm:mb-0">
-                <span className="text-slate-500 font-mono text-sm">{match.date}</span>
-                <span className="text-xl font-bold text-white hidden sm:block">FREEDOM</span>
-                <span className="text-yellow-500 text-sm font-bold mx-2 hidden sm:block">VS</span>
-                <span className="text-xl font-bold text-slate-400 truncate">{match.enemy}</span>
+            <div key={i} className="flex flex-col sm:flex-row items-center justify-between bg-white/[0.02] p-5 border border-white/5 hover:bg-white/[0.05] transition-colors group">
+              <div className="flex items-center gap-4 w-full sm:w-auto mb-4 sm:mb-0">
+                <span className="text-slate-600 font-mono text-xs w-24">{match.date}</span>
+                <span className="text-lg font-black text-white hidden sm:block tracking-wide">FREEDOM</span>
+                <span className="text-amber-600 text-xs font-black mx-4 hidden sm:block">VS</span>
+                <span className="text-lg font-bold text-slate-400 group-hover:text-white transition-colors truncate">{match.enemy}</span>
               </div>
               <div className="flex items-center justify-between w-full sm:w-auto gap-8">
-                <span className="text-2xl font-black text-white">{match.score}</span>
-                <span className={`px-4 py-1 text-xs font-black uppercase tracking-widest border ${match.result === 'VICTORY' ? 'bg-yellow-500/10 text-yellow-500 border-yellow-500/30' : 'bg-red-500/10 text-red-500 border-red-500/30'}`}>
+                <span className="text-2xl font-black text-white tracking-widest">{match.score}</span>
+                <span className={`px-5 py-2 text-[10px] font-black uppercase tracking-[0.2em] border ${match.result === 'VICTORY' ? 'bg-amber-500/10 text-amber-500 border-amber-500/30' : 'bg-red-500/10 text-red-500 border-red-500/30'}`}>
                   {match.result}
                 </span>
               </div>
@@ -194,9 +216,14 @@ export default function Home() {
       </section>
 
       {/* FOOTER */}
-      <footer className="border-t border-yellow-900/20 bg-slate-950 py-12 text-center w-full">
-        <h2 className="text-3xl font-black text-slate-800 tracking-tighter mb-4">FREEDOM CLAN</h2>
-        <p className="text-slate-600 text-sm uppercase tracking-widest">&copy; {new Date().getFullYear()} All Rights Reserved.</p>
+      <footer className="border-t border-white/5 bg-black py-16 text-center w-full px-4">
+        <img 
+          src={logoAsset?.src || logoAsset} 
+          alt="Freedom Logo" 
+          className="h-12 w-12 mx-auto mb-6 opacity-30 grayscale hover:grayscale-0 hover:opacity-100 transition-all"
+        />
+        <h2 className="text-2xl font-black text-slate-700 tracking-tighter mb-4">FREEDOM CLAN</h2>
+        <p className="text-slate-600 text-[10px] uppercase tracking-[0.2em]">&copy; {new Date().getFullYear()} Elite E-Sports Organization. All Rights Reserved.</p>
       </footer>
       
     </div>
