@@ -29,7 +29,7 @@ export default function MembersPage() {
   useEffect(() => {
     fetch(`/listmember.txt?t=${new Date().getTime()}`)
       .then((res) => {
-        if (!res.ok) throw new Error("Gagal");
+        if (!res.ok) throw new Error("Gagall");
         return res.text();
       })
       .then((text) => {
