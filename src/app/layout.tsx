@@ -1,13 +1,14 @@
 import './globals.css'
 import React from 'react'
 import type { Metadata, Viewport } from 'next'
-import Link from 'next/link'
+
+// IMPORT KOMPONEN NAVBAR BARU
+import Navbar from '../components/Navbar';
 
 // IMPORT ASSETS LOKAL
 import logoAsset from '../assets/logo.png';
 import logoPnAsset from '../assets/logo_pn.png';
 
-// Fungsi ambil gambar yang aman
 const getSrc = (asset: any) => asset?.src || (typeof asset === 'string' ? asset : '');
 
 export const metadata: Metadata = {
@@ -71,29 +72,15 @@ export default function RootLayout({
 
         <div className="relative z-10 min-h-screen flex flex-col">
           
-          {/* NAVIGATION BAR */}
-          <nav className="border-b border-white/10 bg-black/60 backdrop-blur-xl sticky top-0 px-4 py-4 z-50">
-            <div className="max-w-6xl mx-auto flex justify-between items-center">
-              <div className="flex items-center gap-3">
-                <img src={logoSrc} alt="Freedom" className="h-9 w-9 md:h-10 md:w-10 object-contain drop-shadow-lg" />
-                <span className="text-xl md:text-2xl font-black tracking-tighter text-white">FREEDOM</span>
-              </div>
-              <div className="flex items-center gap-6">
-                <div className="hidden md:flex gap-8 text-xs font-bold text-slate-300 uppercase tracking-widest">
-                  <Link href="/main" className="hover:text-orange-500 transition-colors">Base</Link>
-                  <Link href="/main#server" className="hover:text-orange-500 transition-colors">Server</Link>
-                  <Link href="/members" className="hover:text-orange-500 transition-colors">Members</Link>
-                </div>
-              </div>
-            </div>
-          </nav>
+          {/* MEMANGGIL NAVBAR CLIENT COMPONENT */}
+          <Navbar logoSrc={logoSrc} />
 
           {/* KONTEN UTAMA HALAMAN */}
           <main className="flex-grow">
             {children}
           </main>
 
-          {/* FOOTER */}
+          {/* FOOTER GLOBAL */}
           <footer className="border-t border-white/5 bg-black/80 backdrop-blur-md py-12 text-center px-4 mt-auto">
             <div className="flex justify-center gap-4 mb-6 opacity-40">
               <img src={logoSrc} alt="Freedom" className="h-8 w-8 object-contain" />
