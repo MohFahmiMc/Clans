@@ -11,7 +11,7 @@ import logoPnAsset from '../assets/logo_pn.png';
 const getSrc = (asset: any) => asset?.src || (typeof asset === 'string' ? asset : '');
 
 export const metadata: Metadata = {
-  metadataBase: new URL('https://clans.scarily.my.id'),
+  metadataBase: new URL('https://freedom.scarily.my.id'),
   title: 'FREEDOM CLAN | ProwNetwork',
   description: 'Fraksi elit yang mendominasi server Minecraft Bedrock ProwNetwork. Simbol Kebebasan dan Kekuatan.',
   keywords: ['Freedom Clan', 'ProwNetwork', 'Minecraft Bedrock', 'Clan Elite', 'PVP'],
@@ -28,7 +28,7 @@ export const metadata: Metadata = {
     siteName: 'Freedom Clan',
     images: [
       {
-        url: 'https://clans.scarily.my.id/preview.png', 
+        url: 'https://freedom.scarily.my.id/preview.png', 
         width: 1200,
         height: 630,
         alt: 'Freedom Clan Preview',
@@ -41,7 +41,7 @@ export const metadata: Metadata = {
     card: 'summary_large_image',
     title: 'FREEDOM CLAN | ProwNetwork',
     description: 'Fraksi elit yang mendominasi server Minecraft Bedrock ProwNetwork.',
-    images: ['https://clans.scarily.my.id/preview.png'],
+    images: ['https://freedom.scarily.my.id/preview.png'],
   },
 }
 
