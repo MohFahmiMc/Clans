@@ -3,7 +3,6 @@
 import React, { useState, useEffect } from 'react';
 
 // MENGAMBIL GAMBAR DARI FOLDER SRC/ASSETS
-// @ts-ignore - (Digunakan agar GitHub/TypeScript tidak error saat membaca file manual)
 import logoAsset from '../assets/logo.png';
 
 interface Member { name: string; role: string; }
@@ -11,6 +10,9 @@ interface Member { name: string; role: string; }
 export default function Home() {
   const [members, setMembers] = useState<Member[]>([]);
   const [loadingMembers, setLoadingMembers] = useState(true);
+
+  // FIX TYPE ERROR: Mengubah format gambar bawaan Next.js agar diterima oleh HTML murni
+  const logoSrc: string = typeof logoAsset === 'object' ? (logoAsset as any).src : (logoAsset as unknown as string);
 
   // FUNGSI MEMBACA LIST MEMBER DARI public/listmember.txt
   useEffect(() => {
@@ -60,11 +62,11 @@ export default function Home() {
       <nav className="border-b border-white/5 bg-black/40 backdrop-blur-2xl sticky top-0 z-50 px-6 py-4">
         <div className="max-w-7xl mx-auto flex justify-between items-center">
           <div className="flex items-center gap-4">
-            {/* LOGO DARI SRC/ASSETS DIMUNCULKAN DI SINI */}
+            {/* LOGO YANG SUDAH DIPERBAIKI (BEBAS ERROR TYPE) */}
             <div className="relative">
               <div className="absolute inset-0 bg-amber-500 blur-md opacity-30 rounded-full"></div>
               <img 
-                src={logoAsset?.src || logoAsset} 
+                src={logoSrc} 
                 alt="Freedom Logo" 
                 className="relative h-10 w-10 sm:h-12 sm:w-12 object-contain"
               />
@@ -77,7 +79,6 @@ export default function Home() {
             <a href="#home" className="hover:text-amber-500 transition-colors">Base</a>
             <a href="#stats" className="hover:text-amber-500 transition-colors">Intel</a>
             <a href="#roster" className="hover:text-amber-500 transition-colors">Squad</a>
-            <a href="#matches" className="hover:text-amber-500 transition-colors">Operations</a>
           </div>
         </div>
       </nav>
@@ -113,7 +114,7 @@ export default function Home() {
         </div>
       </header>
 
-      {/* PARTNERS / SPONSORS (FAKE BUT PREMIUM LOOK) */}
+      {/* PARTNERS / SPONSORS */}
       <section className="py-10 border-y border-white/5 bg-black/30 backdrop-blur-md">
         <div className="max-w-7xl mx-auto px-6 flex flex-wrap justify-center items-center gap-10 sm:gap-20 opacity-40 grayscale hover:grayscale-0 transition-all duration-700">
           <span className="text-xl sm:text-2xl font-black tracking-widest uppercase">Republic of Gamers</span>
@@ -143,7 +144,7 @@ export default function Home() {
       </section>
 
       {/* ROSTER / SQUAD SECTION */}
-      <section id="roster" className="max-w-7xl mx-auto py-24 px-4 sm:px-6 w-full">
+      <section id="roster" className="max-w-7xl mx-auto py-24 px-4 sm:px-6 w-full mb-10">
         <div className="flex flex-col md:flex-row justify-between items-end mb-16 gap-6">
           <div>
             <h2 className="text-5xl sm:text-7xl font-black uppercase tracking-tighter text-white">
@@ -184,41 +185,10 @@ export default function Home() {
         </div>
       </section>
 
-      {/* RECENT MATCHES / OPERATIONS */}
-      <section id="matches" className="max-w-7xl mx-auto py-24 px-4 sm:px-6 w-full mb-10">
-        <h2 className="text-4xl sm:text-6xl font-black uppercase tracking-tighter text-white text-center mb-16">
-          Recent <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-600 to-amber-400">Operations</span>
-        </h2>
-        
-        <div className="space-y-3 max-w-5xl mx-auto">
-          {[
-            { enemy: "Team Phantom", result: "VICTORY", score: "3 - 0", date: "Hari Ini" },
-            { enemy: "Apex Legends E-Sports", result: "VICTORY", score: "2 - 1", date: "Kemarin" },
-            { enemy: "Vanguard Syndicate", result: "DEFEAT", score: "1 - 2", date: "3 Hari Lalu" },
-            { enemy: "Rogue Warriors", result: "VICTORY", score: "3 - 0", date: "Minggu Lalu" },
-          ].map((match, i) => (
-            <div key={i} className="flex flex-col sm:flex-row items-center justify-between bg-white/[0.02] p-5 border border-white/5 hover:bg-white/[0.05] transition-colors group">
-              <div className="flex items-center gap-4 w-full sm:w-auto mb-4 sm:mb-0">
-                <span className="text-slate-600 font-mono text-xs w-24">{match.date}</span>
-                <span className="text-lg font-black text-white hidden sm:block tracking-wide">FREEDOM</span>
-                <span className="text-amber-600 text-xs font-black mx-4 hidden sm:block">VS</span>
-                <span className="text-lg font-bold text-slate-400 group-hover:text-white transition-colors truncate">{match.enemy}</span>
-              </div>
-              <div className="flex items-center justify-between w-full sm:w-auto gap-8">
-                <span className="text-2xl font-black text-white tracking-widest">{match.score}</span>
-                <span className={`px-5 py-2 text-[10px] font-black uppercase tracking-[0.2em] border ${match.result === 'VICTORY' ? 'bg-amber-500/10 text-amber-500 border-amber-500/30' : 'bg-red-500/10 text-red-500 border-red-500/30'}`}>
-                  {match.result}
-                </span>
-              </div>
-            </div>
-          ))}
-        </div>
-      </section>
-
       {/* FOOTER */}
       <footer className="border-t border-white/5 bg-black py-16 text-center w-full px-4">
         <img 
-          src={logoAsset?.src || logoAsset} 
+          src={logoSrc} 
           alt="Freedom Logo" 
           className="h-12 w-12 mx-auto mb-6 opacity-30 grayscale hover:grayscale-0 hover:opacity-100 transition-all"
         />
