@@ -1,14 +1,15 @@
 {
+  "redirects": [
+    {
+      "source": "/",
+      "destination": "/freedom",
+      "permanent": true
+    }
+  ],
   "rewrites": [
     {
-      "source": "/(.*)",
-      "has": [
-        {
-          "type": "host",
-          "value": "clans.scarily.my.id"
-        }
-      ],
-      "destination": "/freedom/$1"
+      "source": "/freedom",
+      "destination": "/"
     }
   ]
 }
