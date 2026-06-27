@@ -25,6 +25,7 @@ import cardDefault from '../../../assets/cardMinecraft.png';
 import steveSkin from '../../../assets/steve.png';
 
 interface Member { 
+  _id?: string; // PERBAIKAN: Ditambahkan agar lolos validasi type checking TypeScript
   name: string; 
   role: string; 
   specialRoles: string[]; 
@@ -59,7 +60,7 @@ export default function MembersPage() {
         return res.json();
       })
       .then((data: Member[]) => {
-        // PERBAIKAN UTAMA: Mengurutkan data berdasarkan properti 'order' agar sejalan dengan panel admin
+        // Mengurutkan data berdasarkan urutan 'order' agar sinkron dengan Command Center Admin
         const sortedData = data.sort((a, b) => (a.order || 0) - (b.order || 0));
         setMembers(sortedData);
         setLoadingMembers(false);
@@ -160,7 +161,7 @@ export default function MembersPage() {
 
                   <div className="relative z-10 flex items-center gap-5 w-full">
                     
-                    <div className="w-14 h-14 md:w-16 md:h-16 flex-shrink-0 rounded-xl border-2 overflow-hidden shadow-lg transition-colors relative bg-[#111] ${isLeader ? 'border-orange-500' : 'border-slate-700 group-hover:border-orange-400'}">
+                    <div className="w-14 h-14 md:w-16 md:h-16 flex-shrink-0 rounded-xl border-2 overflow-hidden shadow-lg transition-colors relative bg-[#111] border-slate-700 group-hover:border-orange-400">
                       <div 
                         className="w-full h-full relative"
                         style={{ imageRendering: 'pixelated' }}
