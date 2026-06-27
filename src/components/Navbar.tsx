@@ -33,9 +33,11 @@ export default function Navbar({ logoSrc }: { logoSrc: string }) {
           </div>
 
           {/* KANAN: Menu Desktop (Disembunyikan di layar kecil) */}
-          <div className="hidden md:flex gap-8 text-xs font-bold text-slate-300 uppercase tracking-widest">
-            <Link href="/freedom/main" className="hover:text-orange-500 transition-colors">Base</Link>
-            <Link href="/freedom/members" className="hover:text-orange-500 transition-colors">Members</Link>
+          <div className="hidden md:flex items-center gap-8 text-xs font-bold uppercase tracking-widest">
+            <Link href="/freedom/main" className="text-slate-300 hover:text-orange-500 transition-colors">Base</Link>
+            <Link href="/freedom/members" className="text-slate-300 hover:text-orange-500 transition-colors">Members</Link>
+            {/* Tambahan Akses Admin untuk Layar Desktop */}
+            <Link href="/freedom/admin" className="text-red-400 hover:text-red-500 transition-colors font-black tracking-wide border border-red-500/20 bg-red-500/5 px-2.5 py-1 rounded-md">Admin</Link>
           </div>
         </div>
       </nav>
@@ -48,7 +50,7 @@ export default function Navbar({ logoSrc }: { logoSrc: string }) {
         ></div>
       )}
 
-      {/* SIDEBAR MENU TERSEMBUNYI */}
+      {/* SIDEBAR MENU TERSEMBUNYI (DRAWER LACH) */}
       <div className={`fixed top-0 left-0 h-full w-64 bg-[#0a0a0a] border-r border-white/10 z-[70] transform transition-transform duration-300 ease-in-out ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
         <div className="p-5 flex flex-col h-full">
           
@@ -83,6 +85,18 @@ export default function Navbar({ logoSrc }: { logoSrc: string }) {
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
               Roster Members
+            </Link>
+
+            {/* PERBAIKAN: Tombol Portal Kontrol Admin Khusus Mobile / HP */}
+            <Link 
+              href="/freedom/admin" 
+              onClick={() => setIsSidebarOpen(false)}
+              className="text-red-400 hover:text-white hover:bg-red-500/20 mt-6 px-4 py-4 rounded-lg font-bold uppercase tracking-widest text-[10px] transition-all flex items-center gap-3 border border-red-500/30"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
+              </svg>
+              PORTAL KONTROL (RESTRICTED)
             </Link>
           </div>
 
