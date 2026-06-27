@@ -2,18 +2,6 @@
 
 import React from 'react';
 
-// IMPORT BANNER CARD KAMU (Pastikan file ini ada di folder assets)
-import cardRedstoner from '../assets/cardRedstoner.png';
-import cardMiner from '../assets/cardMiner.png';
-import cardBuilder from '../assets/cardBuilder.png';
-import cardPvp from '../assets/cardPvp.png';
-import cardFarmer from '../assets/cardFarmer.png';
-import cardAdventure from '../assets/cardAdventure.png';
-import cardDefault from '../assets/cardDefault.png'; // Fallback jika tidak ada role
-
-// Helper render image yang aman
-const getSrc = (asset: any) => asset?.src || (typeof asset === 'string' ? asset : '');
-
 interface ProfileProps {
   member: { name: string; role: string; specialRoles: string[] };
   onClose: () => void;
@@ -22,18 +10,20 @@ interface ProfileProps {
 }
 
 export default function Profile({ member, onClose, getRoleColor, getSpecialIcon }: ProfileProps) {
-  // Logika menentukan background banner berdasarkan role pertama
+  
+  // LOGIKA BARU: Mengambil gambar dari folder public/cards/
+  // Build tidak akan error meskipun gambarnya belum kamu upload
   const getBannerImage = () => {
-    const primaryRole = member.specialRoles[0]; // Ambil role yang paling kiri
-    switch (primaryRole) {
-      case 'redstoner': return getSrc(cardRedstoner);
-      case 'miner': return getSrc(cardMiner);
-      case 'builder': return getSrc(cardBuilder);
-      case 'pvp': return getSrc(cardPvp);
-      case 'farmer': return getSrc(cardFarmer);
-      case 'adventure': return getSrc(cardAdventure);
-      default: return getSrc(cardDefault);
-    }
+    const primaryRole = member.specialRoles[0]; 
+    
+    // Jika tidak punya role di kurung, pakai background default Freedom
+    if (!primaryRole) return 'https://i.imgur.com/U2eVJEi.png'; 
+
+    // Mengubah huruf pertama jadi kapital (contoh: 'pvp' jadi 'Pvp', 'redstoner' jadi 'Redstoner')
+    // Ini menyesuaikan dengan format nama file kamu: cardPvp.png
+    const formattedRole = primaryRole.charAt(0).toUpperCase() + primaryRole.slice(1);
+    
+    return `/cards/card${formattedRole}.png`;
   };
 
   const roleStyle = getRoleColor(member.role);
@@ -49,12 +39,12 @@ export default function Profile({ member, onClose, getRoleColor, getSpecialIcon 
       {/* Kontainer Profile Utama */}
       <div className="relative w-full max-w-2xl bg-[#0a0a0a] rounded-xl border border-white/10 overflow-hidden shadow-[0_0_50px_rgba(0,0,0,0.8)] animate-in fade-in zoom-in duration-200">
         
-        {/* Banner Bagian Atas (Gambar Card 2000x908) */}
+        {/* Banner Bagian Atas */}
+        {/* Fallback bg-[#111] jika gambar belum diload/tidak ada */}
         <div 
-          className="w-full h-48 md:h-64 bg-cover bg-center relative border-b border-white/10"
+          className="w-full h-48 md:h-64 bg-[#111] bg-cover bg-center relative border-b border-white/10"
           style={{ backgroundImage: `url(${getBannerImage()})` }}
         >
-          {/* Overlay Gradient agar teks tetap terbaca */}
           <div className="absolute inset-0 bg-gradient-to-t from-[#0a0a0a] via-transparent to-black/30"></div>
           
           <button 
@@ -68,7 +58,6 @@ export default function Profile({ member, onClose, getRoleColor, getSpecialIcon 
         {/* Konten Detail Profil */}
         <div className="px-6 pb-8 md:px-10 md:pb-10 relative">
           
-          {/* Avatar Gamertag (Naik ke atas menimpa banner) */}
           <div className="w-24 h-24 md:w-32 md:h-32 rounded-2xl bg-[#151515] border-4 border-[#0a0a0a] flex items-center justify-center text-white font-black text-4xl md:text-5xl -mt-12 md:-mt-16 relative z-10 shadow-xl mb-4 group hover:border-orange-500 transition-colors">
             {member.name.charAt(0).toUpperCase()}
           </div>
@@ -83,7 +72,6 @@ export default function Profile({ member, onClose, getRoleColor, getSpecialIcon 
               </span>
             </div>
 
-            {/* List Icon Role Berjejer di Kanan/Bawah */}
             {member.specialRoles.length > 0 && (
               <div className="flex flex-wrap gap-2 p-3 bg-[#111] rounded-lg border border-white/5">
                 {member.specialRoles.map((role, i) => {
@@ -100,7 +88,6 @@ export default function Profile({ member, onClose, getRoleColor, getSpecialIcon 
             )}
           </div>
           
-          {/* Ruang kosong untuk info tambahan nanti */}
           <div className="mt-8 pt-6 border-t border-white/5">
             <p className="text-slate-500 text-xs italic font-medium">Informasi tambahan member belum ditambahkan...</p>
           </div>
