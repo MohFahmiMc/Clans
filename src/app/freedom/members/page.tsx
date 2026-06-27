@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import Profile from '../../../components/Profile'; // Import komponen Profile
+import Profile from '../../../components/Profile';
 
 // IMPORT ICON ROLE MINECRAFT KAMU
 import redstonerAsset from '../../../assets/redstoner.png';
@@ -12,7 +12,6 @@ import farmerAsset from '../../../assets/farmer.png';
 import adventureAsset from '../../../assets/adventure.png';
 import minecraftAsset from '../../../assets/Minecraft.png';
 
-// Tipe data specialRole diubah menjadi Array string
 interface Member { name: string; role: string; specialRoles: string[]; }
 
 export default function MembersPage() {
@@ -20,7 +19,6 @@ export default function MembersPage() {
   const [loadingMembers, setLoadingMembers] = useState(true);
   const [errorMembers, setErrorMembers] = useState(false);
   
-  // State untuk melacak member mana yang diklik
   const [selectedMember, setSelectedMember] = useState<Member | null>(null);
 
   const getSrc = (asset: any) => asset?.src || (typeof asset === 'string' ? asset : '');
@@ -52,17 +50,21 @@ export default function MembersPage() {
             const tags = line.split(',').map(t => t.trim()).filter(Boolean);
             
             tags.forEach(tag => {
-              // LOGIKA BARU: Mengambil SEMUA role yang ada di dalam kurung
-              const matches = [...tag.matchAll(/\((.*?)\)/g)];
-              const rolesList = matches.map(m => m[1].toLowerCase().trim());
+              // PERBAIKAN LOGIKA: Menggunakan match biasa yang lebih ramah TypeScript
+              const matches = tag.match(/\((.*?)\)/g);
+              let rolesList: string[] = [];
               
-              // Membersihkan nama dari teks di dalam kurung
+              if (matches) {
+                // Hapus tanda kurung dari hasil match dan masukkan ke array
+                rolesList = matches.map(m => m.replace(/[\(\)]/g, '').toLowerCase().trim());
+              }
+              
               const cleanName = tag.replace(/\(.*?\)/g, '').trim();
 
               parsedMembers.push({ 
                 name: cleanName, 
                 role: currentRole, 
-                specialRoles: rolesList // Bisa berisi 0, 1, atau 5 role sekaligus
+                specialRoles: rolesList 
               });
             });
           }
@@ -137,7 +139,7 @@ export default function MembersPage() {
               return (
                 <div 
                   key={index} 
-                  onClick={() => setSelectedMember(member)} // Event klik memanggil overlay profil
+                  onClick={() => setSelectedMember(member)} 
                   className="bg-[#0f0f0f] p-5 rounded-lg border border-white/5 hover:border-orange-500/50 hover:bg-[#151515] transition-all flex items-center gap-4 group cursor-pointer shadow-lg hover:shadow-[0_0_20px_rgba(234,88,12,0.1)]"
                 >
                   <div className="w-12 h-12 flex-shrink-0 rounded-full bg-slate-800 flex items-center justify-center text-white font-black text-xl group-hover:bg-orange-600 transition-colors">
@@ -150,7 +152,6 @@ export default function MembersPage() {
                     </span>
                     <h3 className="text-base md:text-xl font-black tracking-tight text-white truncate flex items-center gap-2">
                       {member.name}
-                      {/* Mapping semua icon role bersebelahan */}
                       <div className="flex items-center gap-1">
                         {member.specialRoles.map((role, i) => {
                           const iconSrc = getSpecialIcon(role);
@@ -175,7 +176,6 @@ export default function MembersPage() {
         )}
       </section>
 
-      {/* Render Profile Overlay jika ada member yang di-klik */}
       {selectedMember && (
         <Profile 
           member={selectedMember} 
