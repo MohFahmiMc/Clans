@@ -29,7 +29,8 @@ interface Member {
   role: string; 
   specialRoles: string[]; 
   description?: string; 
-  customSkinUrl?: string | null; 
+  customSkinUrl?: string | null;
+  order?: number;
 }
 
 export default function MembersPage() {
@@ -57,8 +58,10 @@ export default function MembersPage() {
         if (!res.ok) throw new Error("Gagal membaca database");
         return res.json();
       })
-      .then((data) => {
-        setMembers(data);
+      .then((data: Member[]) => {
+        // PERBAIKAN UTAMA: Mengurutkan data berdasarkan properti 'order' agar sejalan dengan panel admin
+        const sortedData = data.sort((a, b) => (a.order || 0) - (b.order || 0));
+        setMembers(sortedData);
         setLoadingMembers(false);
         setErrorMembers(false);
       })
@@ -141,32 +144,27 @@ export default function MembersPage() {
               const isLeader = member.role.toLowerCase() === 'leader';
               const bannerSrc = getBannerImage(member.specialRoles[0]);
               
-              // Tentukan file source skin yang akan dipotong kepalanya
               const currentSkinUrl = member.customSkinUrl ? member.customSkinUrl : getSrc(steveSkin);
               
               return (
                 <div 
-                  key={index} 
+                  key={member._id || index} 
                   onClick={() => setSelectedMember(member)} 
                   className="relative overflow-hidden p-5 md:p-6 rounded-xl border border-white/10 hover:border-orange-500/50 hover:shadow-[0_0_25px_rgba(234,88,12,0.15)] transition-all flex items-center gap-5 group cursor-pointer"
                 >
-                  {/* --- BACKGROUND IMAGE DI DALAM KOTAK --- */}
                   <div 
                     className="absolute inset-0 bg-cover bg-center opacity-30 group-hover:opacity-50 group-hover:scale-110 transition-all duration-500"
                     style={{ backgroundImage: `url(${bannerSrc})` }}
                   />
                   <div className="absolute inset-0 bg-gradient-to-r from-[#0a0a0a] via-[#0a0a0a]/90 to-transparent" />
 
-                  {/* --- KONTEN UTAMA KOTAK --- */}
                   <div className="relative z-10 flex items-center gap-5 w-full">
                     
-                    {/* PERBAIKAN: Menggunakan potongan CSS Sprite langsung dari skin url aktif */}
-                    <div className={`w-14 h-14 md:w-16 md:h-16 flex-shrink-0 rounded-xl border-2 overflow-hidden shadow-lg transition-colors relative bg-[#111] ${isLeader ? 'border-orange-500' : 'border-slate-700 group-hover:border-orange-400'}`}>
+                    <div className="w-14 h-14 md:w-16 md:h-16 flex-shrink-0 rounded-xl border-2 overflow-hidden shadow-lg transition-colors relative bg-[#111] ${isLeader ? 'border-orange-500' : 'border-slate-700 group-hover:border-orange-400'}">
                       <div 
                         className="w-full h-full relative"
                         style={{ imageRendering: 'pixelated' }}
                       >
-                        {/* Layer 1: Wajah Dasar */}
                         <img 
                           src={currentSkinUrl} 
                           alt="" 
@@ -178,7 +176,6 @@ export default function MembersPage() {
                             top: '-100%' 
                           }} 
                         />
-                        {/* Layer 2: Aksesoris Rambut/Topi */}
                         <img 
                           src={currentSkinUrl} 
                           alt="" 
@@ -204,7 +201,6 @@ export default function MembersPage() {
                         {member.name}
                       </h3>
                       
-                      {/* --- ICON + TEKS BADGE ROLE --- */}
                       {member.specialRoles && member.specialRoles.length > 0 && (
                         <div className="flex flex-wrap items-center gap-2 mt-0.5">
                           {member.specialRoles.map((role, i) => {
@@ -234,7 +230,6 @@ export default function MembersPage() {
         )}
       </section>
 
-      {/* RENDER PROFILE MODAL JIKA DIKLIK */}
       {selectedMember && (
         <Profile 
           member={selectedMember} 
