@@ -31,6 +31,10 @@ export default function AdminPortal() {
   const [specialRoleInput, setSpecialRoleInput] = useState('');
   const [desc, setDesc] = useState('');
   
+  // Order Custom States
+  const [orderChanged, setOrderChanged] = useState(false);
+  const [savingOrder, setSavingOrder] = useState(false);
+  
   // Skin Input Mode States ('link' atau 'file')
   const [skinInputMode, setSkinInputMode] = useState<'link' | 'file'>('link');
   const [skinUrl, setSkinUrl] = useState('');
@@ -46,9 +50,9 @@ export default function AdminPortal() {
       const res = await fetch('/api/members?t=' + new Date().getTime(), { cache: 'no-store' });
       if (res.ok) {
         const data = await res.json();
-        // Urutkan data berdasarkan properti 'order' dari nilai terkecil ke terbesar
         const sortedData = data.sort((a: Member, b: Member) => (a.order || 0) - (b.order || 0));
         setMembers(sortedData);
+        setOrderChanged(false);
       }
     } catch (err) {
       console.error("Gagal mengambil data database:", err);
@@ -57,7 +61,6 @@ export default function AdminPortal() {
     }
   };
 
-  // Ambil data otomatis saat berhasil login admin
   useEffect(() => {
     if (isAuthenticated) {
       fetchMembers();
@@ -84,7 +87,6 @@ export default function AdminPortal() {
     }
   };
 
-  // Konversi file gambar local skin menjadi string Base64 Data URL
   const handleSkinFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -110,14 +112,13 @@ export default function AdminPortal() {
       ? specialRoleInput.split(',').map(r => r.trim().toLowerCase()).filter(Boolean)
       : [];
 
-    // Tentukan bobot urutan: Jika baru letakkan di posisi paling akhir roster
     const currentMemberOrder = isEditing 
       ? (members.find(m => m._id === currentMemberId)?.order ?? members.length)
       : members.length;
 
     const memberData = {
       id: currentMemberId,
-      password: password, // Menyertakan password untuk otentikasi API keamanan
+      password: password,
       name: gamertag,
       role: role,
       specialRoles: specialRolesArray,
@@ -176,67 +177,58 @@ export default function AdminPortal() {
     }
   };
 
-  // 5. PERBAIKAN FITUR SINKRONISASI REORDER DENGAN AUTO SAVE AMAN
-  const handleMoveOrder = async (index: number, direction: 'up' | 'down') => {
+  // 5. PENATAAN POSISI LOKAL (UP / DOWN SHIFTING)
+  const handleMoveOrder = (index: number, direction: 'up' | 'down') => {
     const targetIndex = direction === 'up' ? index - 1 : index + 1;
     if (targetIndex < 0 || targetIndex >= members.length) return;
 
-    // PERBAIKAN MUTASI: Gunakan map() untuk melakukan deep copy objek agar tidak merusak state aktif React
     const updatedList = members.map(m => ({ ...m }));
-
-    // Ambil nilai bobot urutan lama atau gunakan index sebagai dasar fallback
-    const currentOrder1 = updatedList[index].order ?? index;
-    const currentOrder2 = updatedList[targetIndex].order ?? targetIndex;
-
-    // Tukar nilai properti urutan posisi order
-    updatedList[index].order = currentOrder2;
-    updatedList[targetIndex].order = currentOrder1;
-
-    // Tukar posisi elemen di dalam array lokal state untuk manipulasi visual cepat (Optimistic UI)
+    
+    // Tukar posisi elemen di dalam array lokal state
     const temp = updatedList[index];
     updatedList[index] = updatedList[targetIndex];
     updatedList[targetIndex] = temp;
 
-    setMembers(updatedList);
+    // Hitung ulang bobot order berdasarkan index array terbaru
+    const finalList = updatedList.map((item, idx) => ({ ...item, order: idx }));
 
-    // AUTO SAVE SYSTEM: Kirim pembaruan posisi urutan kedua belah pihak secara bersamaan ke MongoDB
+    setMembers(finalList);
+    setOrderChanged(true);
+  };
+
+  // 6. FUNGSI SAVE HIJAU MANUAL UNTUK URUTAN ROSTER
+  const handleSaveOrder = async () => {
+    setSavingOrder(true);
     try {
-      await Promise.all([
-        fetch('/api/members', {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            id: updatedList[index]._id,
-            password: password,
-            name: updatedList[index].name,
-            role: updatedList[index].role,
-            specialRoles: updatedList[index].specialRoles,
-            description: updatedList[index].description,
-            customSkinUrl: updatedList[index].customSkinUrl,
-            order: updatedList[index].order
+      await Promise.all(
+        members.map((member, idx) => 
+          fetch('/api/members', {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              id: member._id,
+              password: password,
+              name: member.name,
+              role: member.role,
+              specialRoles: member.specialRoles,
+              description: member.description,
+              customSkinUrl: member.customSkinUrl,
+              order: idx
+            })
           })
-        }),
-        fetch('/api/members', {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            id: updatedList[targetIndex]._id,
-            password: password,
-            name: updatedList[targetIndex].name,
-            role: updatedList[targetIndex].role,
-            specialRoles: updatedList[targetIndex].specialRoles,
-            description: updatedList[targetIndex].description,
-            customSkinUrl: updatedList[targetIndex].customSkinUrl,
-            order: updatedList[targetIndex].order
-          })
-        })
-      ]);
+        )
+      );
+      alert('Sukses! Susunan urutan roster terbaru berhasil disimpan ke MongoDB.');
+      setOrderChanged(false);
+      fetchMembers();
     } catch (err) {
-      console.error("Gagal melakukan enkripsi sinkronisasi urutan posisi database:", err);
+      console.error(err);
+      alert('Terjadi kesalahan jaringan saat menyimpan urutan.');
+    } finally {
+      setSavingOrder(false);
     }
   };
 
-  // 6. FUNGSI SAAT TOMBOL EDIT DIKLIK (POPULATE FORM)
   const handleEditClick = (member: Member) => {
     setIsEditing(true);
     setCurrentMemberId(member._id || null);
@@ -260,7 +252,6 @@ export default function AdminPortal() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  // Reset form kembali ke semula (mode Tambah Member)
   const resetForm = () => {
     setIsEditing(false);
     setCurrentMemberId(null);
@@ -276,9 +267,9 @@ export default function AdminPortal() {
     return (
       <div className="min-h-screen bg-[#050505] flex flex-col items-center justify-center px-4 font-sans text-white relative">
         {bgImgSrc && (
-          <div className="absolute inset-0 bg-cover bg-center opacity-10 z-0 pointer-events-none mix-blend-lighten" style={{ backgroundImage: `url(${bgImgSrc})` }} />
+          <div className="fixed inset-0 bg-cover bg-center opacity-20 z-0 pointer-events-none mix-blend-lighten" style={{ backgroundImage: `url(${bgImgSrc})` }} />
         )}
-        <div className="bg-[#0a0a0a] p-8 rounded-xl border border-white/10 shadow-2xl w-full max-w-md relative z-10">
+        <div className="bg-[#0a0a0a]/90 backdrop-blur-sm p-8 rounded-xl border border-white/10 shadow-2xl w-full max-w-md relative z-10">
           <h1 className="text-3xl font-black text-orange-500 tracking-tighter mb-2 text-center">PORTAL KONTROL</h1>
           <p className="text-slate-500 text-[10px] text-center mb-8 uppercase tracking-widest">Freedom Database Center</p>
           
@@ -303,11 +294,11 @@ export default function AdminPortal() {
   return (
     <div className="min-h-screen bg-[#050505] text-white p-4 md:p-12 font-sans relative overflow-x-hidden">
       
-      {/* --- BACKGROUND IMAGE INTEGRATION --- */}
+      {/* --- PREMIUM VISUAL BACKGROUND LAYER --- */}
       {bgImgSrc && (
-        <div className="absolute inset-0 bg-cover bg-center opacity-20 z-0 pointer-events-none mix-blend-lighten" style={{ backgroundImage: `url(${bgImgSrc})` }} />
+        <div className="fixed inset-0 bg-cover bg-center opacity-25 z-0 pointer-events-none mix-blend-lighten" style={{ backgroundImage: `url(${bgImgSrc})` }} />
       )}
-      <div className="absolute inset-0 bg-gradient-to-b from-[#050505]/30 via-[#050505]/95 to-[#050505] z-0 pointer-events-none" />
+      <div className="fixed inset-0 bg-gradient-to-b from-[#050505]/30 via-[#050505]/95 to-[#050505] z-0 pointer-events-none" />
 
       <div className="max-w-6xl mx-auto relative z-10">
         
@@ -378,7 +369,7 @@ export default function AdminPortal() {
                   <div className="bg-black border border-dashed border-white/10 p-4 rounded text-center cursor-pointer relative hover:border-orange-500/30 transition-colors">
                     <input type="file" accept="image/png" onChange={handleSkinFileChange} className="absolute inset-0 opacity-0 cursor-pointer" />
                     <span className="text-[11px] text-slate-400 font-medium block truncate px-2">
-                      {skinUrl.startsWith('data:image') ? "Berkas Skin Siap Sinkronisasi" : "Pilih File Gambar Skin PNG"}
+                      {skinUrl.startsWith('data:image') ? "Berkas Skin Skin Terkunci" : "Pilih File Gambar Skin PNG"}
                     </span>
                   </div>
                 )}
@@ -393,11 +384,28 @@ export default function AdminPortal() {
 
           {/* KOLOM KANAN: DAFTAR KONTROL ROSTER AKTIF */}
           <div className="lg:col-span-2 bg-[#0a0a0a]/90 backdrop-blur-sm p-6 rounded-xl border border-white/10 shadow-xl h-fit">
-            <div className="flex justify-between items-center mb-6 border-b border-white/10 pb-4">
+            
+            {/* Header Roster Terdaftar + DYNAMIC GREEN SAVE BUTTON */}
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 border-b border-white/10 pb-4 gap-3">
               <h2 className="text-xl font-bold text-white uppercase tracking-tight">Roster Terdaftar di MongoDB</h2>
-              <span className="text-xs bg-orange-500/10 text-orange-400 font-bold px-2.5 py-1 rounded-full border border-orange-500/20">
-                Total: {members.length} Player
-              </span>
+              <div className="flex items-center gap-2 w-full sm:w-auto justify-between sm:justify-end">
+                {orderChanged && (
+                  <button
+                    type="button"
+                    onClick={handleSaveOrder}
+                    disabled={savingOrder}
+                    className="bg-emerald-600 hover:bg-emerald-500 text-white text-[11px] font-black uppercase tracking-widest px-3 py-2 rounded-lg transition-all shadow-[0_0_15px_rgba(16,185,129,0.4)] flex items-center gap-1"
+                  >
+                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                    </svg>
+                    {savingOrder ? "Menyimpan..." : "Simpan Urutan"}
+                  </button>
+                )}
+                <span className="text-xs bg-orange-500/10 text-orange-400 font-bold px-2.5 py-1 rounded-full border border-orange-500/20 whitespace-nowrap">
+                  Total: {members.length} Player
+                </span>
+              </div>
             </div>
 
             {loadingMembers ? (
@@ -411,13 +419,13 @@ export default function AdminPortal() {
             ) : (
               <div className="flex flex-col gap-3 max-h-[650px] overflow-y-auto pr-1">
                 {members.map((member, i) => (
-                  <div key={i} className="bg-black/40 border border-white/5 rounded-lg p-4 flex items-center justify-between gap-4 hover:border-white/10 transition-colors">
+                  <div key={i} className="bg-black/60 border border-white/5 rounded-lg p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:border-white/10 transition-colors">
                     
-                    {/* TATA LETAK SISI KIRI: DATA UTAMA PROFIL */}
-                    <div className="flex items-center gap-4 min-w-0">
+                    {/* SISI KIRI: DATA UTAMA PROFIL (RESPONSIF TERBUKA FULL WIDTH DI MOBILE) */}
+                    <div className="flex items-center gap-3 min-w-0 w-full sm:w-auto">
                       
-                      {/* PANAL SINKRONISASI REORDER POSISI (UP / DOWN ICONS) */}
-                      <div className="flex flex-col gap-1 flex-shrink-0 bg-black/60 p-1.5 rounded-lg border border-white/5">
+                      {/* REORDER BUTTON PANEL */}
+                      <div className="flex flex-col gap-1 flex-shrink-0 bg-black/80 p-1 rounded-md border border-white/5">
                         <button 
                           type="button"
                           disabled={i === 0}
@@ -446,21 +454,24 @@ export default function AdminPortal() {
                         {member.name.charAt(0)}
                       </div>
                       
-                      <div className="min-w-0">
-                        <div className="flex items-center gap-2 mb-0.5">
-                          <h4 className="text-sm font-black text-white truncate">{member.name}</h4>
-                          <span className="text-[8px] uppercase font-bold tracking-widest px-1.5 py-0.5 rounded border border-white/10 bg-white/5 text-slate-400">
+                      {/* FIX RESPONSIVE: Mencegah F.... Terpotong di Layar HP */}
+                      <div className="min-w-0 flex-1">
+                        <div className="flex flex-wrap items-center gap-2 mb-0.5">
+                          <h4 className="text-sm font-black text-white break-all whitespace-normal">
+                            {member.name}
+                          </h4>
+                          <span className="text-[8px] uppercase font-bold tracking-widest px-1.5 py-0.5 rounded border border-white/10 bg-white/5 text-slate-400 whitespace-nowrap">
                             {member.role}
                           </span>
                         </div>
-                        <p className="text-[10px] text-slate-500 truncate max-w-[200px] sm:max-w-md">
+                        <p className="text-[10px] text-slate-500 break-words whitespace-normal">
                           {member.specialRoles && member.specialRoles.length > 0 ? `Roles: ${member.specialRoles.join(', ')}` : 'Tidak ada keahlian khusus'}
                         </p>
                       </div>
                     </div>
 
-                    {/* PANEL SISI KANAN: ACTION BUTTONS CONTROL */}
-                    <div className="flex items-center gap-2 flex-shrink-0">
+                    {/* SISI KANAN: PANEL ACTION BUTTONS CONTROL (MENSELARASKAN LAYAR MOBILE) */}
+                    <div className="flex items-center justify-end gap-2 pt-2 sm:pt-0 border-t border-white/5 sm:border-t-0 flex-shrink-0 w-full sm:w-auto">
                       <button onClick={() => handleEditClick(member)} title="Edit Data" className="p-2 text-blue-400 hover:text-white bg-blue-500/5 hover:bg-blue-600 rounded-lg border border-blue-500/10 transition-all">
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
