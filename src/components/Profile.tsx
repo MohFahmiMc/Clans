@@ -9,7 +9,7 @@ import cardBuilder from '../assets/cardBuilder.png';
 import cardPvp from '../assets/cardPvp.png';
 import cardFarmer from '../assets/cardFarmer.png';
 import cardAdventure from '../assets/cardAdventure.png';
-import cardDefault from '../assets/cardDefault.png'; // Fallback jika tidak ada role
+import cardDefault from '../assets/cardMinecraft.png'; // Fallback jika tidak ada role
 
 // Helper render image yang aman
 const getSrc = (asset: any) => asset?.src || (typeof asset === 'string' ? asset : '');
