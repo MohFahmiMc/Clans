@@ -325,7 +325,7 @@ export default function MainPage() {
           
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center border-b border-white/5 pb-6 mb-8 gap-4">
             <div>
-              <h2 className="text-3xl font-black uppercase tracking-tight">Evaluasi Kepuasan Aliansi</h2>
+              <h2 className="text-3xl font-black uppercase tracking-tight">Evaluasi Kepuasan website</h2>
               <p className="text-xs text-slate-500 uppercase tracking-widest font-bold mt-1">Sistem Penilaian Global Real-Time</p>
             </div>
             
