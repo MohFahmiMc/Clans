@@ -37,7 +37,6 @@ async function getCollection() {
 export async function GET() {
   try {
     const collection = await getCollection();
-    // Ambil semua foto, urutkan dari yang paling baru diunggah (createdAt: -1)
     const data = await collection.find({}).sort({ createdAt: -1 }).toArray();
     return NextResponse.json(data, { status: 200 });
   } catch (err: any) {
@@ -57,7 +56,6 @@ export async function POST(request: Request) {
     const body = await request.json();
     const { password, title, description, imageData } = body;
 
-    // Proteksi Keamanan: Validasi password admin via env Vercel
     if (password !== process.env.PASSWORD) {
       return NextResponse.json({ success: false, error: 'VALIDASI ERROR: Password akses ditolak.' }, { status: 401 });
     }
@@ -70,7 +68,7 @@ export async function POST(request: Request) {
     const newGalleryItem = {
       title: title.trim() || 'Dokumentasi Freedom',
       description: description || '',
-      imageUrl: imageData, // Menyimpan string base64 gambar secara langsung
+      imageUrl: imageData,
       createdAt: new Date()
     };
 
@@ -91,7 +89,60 @@ export async function POST(request: Request) {
 }
 
 // ==========================================
-// 3. [DELETE] - HAPUS FOTO GALERI (ADMIN ONLY)
+// 3. [UPDATE] - EDIT DATA FOTO (ADMIN ONLY)
+// ==========================================
+export async function PUT(request: Request) {
+  try {
+    const body = await request.json();
+    const { id, password, title, description, imageData } = body;
+
+    if (password !== process.env.PASSWORD) {
+      return NextResponse.json({ success: false, error: 'VALIDASI ERROR: Password akses ditolak.' }, { status: 401 });
+    }
+
+    if (!id) {
+      return NextResponse.json({ success: false, error: 'VALIDASI ERROR: ID dokumen wajib disertakan untuk melakukan update.' }, { status: 400 });
+    }
+
+    const collection = await getCollection();
+    
+    // Siapkan field data yang akan diubah
+    const updatePayload: any = {
+      title: title.trim(),
+      description: description,
+      updatedAt: new Date()
+    };
+
+    // Jika admin juga meng-upload file gambar baru, perbarui string Base64 miliknya
+    if (imageData) {
+      updatePayload.imageUrl = imageData;
+    }
+
+    const result = await collection.updateOne(
+      { _id: new ObjectId(id) },
+      { $set: updatePayload }
+    );
+
+    if (result.matchedCount === 0) {
+      return NextResponse.json({ success: false, error: 'ERROR: Dokumen galeri tidak ditemukan.' }, { status: 404 });
+    }
+
+    return NextResponse.json({ 
+      success: true, 
+      message: 'NOTIFIKASI: Arsip dokumentasi galeri berhasil diperbarui.' 
+    }, { status: 200 });
+
+  } catch (err: any) {
+    return NextResponse.json({ 
+      success: false, 
+      error: 'SYSTEM ERROR: Gagal memproses pembaruan dokumen di MongoDB Atlas.',
+      details: err.message 
+    }, { status: 500 });
+  }
+}
+
+// ==========================================
+// 4. [DELETE] - HAPUS FOTO GALERI (ADMIN ONLY)
 // ==========================================
 export async function DELETE(request: Request) {
   try {
