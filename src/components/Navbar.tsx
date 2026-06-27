@@ -36,8 +36,10 @@ export default function Navbar({ logoSrc }: { logoSrc: string }) {
           <div className="hidden md:flex items-center gap-8 text-xs font-bold uppercase tracking-widest">
             <Link href="/freedom/main" className="text-slate-300 hover:text-orange-500 transition-colors">Base</Link>
             <Link href="/freedom/members" className="text-slate-300 hover:text-orange-500 transition-colors">Members</Link>
-            {/* Tambahan Akses Admin untuk Layar Desktop */}
-            <Link href="/freedom/admin" className="text-red-400 hover:text-red-500 transition-colors font-black tracking-wide border border-red-500/20 bg-red-500/5 px-2.5 py-1 rounded-md">Admin</Link>
+            <Link href="/freedom/gallery" className="text-slate-300 hover:text-orange-500 transition-colors">Gallery</Link>
+            
+            {/* Tampilan Link Admin Desktop yang Lebih Minimalis */}
+            <Link href="/freedom/admin" className="text-slate-400 hover:text-red-400 transition-colors font-bold tracking-wide border border-white/10 bg-white/5 px-2.5 py-1 rounded-md">Admin</Link>
           </div>
         </div>
       </nav>
@@ -68,45 +70,61 @@ export default function Navbar({ logoSrc }: { logoSrc: string }) {
             </button>
           </div>
 
-          {/* List Menu Laci */}
+          {/* List Menu Laci Utama */}
           <div className="flex flex-col gap-2">
             <Link 
               href="/freedom/main" 
               onClick={() => setIsSidebarOpen(false)}
-              className="text-slate-300 hover:text-orange-400 hover:bg-white/5 px-4 py-4 rounded-lg font-bold uppercase tracking-widest text-sm transition-all flex items-center gap-3"
+              className="text-slate-300 hover:text-orange-400 hover:bg-white/5 px-4 py-3.5 rounded-lg font-bold uppercase tracking-widest text-sm transition-all flex items-center gap-3"
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
               Base / Home
             </Link>
+            
             <Link 
               href="/freedom/members" 
               onClick={() => setIsSidebarOpen(false)}
-              className="text-slate-300 hover:text-orange-400 hover:bg-white/5 px-4 py-4 rounded-lg font-bold uppercase tracking-widest text-sm transition-all flex items-center gap-3"
+              className="text-slate-300 hover:text-orange-400 hover:bg-white/5 px-4 py-3.5 rounded-lg font-bold uppercase tracking-widest text-sm transition-all flex items-center gap-3"
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
               Roster Members
             </Link>
 
-            {/* PERBAIKAN: Tombol Portal Kontrol Admin Khusus Mobile / HP */}
+            {/* TAMBAHAN: Halaman Gallery Dokumentasi Roster */}
             <Link 
-              href="/freedom/admin" 
+              href="/freedom/gallery" 
               onClick={() => setIsSidebarOpen(false)}
-              className="text-red-400 hover:text-white hover:bg-red-500/20 mt-6 px-4 py-4 rounded-lg font-bold uppercase tracking-widest text-[10px] transition-all flex items-center gap-3 border border-red-500/30"
+              className="text-slate-300 hover:text-orange-400 hover:bg-white/5 px-4 py-3.5 rounded-lg font-bold uppercase tracking-widest text-sm transition-all flex items-center gap-3"
             >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
-              </svg>
-              PORTAL KONTROL (RESTRICTED)
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+              Clan Gallery
             </Link>
           </div>
 
-          {/* Footer Sidebar */}
-          <div className="mt-auto pt-8 border-t border-white/10 flex flex-col items-center gap-3">
-             <img src={logoSrc} alt="Logo" className="w-8 h-8 opacity-50" />
-             <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest text-center">
-               Freedom Clan &copy; {new Date().getFullYear()}
-             </p>
+          {/* AREA BAWAH: Diisolasi menggunakan mt-auto agar menempel di atas elemen footer */}
+          <div className="mt-auto flex flex-col gap-5">
+            
+            {/* PERBAIKAN: Link Kontrol Admin dipindah ke bawah dengan desain minimalis profesional */}
+            <Link 
+              href="/freedom/admin" 
+              onClick={() => setIsSidebarOpen(false)}
+              className="text-slate-500 hover:text-red-400 hover:bg-red-500/5 px-4 py-3 rounded-lg font-bold uppercase tracking-widest text-[10px] transition-all flex items-center gap-3 border border-white/5 bg-white/[0.01]"
+            >
+              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
+              </svg>
+              Portal Admin
+            </Link>
+
+            {/* Footer Sidebar */}
+            <div className="pt-5 border-t border-white/5 flex flex-col items-center gap-2">
+               <img src={logoSrc} alt="Logo" className="w-7 h-7 opacity-30" />
+               <p className="text-[9px] text-slate-600 font-bold uppercase tracking-widest text-center">
+                 Freedom Clan &copy; {new Date().getFullYear()}
+               </p>
+            </div>
           </div>
+
         </div>
       </div>
     </>
