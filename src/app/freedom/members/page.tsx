@@ -21,7 +21,6 @@ import cardFarmer from '../../../assets/cardFarmer.png';
 import cardAdventure from '../../../assets/cardAdventure.png';
 import cardDefault from '../../../assets/cardMinecraft.png';
 
-// Update interface agar mendukung struktur data MongoDB Atlas
 interface Member { 
   name: string; 
   role: string; 
@@ -67,7 +66,7 @@ export default function MembersPage() {
       });
   }, []);
 
-  // Warna badge berdasarkan hierarki pangkat clan
+  // Warna pangkat badge kontainer
   const getRoleColor = (role: string) => {
     const r = role.toLowerCase();
     if (r === 'leader' || r === 'owner') return 'text-red-500 border-red-500/30 bg-red-500/10';
@@ -75,7 +74,7 @@ export default function MembersPage() {
     return 'text-yellow-500 border-yellow-500/30 bg-yellow-500/10';
   };
 
-  // Icon keahlian di samping nama gamertag
+  // Ikon keahlian di samping nama gamertag
   const getSpecialIcon = (specialRole: string) => {
     switch (specialRole) {
       case 'redstoner': return redstonerSrc;
@@ -88,7 +87,7 @@ export default function MembersPage() {
     }
   };
 
-  // Latar belakang grafis kontainer box member sesuai keahlian utama
+  // Latar belakang kontainer box member sesuai keahlian utama
   const getBannerImage = (specialRole: string | undefined) => {
     switch (specialRole) {
       case 'redstoner': return getSrc(cardRedstoner);
@@ -139,6 +138,9 @@ export default function MembersPage() {
               const isLeader = member.role.toLowerCase() === 'leader';
               const bannerSrc = getBannerImage(member.specialRoles[0]);
               
+              // URL Render Kepala 2D Minecraft Avatar otomatis berdasarkan Gamertag Player
+              const headAvatarUrl = `https://mc-heads.net/avatar/${member.name}`;
+              
               return (
                 <div 
                   key={index} 
@@ -154,9 +156,18 @@ export default function MembersPage() {
 
                   {/* --- KONTEN UTAMA KOTAK --- */}
                   <div className="relative z-10 flex items-center gap-5 w-full">
-                    {/* Avatar Profil */}
-                    <div className={`w-14 h-14 md:w-16 md:h-16 flex-shrink-0 rounded-full border-2 ${isLeader ? 'border-orange-500 bg-[#ea580c]' : 'border-slate-700 bg-[#1e293b] group-hover:border-orange-400'} flex items-center justify-center text-white font-black text-2xl md:text-3xl transition-colors shadow-lg`}>
-                      {member.name.charAt(0).toUpperCase()}
+                    
+                    {/* PERBAIKAN: Lingkaran inisial teks diubah menjadi render Kepala 2D Skin Minecraft */}
+                    <div className={`w-14 h-14 md:w-16 md:h-16 flex-shrink-0 rounded-xl border-2 overflow-hidden shadow-lg transition-colors ${isLeader ? 'border-orange-500 bg-[#111]' : 'border-slate-700 bg-[#111] group-hover:border-orange-400'}`}>
+                      <img 
+                        src={headAvatarUrl} 
+                        alt={`${member.name} avatar`} 
+                        className="w-full h-full object-contain"
+                        style={{ imageRendering: 'pixelated' }}
+                        onError={(e) => {
+                          (e.target as HTMLImageElement).src = 'https://mc-heads.net/avatar/Steve';
+                        }}
+                      />
                     </div>
                     
                     <div className="flex-1 min-w-0 flex flex-col justify-center">
