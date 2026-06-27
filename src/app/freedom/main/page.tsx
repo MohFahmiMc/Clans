@@ -343,7 +343,7 @@ export default function MainPage() {
           </div>
 
           <div className="bg-[#0a0a0a] border border-white/10 p-8 rounded-2xl flex flex-col items-center text-center max-w-xl mx-auto mb-12 shadow-xl">
-            <h4 className="text-sm font-bold uppercase tracking-widest text-slate-400 mb-3">Berikan Penilaian Anda terhadap Aliansi</h4>
+            <h4 className="text-sm font-bold uppercase tracking-widest text-slate-400 mb-3">Berikan Penilaian Anda terhadap Website</h4>
             
             <div className="flex items-center gap-2 mb-2">
               {[1, 2, 3, 4, 5].map((star) => (
