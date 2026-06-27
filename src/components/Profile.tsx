@@ -1,17 +1,21 @@
 "use client";
 
 import React from 'react';
+import MinecraftSkin from './MinecraftSkin'; // <--- IMPORT KOMPONEN 3D
 
-// IMPORT BANNER CARD KAMU (Pastikan file ini ada di folder assets)
+// IMPORT BANNER CARD
 import cardRedstoner from '../assets/cardRedstoner.png';
 import cardMiner from '../assets/cardMiner.png';
 import cardBuilder from '../assets/cardBuilder.png';
 import cardPvp from '../assets/cardPvp.png';
 import cardFarmer from '../assets/cardFarmer.png';
 import cardAdventure from '../assets/cardAdventure.png';
-import cardDefault from '../assets/cardMinecraft.png'; // Fallback jika tidak ada role
+import cardDefault from '../assets/cardMinecraft.png';
 
-// Helper render image yang aman
+// IMPORT GAMBAR SKIN 
+import steveSkin from '../assets/steve.png';
+
+// Helper render image
 const getSrc = (asset: any) => asset?.src || (typeof asset === 'string' ? asset : '');
 
 interface ProfileProps {
@@ -22,9 +26,9 @@ interface ProfileProps {
 }
 
 export default function Profile({ member, onClose, getRoleColor, getSpecialIcon }: ProfileProps) {
-  // Logika menentukan background banner berdasarkan role pertama
+  
   const getBannerImage = () => {
-    const primaryRole = member.specialRoles[0]; // Ambil role yang paling kiri
+    const primaryRole = member.specialRoles[0]; 
     switch (primaryRole) {
       case 'redstoner': return getSrc(cardRedstoner);
       case 'miner': return getSrc(cardMiner);
@@ -37,6 +41,9 @@ export default function Profile({ member, onClose, getRoleColor, getSpecialIcon 
   };
 
   const roleStyle = getRoleColor(member.role);
+  
+  // Ambil URL mentah dari file steve.png
+  const skinUrl = getSrc(steveSkin);
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
@@ -49,17 +56,16 @@ export default function Profile({ member, onClose, getRoleColor, getSpecialIcon 
       {/* Kontainer Profile Utama */}
       <div className="relative w-full max-w-2xl bg-[#0a0a0a] rounded-xl border border-white/10 overflow-hidden shadow-[0_0_50px_rgba(0,0,0,0.8)] animate-in fade-in zoom-in duration-200">
         
-        {/* Banner Bagian Atas (Gambar Card 2000x908) */}
+        {/* Banner Bagian Atas */}
         <div 
           className="w-full h-48 md:h-64 bg-cover bg-center relative border-b border-white/10"
           style={{ backgroundImage: `url(${getBannerImage()})` }}
         >
-          {/* Overlay Gradient agar teks tetap terbaca */}
           <div className="absolute inset-0 bg-gradient-to-t from-[#0a0a0a] via-transparent to-black/30"></div>
           
           <button 
             onClick={onClose}
-            className="absolute top-4 right-4 w-8 h-8 bg-black/50 hover:bg-red-500 rounded-full flex items-center justify-center text-white transition-colors border border-white/20 backdrop-blur-md"
+            className="absolute top-4 right-4 w-8 h-8 bg-black/50 hover:bg-red-500 rounded-full flex items-center justify-center text-white transition-colors border border-white/20 backdrop-blur-md z-50"
           >
             ✕
           </button>
@@ -68,12 +74,18 @@ export default function Profile({ member, onClose, getRoleColor, getSpecialIcon 
         {/* Konten Detail Profil */}
         <div className="px-6 pb-8 md:px-10 md:pb-10 relative">
           
-          {/* Avatar Gamertag (Naik ke atas menimpa banner) */}
-          <div className="w-24 h-24 md:w-32 md:h-32 rounded-2xl bg-[#151515] border-4 border-[#0a0a0a] flex items-center justify-center text-white font-black text-4xl md:text-5xl -mt-12 md:-mt-16 relative z-10 shadow-xl mb-4 group hover:border-orange-500 transition-colors">
-            {member.name.charAt(0).toUpperCase()}
+          {/* ----- PERUBAHAN DISINI: AVATAR DIGANTI MODEL 3D ----- */}
+          <div className="w-32 h-40 md:w-40 md:h-48 -mt-24 md:-mt-32 relative z-10 mb-2 drop-shadow-2xl flex items-end">
+            <MinecraftSkin 
+              skinUrl={skinUrl} 
+              width={160} 
+              height={220} 
+              isWalking={true} 
+            />
           </div>
+          {/* ----------------------------------------------------- */}
 
-          <div className="flex flex-col md:flex-row md:justify-between md:items-end gap-4">
+          <div className="flex flex-col md:flex-row md:justify-between md:items-end gap-4 mt-2">
             <div>
               <h2 className="text-3xl md:text-5xl font-black text-white tracking-tighter mb-2">
                 {member.name}
@@ -100,9 +112,8 @@ export default function Profile({ member, onClose, getRoleColor, getSpecialIcon 
             )}
           </div>
           
-          {/* Ruang kosong untuk info tambahan nanti */}
           <div className="mt-8 pt-6 border-t border-white/5">
-            <p className="text-slate-500 text-xs italic font-medium">Informasi tambahan member belum ditambahkan...</p>
+            <p className="text-slate-500 text-xs italic font-medium">Player ini adalah petarung garis depan dari clan Freedom.</p>
           </div>
           
         </div>
