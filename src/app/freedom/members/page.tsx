@@ -21,6 +21,9 @@ import cardFarmer from '../../../assets/cardFarmer.png';
 import cardAdventure from '../../../assets/cardAdventure.png';
 import cardDefault from '../../../assets/cardMinecraft.png';
 
+// IMPORT GAMBAR SKIN SEBAGAI FALLBACK DEFAULT
+import steveSkin from '../../../assets/steve.png';
+
 interface Member { 
   name: string; 
   role: string; 
@@ -138,8 +141,8 @@ export default function MembersPage() {
               const isLeader = member.role.toLowerCase() === 'leader';
               const bannerSrc = getBannerImage(member.specialRoles[0]);
               
-              // URL Render Kepala 2D Minecraft Avatar otomatis berdasarkan Gamertag Player
-              const headAvatarUrl = `https://mc-heads.net/avatar/${member.name}`;
+              // Tentukan file source skin yang akan dipotong kepalanya
+              const currentSkinUrl = member.customSkinUrl ? member.customSkinUrl : getSrc(steveSkin);
               
               return (
                 <div 
@@ -157,17 +160,37 @@ export default function MembersPage() {
                   {/* --- KONTEN UTAMA KOTAK --- */}
                   <div className="relative z-10 flex items-center gap-5 w-full">
                     
-                    {/* PERBAIKAN: Lingkaran inisial teks diubah menjadi render Kepala 2D Skin Minecraft */}
-                    <div className={`w-14 h-14 md:w-16 md:h-16 flex-shrink-0 rounded-xl border-2 overflow-hidden shadow-lg transition-colors ${isLeader ? 'border-orange-500 bg-[#111]' : 'border-slate-700 bg-[#111] group-hover:border-orange-400'}`}>
-                      <img 
-                        src={headAvatarUrl} 
-                        alt={`${member.name} avatar`} 
-                        className="w-full h-full object-contain"
+                    {/* PERBAIKAN: Menggunakan potongan CSS Sprite langsung dari skin url aktif */}
+                    <div className={`w-14 h-14 md:w-16 md:h-16 flex-shrink-0 rounded-xl border-2 overflow-hidden shadow-lg transition-colors relative bg-[#111] ${isLeader ? 'border-orange-500' : 'border-slate-700 group-hover:border-orange-400'}`}>
+                      <div 
+                        className="w-full h-full relative"
                         style={{ imageRendering: 'pixelated' }}
-                        onError={(e) => {
-                          (e.target as HTMLImageElement).src = 'https://mc-heads.net/avatar/Steve';
-                        }}
-                      />
+                      >
+                        {/* Layer 1: Wajah Dasar */}
+                        <img 
+                          src={currentSkinUrl} 
+                          alt="" 
+                          className="absolute max-w-none"
+                          style={{ 
+                            width: '800%', 
+                            height: 'auto', 
+                            left: '-100%', 
+                            top: '-100%' 
+                          }} 
+                        />
+                        {/* Layer 2: Aksesoris Rambut/Topi */}
+                        <img 
+                          src={currentSkinUrl} 
+                          alt="" 
+                          className="absolute max-w-none"
+                          style={{ 
+                            width: '800%', 
+                            height: 'auto', 
+                            left: '-500%', 
+                            top: '-100%' 
+                          }} 
+                        />
+                      </div>
                     </div>
                     
                     <div className="flex-1 min-w-0 flex flex-col justify-center">
