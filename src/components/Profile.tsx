@@ -50,9 +50,6 @@ export default function Profile({ member, onClose, getRoleColor, getSpecialIcon 
   // LOGIKA AMBIL SKIN: Gunakan customSkinUrl jika ada di MongoDB, jika tidak ada pakai steve.png bawaan
   const skinUrl = member.customSkinUrl ? member.customSkinUrl : getSrc(steveSkin);
 
-  // URL Render Kepala 2D Minecraft Avatar otomatis berdasarkan Gamertag Player
-  const headAvatarUrl = `https://mc-heads.net/avatar/${member.name}`;
-
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
       {/* Backdrop Hitam Transparan */}
@@ -82,20 +79,40 @@ export default function Profile({ member, onClose, getRoleColor, getSpecialIcon 
         {/* Konten Detail Profil */}
         <div className="px-6 pb-8 md:px-10 md:pb-10 relative">
           
-          {/* PERBAIKAN TATA LETAK: Kepala 2D Avatar diletakkan di sebelah kiri model 3D */}
+          {/* PERBAIKAN TATA LETAK: Menggunakan CSS Crop untuk memotong wajah langsung dari berkas skinUrl asli */}
           <div className="flex items-end justify-between -mt-16 md:-mt-20 relative z-10 mb-4">
-            {/* Avatar Kepala 2D Minecraft Rapi Sesuai Gamertag */}
-            <div className="w-20 h-20 md:w-24 md:h-24 rounded-2xl bg-[#151515] border-4 border-[#0a0a0a] overflow-hidden shadow-xl hover:border-orange-500 transition-colors flex-shrink-0">
-              <img 
-                src={headAvatarUrl} 
-                alt={`${member.name} head`} 
-                className="w-full h-full object-contain"
+            
+            {/* Avatar Kepala 2D Hasil Ekstrasi Tekstur Skin Komponen Aktif */}
+            <div className="w-20 h-20 md:w-24 md:h-24 rounded-2xl bg-[#151515] border-4 border-[#0a0a0a] overflow-hidden shadow-xl hover:border-orange-500 transition-colors flex-shrink-0 relative">
+              <div 
+                className="w-full h-full relative"
                 style={{ imageRendering: 'pixelated' }}
-                onError={(e) => {
-                  // Fallback jika API avatar offline
-                  (e.target as HTMLImageElement).src = 'https://mc-heads.net/avatar/Steve';
-                }}
-              />
+              >
+                {/* Layer 1: Base Face (Tekstur wajah dasar Minecraft pada koordinat skin) */}
+                <img 
+                  src={skinUrl} 
+                  alt="" 
+                  className="absolute max-w-none"
+                  style={{ 
+                    width: '800%', 
+                    height: 'auto', 
+                    left: '-100%', 
+                    top: '-100%' 
+                  }} 
+                />
+                {/* Layer 2: Hat Overlay (Tekstur rambut/topi luar agar dimensi kepala sempurna) */}
+                <img 
+                  src={skinUrl} 
+                  alt="" 
+                  className="absolute max-w-none"
+                  style={{ 
+                    width: '800%', 
+                    height: 'auto', 
+                    left: '-500%', 
+                    top: '-100%' 
+                  }} 
+                />
+              </div>
             </div>
 
             {/* Model Karakter 3D Animasi Berjalan */}
@@ -136,7 +153,7 @@ export default function Profile({ member, onClose, getRoleColor, getSpecialIcon 
             )}
           </div>
           
-          {/* PERBAIKAN: Deskripsi Profil mengambil data dinamis real-time dari MongoDB */}
+          {/* Deskripsi Profil mengambil data dinamis real-time dari MongoDB */}
           <div className="mt-8 pt-6 border-t border-white/5">
             <p className="text-slate-300 text-sm font-medium leading-relaxed bg-white/5 p-4 rounded-lg border border-white/5">
               {member.description || "Player ini belum mengonfigurasi pesan deskripsi atau bio kutipan di dalam basis data clan."}
