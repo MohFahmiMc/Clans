@@ -117,6 +117,7 @@ export default function AdminPortal() {
 
     const memberData = {
       id: currentMemberId,
+      password: password, // Menyertakan password untuk otentikasi API keamanan
       name: gamertag,
       role: role,
       specialRoles: specialRolesArray,
@@ -158,7 +159,7 @@ export default function AdminPortal() {
       const res = await fetch('/api/members', {
         method: 'DELETE',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id: member._id, name: member.name })
+        body: JSON.stringify({ id: member._id, password: password, name: member.name })
       });
 
       const data = await res.json();
@@ -175,14 +176,15 @@ export default function AdminPortal() {
     }
   };
 
-  // 5. FUNGSI MENGATUR POSISI URUTAN MEMBER (MOVE UP / DOWN)
+  // 5. PERBAIKAN FITUR SINKRONISASI REORDER DENGAN AUTO SAVE AMAN
   const handleMoveOrder = async (index: number, direction: 'up' | 'down') => {
     const targetIndex = direction === 'up' ? index - 1 : index + 1;
     if (targetIndex < 0 || targetIndex >= members.length) return;
 
-    const updatedList = [...members];
-    
-    // Ambil nilai bobot urutan lama atau gunakan index sebagai fallback dasar
+    // PERBAIKAN MUTASI: Gunakan map() untuk melakukan deep copy objek agar tidak merusak state aktif React
+    const updatedList = members.map(m => ({ ...m }));
+
+    // Ambil nilai bobot urutan lama atau gunakan index sebagai dasar fallback
     const currentOrder1 = updatedList[index].order ?? index;
     const currentOrder2 = updatedList[targetIndex].order ?? targetIndex;
 
@@ -190,42 +192,45 @@ export default function AdminPortal() {
     updatedList[index].order = currentOrder2;
     updatedList[targetIndex].order = currentOrder1;
 
-    // Tukar posisi elemen di dalam array lokal state untuk manipulasi visual cepat
+    // Tukar posisi elemen di dalam array lokal state untuk manipulasi visual cepat (Optimistic UI)
     const temp = updatedList[index];
     updatedList[index] = updatedList[targetIndex];
     updatedList[targetIndex] = temp;
 
     setMembers(updatedList);
 
-    // Kirim pembaruan posisi urutan kedua pihak yang bertukar tempat ke basis data MongoDB via API Route
+    // AUTO SAVE SYSTEM: Kirim pembaruan posisi urutan kedua belah pihak secara bersamaan ke MongoDB
     try {
-      await fetch('/api/members', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          id: updatedList[index]._id,
-          name: updatedList[index].name,
-          role: updatedList[index].role,
-          specialRoles: updatedList[index].specialRoles,
-          description: updatedList[index].description,
-          customSkinUrl: updatedList[index].customSkinUrl,
-          order: updatedList[index].order
+      await Promise.all([
+        fetch('/api/members', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            id: updatedList[index]._id,
+            password: password,
+            name: updatedList[index].name,
+            role: updatedList[index].role,
+            specialRoles: updatedList[index].specialRoles,
+            description: updatedList[index].description,
+            customSkinUrl: updatedList[index].customSkinUrl,
+            order: updatedList[index].order
+          })
+        }),
+        fetch('/api/members', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            id: updatedList[targetIndex]._id,
+            password: password,
+            name: updatedList[targetIndex].name,
+            role: updatedList[targetIndex].role,
+            specialRoles: updatedList[targetIndex].specialRoles,
+            description: updatedList[targetIndex].description,
+            customSkinUrl: updatedList[targetIndex].customSkinUrl,
+            order: updatedList[targetIndex].order
+          })
         })
-      });
-
-      await fetch('/api/members', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          id: updatedList[targetIndex]._id,
-          name: updatedList[targetIndex].name,
-          role: updatedList[targetIndex].role,
-          specialRoles: updatedList[targetIndex].specialRoles,
-          description: updatedList[targetIndex].description,
-          customSkinUrl: updatedList[targetIndex].customSkinUrl,
-          order: updatedList[targetIndex].order
-        })
-      });
+      ]);
     } catch (err) {
       console.error("Gagal melakukan enkripsi sinkronisasi urutan posisi database:", err);
     }
