@@ -39,8 +39,8 @@ async function getCollection() {
 export async function GET() {
   try {
     const collection = await getCollection();
-    // Ambil semua data dan ubah menjadi Array JSON
-    const data = await collection.find({}).toArray();
+    // PERBAIKAN: Ambil semua data dan langsung urutkan berdasarkan properti 'order' dari database
+    const data = await collection.find({}).sort({ order: 1 }).toArray();
     return NextResponse.json(data, { status: 200 });
   } catch (err: any) {
     return NextResponse.json({ 
@@ -57,7 +57,8 @@ export async function GET() {
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { name, role, specialRoles, description, customSkinUrl } = body;
+    // PERBAIKAN: Ikut sertakan properti 'order' dari request body
+    const { name, role, specialRoles, description, customSkinUrl, order } = body;
 
     // Validasi input wajib
     if (!name || name.trim() === "") {
@@ -81,6 +82,7 @@ export async function POST(request: Request) {
       specialRoles: specialRoles || [],
       description: description || 'Player ini adalah petarung garis depan dari clan Freedom.',
       customSkinUrl: customSkinUrl || null,
+      order: order !== undefined ? Number(order) : 0, // PERBAIKAN: Menyimpan data nomor urutan
       createdAt: new Date()
     };
 
@@ -106,7 +108,8 @@ export async function POST(request: Request) {
 export async function PUT(request: Request) {
   try {
     const body = await request.json();
-    const { id, name, role, specialRoles, description, customSkinUrl } = body;
+    // PERBAIKAN: Ikut sertakan properti 'order' dari request body agar fungsi pemindahan posisi bekerja
+    const { id, name, role, specialRoles, description, customSkinUrl, order } = body;
 
     if (!id) {
       return NextResponse.json({ success: false, error: 'VALIDASI ERROR: ID Dokumen diperlukan untuk pembaruan data.' }, { status: 400 });
@@ -114,7 +117,7 @@ export async function PUT(request: Request) {
 
     const collection = await getCollection();
 
-    const updatedData = {
+    const updatedData: any = {
       name: name.trim(),
       role: role,
       specialRoles: specialRoles || [],
@@ -122,6 +125,11 @@ export async function PUT(request: Request) {
       customSkinUrl: customSkinUrl || null,
       updatedAt: new Date()
     };
+
+    // PERBAIKAN: Jika properti order dikirimkan, masukkan ke dalam payload update database
+    if (order !== undefined) {
+      updatedData.order = Number(order);
+    }
 
     const result = await collection.updateOne(
       { _id: new ObjectId(id) },
@@ -134,7 +142,7 @@ export async function PUT(request: Request) {
 
     return NextResponse.json({ 
       success: true, 
-      message: `NOTIFIKASI: Sinkronisasi berhasil. Profil dan berkas custom skin ${name} telah diperbarui.` 
+      message: `NOTIFIKASI: Sinkronisasi berhasil. Profil dan susunan posisi urutan ${name} telah diperbarui.` 
     }, { status: 200 });
 
   } catch (err: any) {
