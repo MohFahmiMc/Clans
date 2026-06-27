@@ -200,11 +200,11 @@ export default function MainPage() {
       {/* --- BACKGROUND IMAGE KUSTOM DARI ASSETS --- */}
       {bgImgSrc && (
         <div 
-          className="absolute inset-0 bg-cover bg-center opacity-40 blur-[3px] z-0 pointer-events-none mix-blend-lighten"
+          className="absolute inset-0 bg-cover bg-center opacity-75 z-0 pointer-events-none"
           style={{ backgroundImage: `url(${bgImgSrc})` }}
         />
       )}
-      <div className="absolute inset-0 bg-gradient-to-b from-[#050505]/30 via-[#050505]/70 to-[#050505] z-0 pointer-events-none" />
+      <div className="absolute inset-0 bg-gradient-to-b from-[#050505]/10 via-[#050505]/45 to-[#050505] z-0 pointer-events-none" />
 
       <div className="relative z-10">
         
