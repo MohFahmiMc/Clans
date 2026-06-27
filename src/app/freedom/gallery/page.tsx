@@ -106,7 +106,7 @@ export default function GalleryPage() {
       id: editingItemId,
       title,
       description,
-      imageData: imageFile // Bisa null saat edit jika tidak ingin mengganti gambar
+      imageData: imageFile
     };
 
     const endpoint = '/api/gallery';
@@ -123,7 +123,7 @@ export default function GalleryPage() {
       if (res.ok && data.success) {
         alert(data.message);
         closeUploadModal();
-        fetchGallery(); // Refresh data grid galeri
+        fetchGallery();
       } else {
         alert(data.error || 'Gagal memproses berkas dokumentasi.');
       }
@@ -163,7 +163,7 @@ export default function GalleryPage() {
     setEditingItemId(item._id || null);
     setTitle(item.title);
     setDescription(item.description || '');
-    setImageFile(item.imageUrl); // Set gambar lama sebagai pratinjau
+    setImageFile(item.imageUrl);
     setShowUploadModal(true);
   };
 
@@ -237,63 +237,65 @@ export default function GalleryPage() {
             </div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              {items.map((item, index) => (
-                <div 
-                  key={index}
-                  className="bg-[#0f0f0f]/80 backdrop-blur-sm rounded-xl border border-white/5 overflow-hidden group shadow-lg hover:border-orange-500/30 transition-all flex flex-col relative"
-                >
-                  {/* Frame Foto */}
+              {items.map((item, index) => {
+                return (
                   <div 
-                    onClick={() => setLightboxItem(item)}
-                    className="w-full aspect-video bg-neutral-900 overflow-hidden cursor-zoom-in relative"
+                    key={index}
+                    className="bg-[#0f0f0f]/80 backdrop-blur-sm rounded-xl border border-white/5 overflow-hidden group shadow-lg hover:border-orange-500/30 transition-all flex flex-col relative"
                   >
-                    <img 
-                      src={item.imageUrl} 
-                      alt={item.title} 
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" 
-                    />
-                    <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                      <span className="text-xs bg-black/60 px-3 py-1.5 rounded-full uppercase tracking-wider font-bold border border-white/10 text-slate-200">Perbesar</span>
+                    {/* Frame Foto */}
+                    <div 
+                      onClick={() => setLightboxItem(item)}
+                      className="w-full aspect-video bg-neutral-900 overflow-hidden cursor-zoom-in relative"
+                    >
+                      <img 
+                        src={item.imageUrl} 
+                        alt={item.title} 
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" 
+                      />
+                      <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                        <span className="text-xs bg-black/60 px-3 py-1.5 rounded-full uppercase tracking-wider font-bold border border-white/10 text-slate-200">Perbesar</span>
+                      </div>
                     </div>
-                  </div>
 
-                  {/* Info Text */}
-                  <div className="p-5 flex-1 flex flex-col justify-between">
-                    <div>
-                      <h3 className="text-base font-black text-white tracking-tight mb-1 truncate">{item.title}</h3>
-                      <p className="text-xs text-slate-400 font-medium line-clamp-2 leading-relaxed">{item.description || 'Tidak ada deskripsi berkas.'}</p>
+                    {/* Info Text */}
+                    <div className="p-5 flex-1 flex flex-col justify-between">
+                      <div>
+                        <h3 className="text-base font-black text-white tracking-tight mb-1 truncate">{item.title}</h3>
+                        <p className="text-xs text-slate-400 font-medium line-clamp-2 leading-relaxed">{item.description || 'Tidak ada deskripsi berkas.'}</p>
+                      </div>
+                      <span className="text-[9px] text-slate-600 uppercase tracking-widest font-bold mt-4 block border-t border-white/5 pt-3">
+                        {new Date(item.createdAt).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}
+                      </span>
                     </div>
-                    <span className="text-[9px] text-slate-600 uppercase tracking-widest font-bold mt-4 block border-t border-white/5 pt-3">
-                      {new Date(item.createdAt).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}
-                    </span>
-                  </div>
 
-                  {/* TOMBOL KONTROL EDIT & HAPUS RAHASIA (HANYA MUNCUL JIKA MODE ADMIN AKTIF) */}
-                  {isAdmin && (
-                    <div className="absolute top-3 right-3 flex items-center gap-1.5 bg-black/70 p-1 rounded-lg border border-white/10 backdrop-blur-md animate-in fade-in duration-200">
-                      <button 
-                        onClick={() => handleEditClick(item)}
-                        title="Edit Data"
-                        className="p-1.5 text-blue-400 hover:text-white hover:bg-blue-600 rounded transition-colors"
-                      >
-                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
-                        </svg>
-                      </button>
-                      <div className="w-px h-3 bg-white/10" />
-                      <button 
-                        onClick={() => handleDeleteItem(item._id!)}
-                        title="Hapus Gambar"
-                        className="p-1.5 text-red-400 hover:text-white hover:bg-red-600 rounded transition-colors"
-                      >
-                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-4v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                        </svg>
-                      </button>
-                    </div>
-                  )}
-                </div>
-              ))}
+                    {/* TOMBOL KONTROL EDIT & HAPUS RAHASIA (HANYA MUNCUL JIKA MODE ADMIN AKTIF) */}
+                    {isAdmin && (
+                      <div className="absolute top-3 right-3 flex items-center gap-1.5 bg-black/70 p-1 rounded-lg border border-white/10 backdrop-blur-md animate-in fade-in duration-200">
+                        <button 
+                          onClick={() => handleEditClick(item)}
+                          title="Edit Data"
+                          className="p-1.5 text-blue-400 hover:text-white hover:bg-blue-600 rounded transition-colors"
+                        >
+                          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                          </svg>
+                        </button>
+                        <div className="w-px h-3 bg-white/10" />
+                        <button 
+                          onClick={() => handleDeleteItem(item._id!)}
+                          title="Hapus Gambar"
+                          className="p-1.5 text-red-400 hover:text-white hover:bg-red-600 rounded transition-colors"
+                        >
+                          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-4v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                          </svg>
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
             </div>
           )}
         </div>
@@ -431,4 +433,16 @@ export default function GalleryPage() {
             <img 
               src={lightboxItem.imageUrl} 
               alt={lightboxItem.title} 
-              className="max-w-full max-h-
+              className="max-w-full max-h-[70vh] object-contain rounded-lg border border-white/10 shadow-2xl"
+            />
+            <div className="text-center mt-4 max-w-xl">
+              <h3 className="text-lg font-black text-white tracking-tight">{lightboxItem.title}</h3>
+              <p className="text-xs text-slate-400 mt-1 font-medium leading-relaxed">{lightboxItem.description}</p>
+            </div>
+          </div>
+        </div>
+      )}
+
+    </div>
+  );
+}
