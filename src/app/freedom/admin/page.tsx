@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 
 interface Member {
-  _id?: string; // MongoDB ID otomatis
+  _id?: string;
   name: string;
   role: string;
   specialRoles: string[];
@@ -28,6 +28,9 @@ export default function AdminPortal() {
   const [role, setRole] = useState('Member');
   const [specialRoleInput, setSpecialRoleInput] = useState('');
   const [desc, setDesc] = useState('');
+  
+  // Skin Input Mode States ('link' atau 'file')
+  const [skinInputMode, setSkinInputMode] = useState<'link' | 'file'>('link');
   const [skinUrl, setSkinUrl] = useState('');
 
   // 1. FUNGSI AMBIL DATA DARI MONGODB (READ)
@@ -73,6 +76,23 @@ export default function AdminPortal() {
     }
   };
 
+  // Konversi file gambar local skin menjadi string Base64 Data URL
+  const handleSkinFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.type !== "image/png") {
+      alert("Validasi Gagal: File skin Minecraft harus berformat .PNG!");
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setSkinUrl(reader.result as string);
+    };
+    reader.readAsDataURL(file);
+  };
+
   // 3. FUNGSI SIMPAN DATA (CREATE / UPDATE)
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -83,7 +103,7 @@ export default function AdminPortal() {
       : [];
 
     const memberData = {
-      id: currentMemberId, // Akan diolah di API route jika melakukan update
+      id: currentMemberId,
       name: gamertag,
       role: role,
       specialRoles: specialRolesArray,
@@ -91,7 +111,6 @@ export default function AdminPortal() {
       customSkinUrl: skinUrl || null
     };
 
-    // Tentukan method API: PUT jika sedang mengedit data lama, POST jika membuat data baru
     const method = isEditing ? 'PUT' : 'POST';
 
     try {
@@ -101,12 +120,13 @@ export default function AdminPortal() {
         body: JSON.stringify(memberData)
       });
       
+      const data = await res.json();
       if (res.ok) {
-        alert(isEditing ? `Sukses! Data profil ${gamertag} berhasil di-update.` : `Sukses! ${gamertag} berhasil dimasukkan ke MongoDB.`);
+        alert(data.message || 'Transaksi data berhasil diproses.');
         resetForm();
-        fetchMembers(); // Muat ulang daftar nama roster terbaru
+        fetchMembers();
       } else {
-        alert('Gagal memproses data ke database. Periksa kestabilan server api.');
+        alert(data.error || 'Gagal memproses data ke database. Periksa kestabilan server api.');
       }
     } catch (err) {
       console.error(err);
@@ -127,12 +147,13 @@ export default function AdminPortal() {
         body: JSON.stringify({ id: member._id, name: member.name })
       });
 
+      const data = await res.json();
       if (res.ok) {
-        alert(`${member.name} telah dikeluarkan dari database clan.`);
+        alert(data.message || 'Data berhasil dihapus.');
         fetchMembers();
         if (currentMemberId === member._id) resetForm();
       } else {
-        alert('Gagal menghapus data dari database.');
+        alert(data.error || 'Gagal menghapus data dari database.');
       }
     } catch (err) {
       console.error(err);
@@ -148,8 +169,21 @@ export default function AdminPortal() {
     setRole(member.role);
     setSpecialRoleInput(member.specialRoles ? member.specialRoles.join(', ') : '');
     setDesc(member.description || '');
-    setSkinUrl(member.customSkinUrl || '');
-    window.scrollTo({ top: 0, behavior: 'smooth' }); // Scroll otomatis ke atas ke area form
+    
+    // Deteksi tipe skinUrl lama apakah Base64 berkas atau alamat link URL biasa
+    if (member.customSkinUrl) {
+      setSkinUrl(member.customSkinUrl);
+      if (member.customSkinUrl.startsWith('data:image')) {
+        setSkinInputMode('file');
+      } else {
+        setSkinInputMode('link');
+      }
+    } else {
+      setSkinUrl('');
+      setSkinInputMode('link');
+    }
+    
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   // Reset form kembali ke semula (mode Tambah Member)
@@ -161,6 +195,7 @@ export default function AdminPortal() {
     setSpecialRoleInput('');
     setDesc('');
     setSkinUrl('');
+    setSkinInputMode('link');
   };
 
   if (!isAuthenticated) {
@@ -209,11 +244,11 @@ export default function AdminPortal() {
           {/* KOLOM KIRI: FORM CONTROL KUSTOM DATA (INPUT AREA) */}
           <div className="bg-[#0a0a0a] p-6 rounded-xl border border-white/10 shadow-xl h-fit">
             <div className="flex justify-between items-center mb-6 border-b border-white/10 pb-4">
-              <h2 className="text-xl font-bold text-white uppercase tracking-tight">
-                {isEditing ? "⚙️ Edit Profil Member" : "➕ Tambah Member Baru"}
+              <h2 className="text-lg font-bold text-white uppercase tracking-tight flex items-center gap-2">
+                {isEditing ? "Edit Profil Member" : "Tambah Member Baru"}
               </h2>
               {isEditing && (
-                <button onClick={resetForm} className="text-[10px] bg-white/10 text-slate-300 px-2 py-1 rounded hover:bg-white/20 transition-all font-bold uppercase tracking-wider">
+                <button onClick={resetForm} className="text-[10px] bg-white/10 text-slate-300 px-2.5 py-1 rounded hover:bg-white/20 transition-all font-bold uppercase tracking-wider">
                   Batal
                 </button>
               )}
@@ -266,16 +301,51 @@ export default function AdminPortal() {
                 ></textarea>
               </div>
 
-              <div className="flex flex-col gap-1.5">
-                <label className="text-[10px] font-bold uppercase tracking-widest text-orange-400">Custom Skin PNG Link (Direct URL)</label>
-                <input 
-                  type="text" 
-                  value={skinUrl} 
-                  onChange={e => setSkinUrl(e.target.value)} 
-                  className="bg-black border border-white/10 p-3 rounded text-white focus:border-orange-500 focus:outline-none text-xs text-slate-400 font-mono" 
-                  placeholder="Contoh: https://i.imgur.com/xxx.png" 
-                />
-                <p className="text-[9px] text-slate-500 leading-normal">Tempel direct link skin kustom jika ada. Kosongkan jika ingin sistem memuat skin standar secara otomatis.</p>
+              {/* PERBAIKAN: INTERACTIVE DUAL SYSTEM FOR CUSTOM SKIN */}
+              <div className="flex flex-col gap-2 border-t border-white/5 pt-4">
+                <label className="text-[10px] font-bold uppercase tracking-widest text-orange-400">Custom Skin Data (.PNG)</label>
+                
+                {/* Tab selector */}
+                <div className="grid grid-cols-2 gap-1 bg-black p-1 rounded-lg border border-white/5 text-center text-[10px] font-bold uppercase tracking-wider">
+                  <button
+                    type="button"
+                    onClick={() => setSkinInputMode('link')}
+                    className={`py-1.5 rounded-md transition-all ${skinInputMode === 'link' ? 'bg-orange-600 text-white' : 'text-slate-400 hover:text-white'}`}
+                  >
+                    Direct Link
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setSkinInputMode('file')}
+                    className={`py-1.5 rounded-md transition-all ${skinInputMode === 'file' ? 'bg-orange-600 text-white' : 'text-slate-400 hover:text-white'}`}
+                  >
+                    Upload File
+                  </button>
+                </div>
+
+                {/* Input Sesuai Mode Pilihan */}
+                {skinInputMode === 'link' ? (
+                  <input 
+                    type="text" 
+                    value={skinUrl.startsWith('data:image') ? '' : skinUrl} 
+                    onChange={e => setSkinUrl(e.target.value)} 
+                    className="bg-black border border-white/10 p-3 rounded text-white focus:border-orange-500 focus:outline-none text-xs text-slate-400 font-mono" 
+                    placeholder="Contoh: https://i.imgur.com/xxx.png" 
+                  />
+                ) : (
+                  <div className="bg-black border border-dashed border-white/10 p-4 rounded text-center cursor-pointer relative hover:border-orange-500/30 transition-colors">
+                    <input 
+                      type="file" 
+                      accept="image/png" 
+                      onChange={handleSkinFileChange}
+                      className="absolute inset-0 opacity-0 cursor-pointer"
+                    />
+                    <span className="text-[11px] text-slate-400 font-medium block truncate px-2">
+                      {skinUrl.startsWith('data:image') ? "Berkas Skin Siap Sinkronisasi" : "Pilih File Gambar Skin PNG"}
+                    </span>
+                  </div>
+                )}
+                <p className="text-[9px] text-slate-500 leading-normal">Kosongkan jika ingin menggunakan berkas skin standar aliansi secara otomatis.</p>
               </div>
 
               <button 
@@ -291,7 +361,7 @@ export default function AdminPortal() {
           {/* KOLOM KANAN: DAFTAR KONTROL ROSTER AKTIF (DATABASE CONTROL VIEW) */}
           <div className="lg:col-span-2 bg-[#0a0a0a] p-6 rounded-xl border border-white/10 shadow-xl h-fit">
             <div className="flex justify-between items-center mb-6 border-b border-white/10 pb-4">
-              <h2 className="text-xl font-bold text-white uppercase tracking-tight">📋 Roster Terdaftar di MongoDB</h2>
+              <h2 className="text-xl font-bold text-white uppercase tracking-tight">Roster Terdaftar di MongoDB</h2>
               <span className="text-xs bg-orange-500/10 text-orange-400 font-bold px-2.5 py-1 rounded-full border border-orange-500/20">
                 Total: {members.length} Player
               </span>
@@ -313,7 +383,7 @@ export default function AdminPortal() {
                     className="bg-black/40 border border-white/5 rounded-lg p-4 flex items-center justify-between gap-4 hover:border-white/10 transition-colors"
                   >
                     <div className="flex items-center gap-4 min-w-0">
-                      <div className="w-10 h-10 rounded-full bg-slate-800 text-white font-black flex items-center justify-center text-sm uppercase">
+                      <div className="w-10 h-10 rounded-full bg-slate-800 text-white font-black flex items-center justify-center text-sm uppercase flex-shrink-0">
                         {member.name.charAt(0)}
                       </div>
                       <div className="min-w-0">
@@ -331,19 +401,25 @@ export default function AdminPortal() {
                       </div>
                     </div>
 
-                    {/* ACTION CONTROL BUTTONS */}
+                    {/* ACTION CONTROL BUTTONS WITH PROFESSIONAL ICONS */}
                     <div className="flex items-center gap-2 flex-shrink-0">
                       <button 
                         onClick={() => handleEditClick(member)}
-                        className="text-[10px] font-bold uppercase tracking-wider bg-blue-600/10 border border-blue-500/30 text-blue-400 px-3 py-1.5 rounded hover:bg-blue-600 hover:text-white transition-colors"
+                        title="Edit Data"
+                        className="p-2 text-blue-400 hover:text-white bg-blue-500/5 hover:bg-blue-600 rounded-lg border border-blue-500/10 transition-all"
                       >
-                        Edit
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                        </svg>
                       </button>
                       <button 
                         onClick={() => handleDelete(member)}
-                        className="text-[10px] font-bold uppercase tracking-wider bg-red-600/10 border border-red-500/30 text-red-400 px-3 py-1.5 rounded hover:bg-red-600 hover:text-white transition-colors"
+                        title="Hapus Data"
+                        className="p-2 text-red-400 hover:text-white bg-red-500/5 hover:bg-red-600 rounded-lg border border-red-500/10 transition-all"
                       >
-                        Hapus
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-4v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        </svg>
                       </button>
                     </div>
                   </div>
