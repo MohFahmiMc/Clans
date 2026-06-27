@@ -1,7 +1,7 @@
 "use client";
 
 import React from 'react';
-import MinecraftSkin from './MinecraftSkin'; // <--- IMPORT KOMPONEN 3D
+import MinecraftSkin from './MinecraftSkin';
 
 // IMPORT BANNER CARD
 import cardRedstoner from '../assets/cardRedstoner.png';
@@ -12,14 +12,19 @@ import cardFarmer from '../assets/cardFarmer.png';
 import cardAdventure from '../assets/cardAdventure.png';
 import cardDefault from '../assets/cardMinecraft.png';
 
-// IMPORT GAMBAR SKIN 
+// IMPORT GAMBAR SKIN SEBAGAI FALLBACK
 import steveSkin from '../assets/steve.png';
 
-// Helper render image
 const getSrc = (asset: any) => asset?.src || (typeof asset === 'string' ? asset : '');
 
 interface ProfileProps {
-  member: { name: string; role: string; specialRoles: string[] };
+  member: { 
+    name: string; 
+    role: string; 
+    specialRoles: string[];
+    description?: string;
+    customSkinUrl?: string | null;
+  };
   onClose: () => void;
   getRoleColor: (role: string) => string;
   getSpecialIcon: (specialRole: string) => string | null;
@@ -42,8 +47,11 @@ export default function Profile({ member, onClose, getRoleColor, getSpecialIcon 
 
   const roleStyle = getRoleColor(member.role);
   
-  // Ambil URL mentah dari file steve.png
-  const skinUrl = getSrc(steveSkin);
+  // LOGIKA AMBIL SKIN: Gunakan customSkinUrl jika ada di MongoDB, jika tidak ada pakai steve.png bawaan
+  const skinUrl = member.customSkinUrl ? member.customSkinUrl : getSrc(steveSkin);
+
+  // URL Render Kepala 2D Minecraft Avatar otomatis berdasarkan Gamertag Player
+  const headAvatarUrl = `https://mc-heads.net/avatar/${member.name}`;
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
@@ -74,16 +82,32 @@ export default function Profile({ member, onClose, getRoleColor, getSpecialIcon 
         {/* Konten Detail Profil */}
         <div className="px-6 pb-8 md:px-10 md:pb-10 relative">
           
-          {/* ----- PERUBAHAN DISINI: AVATAR DIGANTI MODEL 3D ----- */}
-          <div className="w-32 h-40 md:w-40 md:h-48 -mt-24 md:-mt-32 relative z-10 mb-2 drop-shadow-2xl flex items-end">
-            <MinecraftSkin 
-              skinUrl={skinUrl} 
-              width={160} 
-              height={220} 
-              isWalking={true} 
-            />
+          {/* PERBAIKAN TATA LETAK: Kepala 2D Avatar diletakkan di sebelah kiri model 3D */}
+          <div className="flex items-end justify-between -mt-16 md:-mt-20 relative z-10 mb-4">
+            {/* Avatar Kepala 2D Minecraft Rapi Sesuai Gamertag */}
+            <div className="w-20 h-20 md:w-24 md:h-24 rounded-2xl bg-[#151515] border-4 border-[#0a0a0a] overflow-hidden shadow-xl hover:border-orange-500 transition-colors flex-shrink-0">
+              <img 
+                src={headAvatarUrl} 
+                alt={`${member.name} head`} 
+                className="w-full h-full object-contain"
+                style={{ imageRendering: 'pixelated' }}
+                onError={(e) => {
+                  // Fallback jika API avatar offline
+                  (e.target as HTMLImageElement).src = 'https://mc-heads.net/avatar/Steve';
+                }}
+              />
+            </div>
+
+            {/* Model Karakter 3D Animasi Berjalan */}
+            <div className="w-28 h-36 md:w-36 md:h-44 flex items-end drop-shadow-2xl">
+              <MinecraftSkin 
+                skinUrl={skinUrl} 
+                width={140} 
+                height={180} 
+                isWalking={true} 
+              />
+            </div>
           </div>
-          {/* ----------------------------------------------------- */}
 
           <div className="flex flex-col md:flex-row md:justify-between md:items-end gap-4 mt-2">
             <div>
@@ -112,8 +136,11 @@ export default function Profile({ member, onClose, getRoleColor, getSpecialIcon 
             )}
           </div>
           
+          {/* PERBAIKAN: Deskripsi Profil mengambil data dinamis real-time dari MongoDB */}
           <div className="mt-8 pt-6 border-t border-white/5">
-            <p className="text-slate-500 text-xs italic font-medium">Player ini adalah petarung garis depan dari clan Freedom.</p>
+            <p className="text-slate-300 text-sm font-medium leading-relaxed bg-white/5 p-4 rounded-lg border border-white/5">
+              {member.description || "Player ini belum mengonfigurasi pesan deskripsi atau bio kutipan di dalam basis data clan."}
+            </p>
           </div>
           
         </div>
