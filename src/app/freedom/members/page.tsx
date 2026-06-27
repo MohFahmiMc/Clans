@@ -1,9 +1,9 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import Profile from '../../../components/Profile';
 
-// IMPORT ICON ROLE MINECRAFT KAMU
+// IMPORT ICON ROLE MINECRAFT
 import redstonerAsset from '../../../assets/redstoner.png';
 import minerAsset from '../../../assets/miner.png';
 import builderAsset from '../../../assets/builder.png';
@@ -11,6 +11,15 @@ import pvpAsset from '../../../assets/pvp.png';
 import farmerAsset from '../../../assets/farmer.png';
 import adventureAsset from '../../../assets/adventure.png';
 import minecraftAsset from '../../../assets/Minecraft.png';
+
+// IMPORT BACKGROUND BANNER CARD (Sama seperti di Profile)
+import cardRedstoner from '../../../assets/cardRedstoner.png';
+import cardMiner from '../../../assets/cardMiner.png';
+import cardBuilder from '../../../assets/cardBuilder.png';
+import cardPvp from '../../../assets/cardPvp.png';
+import cardFarmer from '../../../assets/cardFarmer.png';
+import cardAdventure from '../../../assets/cardAdventure.png';
+import cardDefault from '../../../assets/cardMinecraft.png';
 
 interface Member { name: string; role: string; specialRoles: string[]; }
 
@@ -20,10 +29,8 @@ export default function MembersPage() {
   const [errorMembers, setErrorMembers] = useState(false);
   
   const [selectedMember, setSelectedMember] = useState<Member | null>(null);
-  
-  // Referensi timer untuk mendeteksi Hold / Tahan Teken
-  const pressTimer = useRef<NodeJS.Timeout | null>(null);
 
+  // Helper fungsi gambar
   const getSrc = (asset: any) => asset?.src || (typeof asset === 'string' ? asset : '');
 
   const redstonerSrc = getSrc(redstonerAsset);
@@ -82,6 +89,7 @@ export default function MembersPage() {
       });
   }, []);
 
+  // Warna Role Clan
   const getRoleColor = (role: string) => {
     const r = role.toLowerCase();
     if (r === 'leader' || r === 'owner') return 'text-red-500 border-red-500/30 bg-red-500/10';
@@ -89,6 +97,7 @@ export default function MembersPage() {
     return 'text-yellow-500 border-yellow-500/30 bg-yellow-500/10';
   };
 
+  // Icon Role Minecraft
   const getSpecialIcon = (specialRole: string) => {
     switch (specialRole) {
       case 'redstoner': return redstonerSrc;
@@ -101,17 +110,16 @@ export default function MembersPage() {
     }
   };
 
-  // --- FUNGSI UNTUK MENDETEKSI TAHAN (LONG PRESS) ---
-  const handlePointerDown = (member: Member) => {
-    pressTimer.current = setTimeout(() => {
-      setSelectedMember(member);
-    }, 400); // 400ms ditahan akan membuka profil
-  };
-
-  const handlePointerUp = () => {
-    if (pressTimer.current) {
-      clearTimeout(pressTimer.current);
-      pressTimer.current = null;
+  // Background Image untuk Kotak Member
+  const getBannerImage = (specialRole: string | undefined) => {
+    switch (specialRole) {
+      case 'redstoner': return getSrc(cardRedstoner);
+      case 'miner': return getSrc(cardMiner);
+      case 'builder': return getSrc(cardBuilder);
+      case 'pvp': return getSrc(cardPvp);
+      case 'farmer': return getSrc(cardFarmer);
+      case 'adventure': return getSrc(cardAdventure);
+      default: return getSrc(cardDefault);
     }
   };
 
@@ -147,54 +155,68 @@ export default function MembersPage() {
             <p className="text-slate-400 text-xs">Data member di listmember.txt kosong.</p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 md:gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 md:gap-6">
             {members.map((member, index) => {
               const roleStyle = getRoleColor(member.role);
               const isLeader = member.role.toLowerCase() === 'leader';
+              const bannerSrc = getBannerImage(member.specialRoles[0]);
               
               return (
                 <div 
                   key={index} 
+                  // Klik biasa, langsung buka!
                   onClick={() => setSelectedMember(member)} 
-                  onPointerDown={() => handlePointerDown(member)}
-                  onPointerUp={handlePointerUp}
-                  onPointerLeave={handlePointerUp}
-                  onContextMenu={(e) => e.preventDefault()} // Mencegah klik kanan/menu popup di HP agar modal bisa muncul mulus
-                  className="bg-[#111111] p-5 rounded-lg border border-white/5 hover:border-orange-500/50 hover:bg-[#151515] transition-all flex items-center gap-5 group cursor-pointer shadow-md select-none"
+                  // Penambahan overflow-hidden agar gambar background tidak meluber ke luar kotak
+                  className="relative overflow-hidden p-5 md:p-6 rounded-xl border border-white/10 hover:border-orange-500/50 hover:shadow-[0_0_25px_rgba(234,88,12,0.15)] transition-all flex items-center gap-5 group cursor-pointer"
                 >
-                  {/* Warna avatar dinamis: Oranye untuk Leader, Biru gelap untuk yang lain */}
-                  <div className={`w-14 h-14 flex-shrink-0 rounded-full flex items-center justify-center text-white font-black text-2xl transition-colors ${isLeader ? 'bg-[#ea580c]' : 'bg-[#1e293b] group-hover:bg-[#334155]'}`}>
-                    {member.name.charAt(0).toUpperCase()}
-                  </div>
-                  
-                  <div className="flex-1 min-w-0 flex flex-col justify-center">
-                    <div className="mb-1">
-                      <span className={`text-[9px] md:text-[10px] font-black uppercase tracking-widest inline-block px-2 py-0.5 rounded border ${roleStyle}`}>
-                        {member.role}
-                      </span>
+                  {/* --- BACKGROUND IMAGE DI DALAM KOTAK --- */}
+                  <div 
+                    className="absolute inset-0 bg-cover bg-center opacity-30 group-hover:opacity-50 group-hover:scale-110 transition-all duration-500"
+                    style={{ backgroundImage: `url(${bannerSrc})` }}
+                  />
+                  {/* Gradien Hitam agar teks di atasnya tetap tajam terbaca */}
+                  <div className="absolute inset-0 bg-gradient-to-r from-[#0a0a0a] via-[#0a0a0a]/90 to-transparent" />
+
+                  {/* --- KONTEN UTAMA KOTAK (z-10 agar di atas gambar) --- */}
+                  <div className="relative z-10 flex items-center gap-5 w-full">
+                    {/* Avatar Profil */}
+                    <div className={`w-14 h-14 md:w-16 md:h-16 flex-shrink-0 rounded-full border-2 ${isLeader ? 'border-orange-500 bg-[#ea580c]' : 'border-slate-700 bg-[#1e293b] group-hover:border-orange-400'} flex items-center justify-center text-white font-black text-2xl md:text-3xl transition-colors shadow-lg`}>
+                      {member.name.charAt(0).toUpperCase()}
                     </div>
                     
-                    <h3 className="text-base md:text-lg font-black tracking-tight text-white truncate flex items-center gap-1.5">
-                      {member.name}
+                    <div className="flex-1 min-w-0 flex flex-col justify-center">
+                      <div className="mb-1">
+                        <span className={`text-[9px] md:text-[10px] font-black uppercase tracking-widest inline-block px-2 py-0.5 rounded border ${roleStyle}`}>
+                          {member.role}
+                        </span>
+                      </div>
                       
+                      <h3 className="text-lg md:text-xl font-black tracking-tight text-white truncate mb-1">
+                        {member.name}
+                      </h3>
+                      
+                      {/* --- ICON + TEKS ROLE (Desain Badge) --- */}
                       {member.specialRoles.length > 0 && (
-                        <div className="flex items-center gap-1 ml-1">
+                        <div className="flex flex-wrap items-center gap-2 mt-0.5">
                           {member.specialRoles.map((role, i) => {
                             const iconSrc = getSpecialIcon(role);
                             if (!iconSrc) return null;
                             return (
-                              <img 
-                                key={i}
-                                src={iconSrc} 
-                                alt={role} 
-                                title={`Role: ${role}`} 
-                                className="w-[18px] h-[18px] object-contain opacity-90 drop-shadow-md" 
-                              />
+                              <div key={i} className="flex items-center gap-1.5 bg-black/60 px-2 py-1 rounded-md border border-white/10 backdrop-blur-sm">
+                                <img 
+                                  src={iconSrc} 
+                                  alt={role} 
+                                  className="w-3.5 h-3.5 object-contain" 
+                                />
+                                <span className="text-[9px] text-slate-300 font-bold uppercase tracking-widest leading-none mt-px">
+                                  {role}
+                               </span>
+                              </div>
                             )
                           })}
                         </div>
                       )}
-                    </h3>
+                    </div>
                   </div>
                 </div>
               );
@@ -203,7 +225,7 @@ export default function MembersPage() {
         )}
       </section>
 
-      {/* RENDER PROFILE MODAL */}
+      {/* RENDER PROFILE MODAL JIKA DIKLIK */}
       {selectedMember && (
         <Profile 
           member={selectedMember} 
