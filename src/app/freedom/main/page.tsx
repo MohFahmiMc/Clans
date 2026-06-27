@@ -6,6 +6,9 @@ import mcProwAsset from '../../../assets/mc_prow.png';
 import backgroundImage from '../../../assets/background.png';
 import MinecraftSkin from '../../../components/MinecraftSkin';
 
+// IMPORT GAMBAR SKIN SEBAGAI FALLBACK DEFAULT JIKA BELUM SET SKIN
+import steveSkin from '../../../assets/steve.png';
+
 interface Member {
   _id?: string;
   name: string;
@@ -116,7 +119,7 @@ export default function MainPage() {
         setReviewerName('');
         setReviewerMessage('');
         setSelectedStars(0);
-        loadDataCenter(); // Muat ulang data terbaru
+        loadDataCenter();
       } else {
         alert(data.error || 'Gagal mengirimkan ulasan.');
       }
@@ -159,7 +162,7 @@ export default function MainPage() {
   };
 
   const executeDeleteRating = async (id: string) => {
-    if (!confirm('Apakah Anda yakin ingin memoderasi dan menghapus chat ulasan ini secara permanen?')) return;
+    if (!confirm('Apakah Anda yakin ingin memoderasi dan menghapus ulasan ini secara permanen?')) return;
     try {
       const res = await fetch('/api/ratings', {
         method: 'DELETE',
@@ -215,8 +218,8 @@ export default function MainPage() {
               <span className="text-[10px] md:text-xs font-bold uppercase tracking-widest text-orange-500">
                 ProwNetwork Official
               </span>
-              <div className="w-1 h-1 bg-white/30 rounded-full mx-1" />
-              <span className="text-[9px] md:text-[10px] font-black text-slate-400 uppercase tracking-widest">
+              <div className="w-px h-3 bg-white/20 mx-1" />
+              <span className="text-[9px] md:text-[10px] font-bold text-slate-400 uppercase tracking-widest">
                 Dibuat: 02-01-2023
               </span>
             </div>
@@ -237,29 +240,30 @@ export default function MainPage() {
         </header>
 
         {/* ======================================================== */}
-        {/* PREMIUM UPGRADE: DYNAMIC 3D CHARACTER SHOWCASE (LEADER) */}
+        {/* CHARACTER SHOWCASE WITH FALLBACK AND OVERHEAD NAMETAG */}
         {/* ======================================================== */}
         {leaderMember && (
           <section className="pb-20 px-4 w-full flex flex-col items-center animate-in fade-in zoom-in duration-300">
-            <div className="bg-[#0a0a0a]/80 backdrop-blur-md border border-white/10 p-6 rounded-2xl flex flex-col items-center w-full max-w-sm shadow-[0_0_50px_rgba(234,88,12,0.1)] group hover:border-orange-500/30 transition-all">
-              <span className="text-[9px] font-bold text-orange-400 uppercase tracking-widest border border-orange-500/20 bg-orange-500/5 px-2.5 py-1 rounded-full mb-6">
+            <div className="bg-[#0a0a0a]/80 backdrop-blur-md border border-white/10 p-6 rounded-2xl flex flex-col items-center w-full max-w-sm shadow-[0_0_50px_rgba(234,88,12,0.1)] group hover:border-orange-500/30 transition-all relative">
+              <span className="text-[9px] font-bold text-orange-400 uppercase tracking-widest border border-orange-500/20 bg-orange-500/5 px-2.5 py-1 rounded-full mb-4">
                 Clan Leader
               </span>
               
-              <div className="h-48 flex items-end justify-center mb-4 overflow-visible relative w-full">
+              {/* MINECRAFT STYLE FLOATING OVERHEAD NAMETAG */}
+              <div className="mb-4 bg-black/75 border border-neutral-800 px-3 py-1.5 rounded shadow-xl relative z-20 select-none animate-bounce duration-1000">
+                <h3 className="text-xs font-black text-green-400 tracking-widest font-mono uppercase">
+                  {leaderMember.name}
+                </h3>
+              </div>
+
+              {/* RENDER MODEL KONTUR 3D */}
+              <div className="h-48 flex items-end justify-center overflow-visible relative w-full">
                 <MinecraftSkin 
-                  skinUrl={leaderMember.customSkinUrl || ""} 
+                  skinUrl={leaderMember.customSkinUrl ? leaderMember.customSkinUrl : getSrc(steveSkin)} 
                   width={140} 
                   height={180} 
                   isWalking={true} 
                 />
-              </div>
-
-              {/* MINECRAFT RETRO STYLE GAMERTAG BADGE */}
-              <div className="bg-black/80 border-2 border-slate-700 px-4 py-2 rounded shadow-2xl relative">
-                <h3 className="text-xl font-black text-green-400 tracking-wide text-center" style={{ fontFamily: 'monospace' }}>
-                  {leaderMember.name}
-                </h3>
               </div>
             </div>
           </section>
@@ -293,7 +297,7 @@ export default function MainPage() {
         </section>
 
         {/* ======================================================== */}
-        {/* 3. STATS GRID (PERBAIKAN: AUTO DETECT COUNT DARI MONGODB) */}
+        {/* 3. STATS GRID */}
         {/* ======================================================== */}
         <section className="py-12 md:py-20 px-4 w-full border-b border-white/5 bg-black/30 backdrop-blur-sm">
           <div className="max-w-5xl mx-auto">
@@ -301,7 +305,6 @@ export default function MainPage() {
               {[
                 { value: "95%", label: "Win Rate", icon: <svg className="w-5 h-5 mx-auto mb-2 text-orange-500" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg> },
                 { value: "S-Tier", label: "Clan Rank", icon: <svg className="w-5 h-5 mx-auto mb-2 text-yellow-500" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"></path></svg> },
-                // Membaca jumlah panjang array members secara dinamis real-time
                 { value: loadingStats ? "..." : `${members.length} Player`, label: "Active Members", icon: <svg className="w-5 h-5 mx-auto mb-2 text-slate-400" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path></svg> },
                 { value: "Full", label: "Kebebasan", icon: <svg className="w-5 h-5 mx-auto mb-2 text-orange-500" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path></svg> }
               ].map((stat, i) => (
@@ -326,7 +329,6 @@ export default function MainPage() {
               <p className="text-xs text-slate-500 uppercase tracking-widest font-bold mt-1">Sistem Penilaian Global Real-Time</p>
             </div>
             
-            {/* Skor Akumulasi Rata-Rata Dinamis */}
             <div className="flex items-center gap-4 bg-neutral-900/60 border border-white/10 px-5 py-3 rounded-xl backdrop-blur-md">
               <div className="text-center">
                 <span className="text-2xl font-black text-yellow-500 block leading-none">{calculateAverageRating()}</span>
@@ -340,7 +342,6 @@ export default function MainPage() {
             </div>
           </div>
 
-          {/* PANEL INPUT SELECTOR 5 BINTANG */}
           <div className="bg-[#0a0a0a] border border-white/10 p-8 rounded-2xl flex flex-col items-center text-center max-w-xl mx-auto mb-12 shadow-xl">
             <h4 className="text-sm font-bold uppercase tracking-widest text-slate-400 mb-3">Berikan Penilaian Anda terhadap Aliansi</h4>
             
@@ -369,7 +370,6 @@ export default function MainPage() {
             <p className="text-[10px] text-slate-500 uppercase tracking-wider">Klik bintang untuk melampirkan ulasan pesan tertulis</p>
           </div>
 
-          {/* HORIZONTAL AUTO SCROLLING RATINGS TICKER CONTAINER */}
           <div className="w-full overflow-hidden relative py-4 border-y border-white/5 bg-black/20 rounded-xl mb-6">
             {ratings.length === 0 ? (
               <p className="text-center text-xs text-slate-600 uppercase font-bold tracking-wider py-6">Belum ada obrolan ulasan bintang terdaftar.</p>
@@ -384,7 +384,6 @@ export default function MainPage() {
                       <div className="flex justify-between items-start mb-2 gap-2">
                         <h5 className="text-sm font-black text-white truncate max-w-[150px]">{item.name}</h5>
                         
-                        {/* Render Bintang Kecil Statis */}
                         <div className="flex items-center gap-0.5 flex-shrink-0">
                           {Array.from({ length: 5 }).map((_, idx) => (
                             <svg 
@@ -407,7 +406,6 @@ export default function MainPage() {
                       {new Date(item.createdAt).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })}
                     </span>
 
-                    {/* ADMIN DELETION INTERACTION (MODERASI KHUSUS JALUR SECURE) */}
                     <button
                       type="button"
                       onClick={() => triggerDeleteRating(item._id)}
@@ -424,7 +422,6 @@ export default function MainPage() {
             )}
           </div>
 
-          {/* UTILITY CONTROL: TOMBOL MINUS UNTUK TOGGLE ADMIN RATING VIEW CONTROL */}
           <div className="flex justify-end px-2">
             <button
               type="button"
@@ -488,7 +485,7 @@ export default function MainPage() {
       )}
 
       {/* ======================================================== */}
-      {/* JENDELA MODAL OVERLAY AKSES VERIFIKASI ADMIN (MINUS SUB SYSTEM) */}
+      {/* JENDELA MODAL OVERLAY AKSES VERIFIKASI ADMIN */}
       {/* ======================================================== */}
       {showAuthModal && (
         <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
