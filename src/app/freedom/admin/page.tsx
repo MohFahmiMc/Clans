@@ -43,6 +43,26 @@ export default function AdminPortal() {
   const getSrc = (asset: any) => asset?.src || (typeof asset === 'string' ? asset : '');
   const bgImgSrc = getSrc(backgroundImage);
 
+  // PERSISTENT LOGIN: Cek sesi login di localStorage saat komponen pertama kali dimuat
+  useEffect(() => {
+    const savedPassword = localStorage.getItem('freedom_admin_password');
+    if (savedPassword) {
+      setPassword(savedPassword);
+      // Lakukan verifikasi otomatis di latar belakang
+      fetch('/api/admin-login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ password: savedPassword })
+      }).then((res) => {
+        if (res.ok) {
+          setIsAuthenticated(true);
+        } else {
+          localStorage.removeItem('freedom_admin_password');
+        }
+      }).catch((err) => console.error("Koneksi gagal saat auto-auth:", err));
+    }
+  }, []);
+
   // 1. FUNGSI AMBIL DATA DARI MONGODB (READ)
   const fetchMembers = async () => {
     setLoadingMembers(true);
@@ -79,12 +99,21 @@ export default function AdminPortal() {
       });
       if (res.ok) {
         setIsAuthenticated(true);
+        localStorage.setItem('freedom_admin_password', password); // Simpan password ke storage lokal
       } else {
         setErrorMsg('Password salah atau tidak terkonfigurasi di Vercel env!');
       }
     } catch (err) {
       setErrorMsg('Gagal terhubung ke sistem verifikasi.');
     }
+  };
+
+  // Fungsi Keluar Sistem Admin
+  const handleLogout = () => {
+    localStorage.removeItem('freedom_admin_password');
+    setIsAuthenticated(false);
+    setPassword('');
+    resetForm();
   };
 
   const handleSkinFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -177,19 +206,17 @@ export default function AdminPortal() {
     }
   };
 
-  // 5. PENATAAN POSISI LOKAL (UP / DOWN SHIFTING)
+  // 5. PENATAAN POSISI LOKAL (UP / DOWN SHIFTING IMUTABEL)
   const handleMoveOrder = (index: number, direction: 'up' | 'down') => {
     const targetIndex = direction === 'up' ? index - 1 : index + 1;
     if (targetIndex < 0 || targetIndex >= members.length) return;
 
     const updatedList = members.map(m => ({ ...m }));
     
-    // Tukar posisi elemen di dalam array lokal state
     const temp = updatedList[index];
     updatedList[index] = updatedList[targetIndex];
     updatedList[targetIndex] = temp;
 
-    // Hitung ulang bobot order berdasarkan index array terbaru
     const finalList = updatedList.map((item, idx) => ({ ...item, order: idx }));
 
     setMembers(finalList);
@@ -294,7 +321,7 @@ export default function AdminPortal() {
   return (
     <div className="min-h-screen bg-[#050505] text-white p-4 md:p-12 font-sans relative overflow-x-hidden">
       
-      {/* --- PREMIUM VISUAL BACKGROUND LAYER --- */}
+      {/* --- LAYER IMPLEMENTASI BACKGROUND PNG --- */}
       {bgImgSrc && (
         <div className="fixed inset-0 bg-cover bg-center opacity-25 z-0 pointer-events-none mix-blend-lighten" style={{ backgroundImage: `url(${bgImgSrc})` }} />
       )}
@@ -308,7 +335,7 @@ export default function AdminPortal() {
             <h1 className="text-4xl md:text-5xl font-black text-orange-500 tracking-tight drop-shadow-[0_0_30px_rgba(234,88,12,0.2)]">COMMAND CENTER</h1>
             <p className="text-xs text-slate-400 uppercase tracking-widest mt-1">Database Sync: MongoDB Atlas Cluster0</p>
           </div>
-          <button onClick={() => setIsAuthenticated(false)} className="w-full sm:w-auto text-xs font-bold border border-white/10 bg-white/5 px-5 py-3 rounded-lg hover:bg-red-500/20 hover:text-red-500 transition-colors uppercase tracking-wider">
+          <button onClick={handleLogout} className="w-full sm:w-auto text-xs font-bold border border-white/10 bg-white/5 px-5 py-3 rounded-lg hover:bg-red-500/20 hover:text-red-500 transition-colors uppercase tracking-wider">
             Keluar Sistem
           </button>
         </div>
@@ -394,7 +421,7 @@ export default function AdminPortal() {
                     type="button"
                     onClick={handleSaveOrder}
                     disabled={savingOrder}
-                    className="bg-emerald-600 hover:bg-emerald-500 text-white text-[11px] font-black uppercase tracking-widest px-3 py-2 rounded-lg transition-all shadow-[0_0_15px_rgba(16,185,129,0.4)] flex items-center gap-1"
+                    className="bg-emerald-600 hover:bg-emerald-500 text-white text-[11px] font-black uppercase tracking-widest px-3 py-2 rounded-lg transition-all shadow-[0_0_15px_rgba(16,185,129,0.4)] flex items-center gap-1 animate-pulse"
                   >
                     <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
@@ -419,9 +446,9 @@ export default function AdminPortal() {
             ) : (
               <div className="flex flex-col gap-3 max-h-[650px] overflow-y-auto pr-1">
                 {members.map((member, i) => (
-                  <div key={i} className="bg-black/60 border border-white/5 rounded-lg p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:border-white/10 transition-colors">
+                  <div key={member._id || i} className="bg-black/60 border border-white/5 rounded-lg p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:border-white/10 transition-colors">
                     
-                    {/* SISI KIRI: DATA UTAMA PROFIL (RESPONSIF TERBUKA FULL WIDTH DI MOBILE) */}
+                    {/* SISI KIRI: DATA UTAMA PROFIL (FIX MOBILE: TAMPIL LUAS TANPA CLAMP F....) */}
                     <div className="flex items-center gap-3 min-w-0 w-full sm:w-auto">
                       
                       {/* REORDER BUTTON PANEL */}
@@ -454,7 +481,7 @@ export default function AdminPortal() {
                         {member.name.charAt(0)}
                       </div>
                       
-                      {/* FIX RESPONSIVE: Mencegah F.... Terpotong di Layar HP */}
+                      {/* FIX TAMPILAN MOBILE RESPONSIF AGAR NAMA TERBACA UTUH */}
                       <div className="min-w-0 flex-1">
                         <div className="flex flex-wrap items-center gap-2 mb-0.5">
                           <h4 className="text-sm font-black text-white break-all whitespace-normal">
@@ -470,14 +497,14 @@ export default function AdminPortal() {
                       </div>
                     </div>
 
-                    {/* SISI KANAN: PANEL ACTION BUTTONS CONTROL (MENSELARASKAN LAYAR MOBILE) */}
+                    {/* SISI KANAN: PANEL ACTION BUTTONS CONTROL */}
                     <div className="flex items-center justify-end gap-2 pt-2 sm:pt-0 border-t border-white/5 sm:border-t-0 flex-shrink-0 w-full sm:w-auto">
-                      <button onClick={() => handleEditClick(member)} title="Edit Data" className="p-2 text-blue-400 hover:text-white bg-blue-500/5 hover:bg-blue-600 rounded-lg border border-blue-500/10 transition-all">
+                      <button type="button" onClick={() => handleEditClick(member)} title="Edit Data" className="p-2 text-blue-400 hover:text-white bg-blue-500/5 hover:bg-blue-600 rounded-lg border border-blue-500/10 transition-all">
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
                         </svg>
                       </button>
-                      <button onClick={() => handleDelete(member)} title="Hapus Data" className="p-2 text-red-400 hover:text-white bg-red-500/5 hover:bg-red-600 rounded-lg border border-red-500/10 transition-all">
+                      <button type="button" onClick={() => handleDelete(member)} title="Hapus Data" className="p-2 text-red-400 hover:text-white bg-red-500/5 hover:bg-red-600 rounded-lg border border-red-500/10 transition-all">
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-4v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                         </svg>
