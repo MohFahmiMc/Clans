@@ -14,7 +14,7 @@ const getSrc = (asset: any) => asset?.src || (typeof asset === 'string' ? asset 
 export const metadata: Metadata = {
   metadataBase: new URL('https://freedom.scarily.my.id'),
   title: 'FREEDOM CLAN | ProwNetwork',
-  description: 'Fraksi elit yang mendominasi server Minecraft Bedrock ProwNetwork. Simbol Kebebasan dan Kekuatan.',
+  description: ' Clan pertama di server Minecraft Bedrock ProwNetwork. Simbol Kebebasan dan Kekuatan.',
   keywords: ['Freedom Clan', 'ProwNetwork', 'Minecraft Bedrock', 'Clan Elite', 'PVP'],
   authors: [{ name: 'M.K Fahmi', url: 'https://mifahmi.my.id' }],
   icons: {
@@ -24,7 +24,7 @@ export const metadata: Metadata = {
   },
   openGraph: {
     title: 'FREEDOM CLAN | ProwNetwork',
-    description: 'Fraksi elit yang mendominasi server Minecraft Bedrock ProwNetwork.',
+    description: 'Clan Pertama di server Minecraft Bedrock ProwNetwork.',
     url: 'https://clans.scarily.my.id/freedom',
     siteName: 'Freedom Clan',
     images: [
@@ -41,7 +41,7 @@ export const metadata: Metadata = {
   twitter: {
     card: 'summary_large_image',
     title: 'FREEDOM CLAN | ProwNetwork',
-    description: 'Fraksi elit yang mendominasi server Minecraft Bedrock ProwNetwork.',
+    description: 'Clan pertama di server Minecraft Bedrock ProwNetwork.',
     images: ['https://freedom.scarily.my.id/preview.png'],
   },
 }
