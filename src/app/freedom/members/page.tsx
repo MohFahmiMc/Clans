@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Profile from '../../../components/Profile';
 
 // IMPORT ICON ROLE MINECRAFT KAMU
@@ -20,6 +20,9 @@ export default function MembersPage() {
   const [errorMembers, setErrorMembers] = useState(false);
   
   const [selectedMember, setSelectedMember] = useState<Member | null>(null);
+  
+  // Referensi timer untuk mendeteksi Hold / Tahan Teken
+  const pressTimer = useRef<NodeJS.Timeout | null>(null);
 
   const getSrc = (asset: any) => asset?.src || (typeof asset === 'string' ? asset : '');
 
@@ -50,12 +53,10 @@ export default function MembersPage() {
             const tags = line.split(',').map(t => t.trim()).filter(Boolean);
             
             tags.forEach(tag => {
-              // PERBAIKAN LOGIKA: Menggunakan match biasa yang lebih ramah TypeScript
               const matches = tag.match(/\((.*?)\)/g);
               let rolesList: string[] = [];
               
               if (matches) {
-                // Hapus tanda kurung dari hasil match dan masukkan ke array
                 rolesList = matches.map(m => m.replace(/[\(\)]/g, '').toLowerCase().trim());
               }
               
@@ -100,6 +101,20 @@ export default function MembersPage() {
     }
   };
 
+  // --- FUNGSI UNTUK MENDETEKSI TAHAN (LONG PRESS) ---
+  const handlePointerDown = (member: Member) => {
+    pressTimer.current = setTimeout(() => {
+      setSelectedMember(member);
+    }, 400); // 400ms ditahan akan membuka profil
+  };
+
+  const handlePointerUp = () => {
+    if (pressTimer.current) {
+      clearTimeout(pressTimer.current);
+      pressTimer.current = null;
+    }
+  };
+
   return (
     <>
       <section className="max-w-5xl mx-auto py-16 md:py-24 px-4 w-full mb-10">
@@ -111,9 +126,9 @@ export default function MembersPage() {
             <p className="text-orange-400 mt-1 text-xs md:text-sm font-bold tracking-widest uppercase">The Faces of Freedom</p>
           </div>
           
-          <div className="text-yellow-500 font-bold uppercase tracking-widest text-[9px] md:text-[10px] bg-[#0f0f0f] px-4 py-2 rounded-full border border-yellow-500/30 flex items-center gap-2">
+          <div className="text-green-500 font-bold uppercase tracking-widest text-[9px] md:text-[10px] bg-[#0f0f0f] px-4 py-2 rounded-full border border-green-500/30 flex items-center gap-2">
             <span className={`w-2 h-2 rounded-full ${loadingMembers ? 'bg-orange-500 animate-pulse' : errorMembers ? 'bg-red-500' : 'bg-green-500 shadow-[0_0_8px_#22c55e]'}`}></span>
-            {loadingMembers ? "Syncing..." : errorMembers ? "Error Load" : "Live Roster"}
+            {loadingMembers ? "Syncing..." : errorMembers ? "Error Load" : "LIVE ROSTER"}
           </div>
         </div>
 
@@ -135,38 +150,50 @@ export default function MembersPage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 md:gap-6">
             {members.map((member, index) => {
               const roleStyle = getRoleColor(member.role);
+              const isLeader = member.role.toLowerCase() === 'leader';
               
               return (
                 <div 
                   key={index} 
                   onClick={() => setSelectedMember(member)} 
-                  className="bg-[#0f0f0f] p-5 rounded-lg border border-white/5 hover:border-orange-500/50 hover:bg-[#151515] transition-all flex items-center gap-4 group cursor-pointer shadow-lg hover:shadow-[0_0_20px_rgba(234,88,12,0.1)]"
+                  onPointerDown={() => handlePointerDown(member)}
+                  onPointerUp={handlePointerUp}
+                  onPointerLeave={handlePointerUp}
+                  onContextMenu={(e) => e.preventDefault()} // Mencegah klik kanan/menu popup di HP agar modal bisa muncul mulus
+                  className="bg-[#111111] p-5 rounded-lg border border-white/5 hover:border-orange-500/50 hover:bg-[#151515] transition-all flex items-center gap-5 group cursor-pointer shadow-md select-none"
                 >
-                  <div className="w-12 h-12 flex-shrink-0 rounded-full bg-slate-800 flex items-center justify-center text-white font-black text-xl group-hover:bg-orange-600 transition-colors">
+                  {/* Warna avatar dinamis: Oranye untuk Leader, Biru gelap untuk yang lain */}
+                  <div className={`w-14 h-14 flex-shrink-0 rounded-full flex items-center justify-center text-white font-black text-2xl transition-colors ${isLeader ? 'bg-[#ea580c]' : 'bg-[#1e293b] group-hover:bg-[#334155]'}`}>
                     {member.name.charAt(0).toUpperCase()}
                   </div>
                   
-                  <div className="flex-1 min-w-0">
-                    <span className={`text-[9px] md:text-[10px] font-black uppercase tracking-widest inline-block px-2 py-0.5 rounded border mb-1 ${roleStyle}`}>
-                      {member.role}
-                    </span>
-                    <h3 className="text-base md:text-xl font-black tracking-tight text-white truncate flex items-center gap-2">
+                  <div className="flex-1 min-w-0 flex flex-col justify-center">
+                    <div className="mb-1">
+                      <span className={`text-[9px] md:text-[10px] font-black uppercase tracking-widest inline-block px-2 py-0.5 rounded border ${roleStyle}`}>
+                        {member.role}
+                      </span>
+                    </div>
+                    
+                    <h3 className="text-base md:text-lg font-black tracking-tight text-white truncate flex items-center gap-1.5">
                       {member.name}
-                      <div className="flex items-center gap-1">
-                        {member.specialRoles.map((role, i) => {
-                          const iconSrc = getSpecialIcon(role);
-                          if (!iconSrc) return null;
-                          return (
-                            <img 
-                              key={i}
-                              src={iconSrc} 
-                              alt={role} 
-                              title={`Role: ${role}`} 
-                              className="w-4 h-4 object-contain opacity-70 group-hover:opacity-100 transition-opacity" 
-                            />
-                          )
-                        })}
-                      </div>
+                      
+                      {member.specialRoles.length > 0 && (
+                        <div className="flex items-center gap-1 ml-1">
+                          {member.specialRoles.map((role, i) => {
+                            const iconSrc = getSpecialIcon(role);
+                            if (!iconSrc) return null;
+                            return (
+                              <img 
+                                key={i}
+                                src={iconSrc} 
+                                alt={role} 
+                                title={`Role: ${role}`} 
+                                className="w-[18px] h-[18px] object-contain opacity-90 drop-shadow-md" 
+                              />
+                            )
+                          })}
+                        </div>
+                      )}
                     </h3>
                   </div>
                 </div>
@@ -176,6 +203,7 @@ export default function MembersPage() {
         )}
       </section>
 
+      {/* RENDER PROFILE MODAL */}
       {selectedMember && (
         <Profile 
           member={selectedMember} 
