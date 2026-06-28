@@ -8,18 +8,19 @@ export default function Navbar({ logoSrc }: { logoSrc: string }) {
 
   return (
     <>
+      {/* ======================================================== */}
       {/* TOP NAVIGATION BAR */}
+      {/* ======================================================== */}
       <nav className="border-b border-white/10 bg-black/60 backdrop-blur-xl sticky top-0 z-50">
         <div className="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
           
-          {/* KIRI: Tombol Dua Garis (Gemini Style) & Logo */}
+          {/* SISI KIRI: Tombol Dua Garis (Minimalist Modern) & Logo */}
           <div className="flex items-center gap-4">
             <button 
               onClick={() => setIsSidebarOpen(true)}
               className="text-slate-300 hover:text-white transition-colors focus:outline-none"
               aria-label="Open Menu"
             >
-              {/* Ikon 2 Garis Kustom */}
               <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                 <line x1="3" y1="9" x2="21" y2="9"></line>
                 <line x1="3" y1="15" x2="21" y2="15"></line>
@@ -27,106 +28,109 @@ export default function Navbar({ logoSrc }: { logoSrc: string }) {
             </button>
             
             <div className="flex items-center gap-3">
-              <img src={logoSrc} alt="Freedom" className="h-8 w-8 md:h-10 md:w-10 object-contain drop-shadow-lg" />
-              <span className="text-xl md:text-2xl font-black tracking-tighter text-white">FREEDOM</span>
+              <img src={logoSrc} alt="Logo" className="w-8 h-8 object-contain" />
+              <span className="text-sm font-black uppercase tracking-wider text-white">Freedom</span>
             </div>
           </div>
 
-          {/* KANAN: Menu Desktop (Disembunyikan di layar kecil) */}
-          <div className="hidden md:flex items-center gap-8 text-xs font-bold uppercase tracking-widest">
-            <Link href="/freedom/main" className="text-slate-300 hover:text-orange-500 transition-colors">Base</Link>
-            <Link href="/freedom/members" className="text-slate-300 hover:text-orange-500 transition-colors">Members</Link>
-            <Link href="/freedom/gallery" className="text-slate-300 hover:text-orange-500 transition-colors">Gallery</Link>
-            
-            {/* Tampilan Link Admin Desktop yang Lebih Minimalis */}
-            <Link href="/freedom/admin" className="text-slate-400 hover:text-red-400 transition-colors font-bold tracking-wide border border-white/10 bg-white/5 px-2.5 py-1 rounded-md">Admin</Link>
+          {/* SISI KANAN: Desktop Menu Navigasi Utama */}
+          <div className="hidden md:flex items-center gap-6">
+            <Link href="/freedom/main" className="text-xs font-bold uppercase tracking-widest text-slate-400 hover:text-white transition-colors">
+              Utama
+            </Link>
+            <Link href="/freedom/members" className="text-xs font-bold uppercase tracking-widest text-slate-400 hover:text-white transition-colors">
+              Roster
+            </Link>
+            <Link href="/freedom/gallery" className="text-xs font-bold uppercase tracking-widest text-slate-400 hover:text-white transition-colors">
+              Galeri
+            </Link>
+            <Link href="/freedom/join" className="text-xs font-bold uppercase tracking-widest text-orange-500 hover:text-orange-400 transition-colors border border-orange-500/20 bg-orange-500/5 px-3 py-1.5 rounded-md shadow-sm shadow-orange-500/5">
+              Pendaftaran
+            </Link>
           </div>
         </div>
       </nav>
 
-      {/* OVERLAY GELAP (Muncul saat sidebar terbuka) */}
+      {/* ======================================================== */}
+      {/* SIDEBAR NAVIGATION DRAWER (MOBILE VIEW) */}
+      {/* ======================================================== */}
       {isSidebarOpen && (
-        <div 
-          className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[60]"
-          onClick={() => setIsSidebarOpen(false)}
-        ></div>
-      )}
-
-      {/* SIDEBAR MENU TERSEMBUNYI (DRAWER LACH) */}
-      <div className={`fixed top-0 left-0 h-full w-64 bg-[#0a0a0a] border-r border-white/10 z-[70] transform transition-transform duration-300 ease-in-out ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
-        <div className="p-5 flex flex-col h-full">
+        <div className="fixed inset-0 z-[100] flex animate-in fade-in duration-200">
+          {/* Overlay Gelap Belakang Backdrop */}
+          <div className="fixed inset-0 bg-black/80 backdrop-blur-sm" onClick={() => setIsSidebarOpen(false)} />
           
-          {/* Header Sidebar (Tombol X untuk tutup) */}
-          <div className="flex justify-between items-center mb-10">
-            <span className="text-lg font-black tracking-tighter text-orange-500">MENU</span>
-            <button 
-              onClick={() => setIsSidebarOpen(false)}
-              className="text-slate-400 hover:text-white transition-colors"
-            >
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <line x1="18" y1="6" x2="6" y2="18"></line>
-                <line x1="6" y1="6" x2="18" y2="18"></line>
-              </svg>
-            </button>
-          </div>
-
-          {/* List Menu Laci Utama */}
-          <div className="flex flex-col gap-2">
-            <Link 
-              href="/freedom/main" 
-              onClick={() => setIsSidebarOpen(false)}
-              className="text-slate-300 hover:text-orange-400 hover:bg-white/5 px-4 py-3.5 rounded-lg font-bold uppercase tracking-widest text-sm transition-all flex items-center gap-3"
-            >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
-              Base / Home
-            </Link>
+          {/* Kontainer Utama Drawer Samping */}
+          <div className="relative flex flex-col w-full max-w-xs bg-[#0a0a0a] border-r border-white/10 p-6 text-white h-full z-10 animate-in slide-in-from-left duration-200">
             
-            <Link 
-              href="/freedom/members" 
-              onClick={() => setIsSidebarOpen(false)}
-              className="text-slate-300 hover:text-orange-400 hover:bg-white/5 px-4 py-3.5 rounded-lg font-bold uppercase tracking-widest text-sm transition-all flex items-center gap-3"
-            >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
-              Roster Members
-            </Link>
-
-            {/* TAMBAHAN: Halaman Gallery Dokumentasi Roster */}
-            <Link 
-              href="/freedom/gallery" 
-              onClick={() => setIsSidebarOpen(false)}
-              className="text-slate-300 hover:text-orange-400 hover:bg-white/5 px-4 py-3.5 rounded-lg font-bold uppercase tracking-widest text-sm transition-all flex items-center gap-3"
-            >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
-              Clan Gallery
-            </Link>
-          </div>
-
-          {/* AREA BAWAH: Diisolasi menggunakan mt-auto agar menempel di atas elemen footer */}
-          <div className="mt-auto flex flex-col gap-5">
-            
-            {/* PERBAIKAN: Link Kontrol Admin dipindah ke bawah dengan desain minimalis profesional */}
-            <Link 
-              href="/freedom/admin" 
-              onClick={() => setIsSidebarOpen(false)}
-              className="text-slate-500 hover:text-red-400 hover:bg-red-500/5 px-4 py-3 rounded-lg font-bold uppercase tracking-widest text-[10px] transition-all flex items-center gap-3 border border-white/5 bg-white/[0.01]"
-            >
-              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
-              </svg>
-              Portal Admin
-            </Link>
-
-            {/* Footer Sidebar */}
-            <div className="pt-5 border-t border-white/5 flex flex-col items-center gap-2">
-               <img src={logoSrc} alt="Logo" className="w-7 h-7 opacity-30" />
-               <p className="text-[9px] text-slate-600 font-bold uppercase tracking-widest text-center">
-                 Freedom Clan &copy; {new Date().getFullYear()}
-               </p>
+            {/* Header Laci Samping */}
+            <div className="flex items-center justify-between pb-6 border-b border-white/5 mb-6">
+              <div className="flex items-center gap-3">
+                <img src={logoSrc} alt="Logo" className="w-6 h-6 object-contain" />
+                <span className="text-sm font-black uppercase tracking-wider text-white">Menu Aliansi</span>
+              </div>
+              <button onClick={() => setIsSidebarOpen(false)} className="text-slate-400 hover:text-white p-1 transition-colors">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
             </div>
-          </div>
 
+            {/* Menu Links Roster Navigasi */}
+            <div className="flex flex-col gap-2">
+              <Link 
+                href="/freedom/main" 
+                onClick={() => setIsSidebarOpen(false)} 
+                className="px-4 py-3 text-sm font-bold tracking-wide uppercase text-slate-300 hover:text-white hover:bg-white/5 rounded-lg transition-all"
+              >
+                Utama
+              </Link>
+              <Link 
+                href="/freedom/members" 
+                onClick={() => setIsSidebarOpen(false)} 
+                className="px-4 py-3 text-sm font-bold tracking-wide uppercase text-slate-300 hover:text-white hover:bg-white/5 rounded-lg transition-all"
+              >
+                Roster
+              </Link>
+              <Link 
+                href="/freedom/gallery" 
+                onClick={() => setIsSidebarOpen(false)} 
+                className="px-4 py-3 text-sm font-bold tracking-wide uppercase text-slate-300 hover:text-white hover:bg-white/5 rounded-lg transition-all"
+              >
+                Galeri
+              </Link>
+              <Link 
+                href="/freedom/join" 
+                onClick={() => setIsSidebarOpen(false)} 
+                className="px-4 py-3 text-sm font-bold tracking-wide uppercase text-orange-500 bg-orange-500/5 border border-orange-500/10 rounded-lg transition-all"
+              >
+                Pendaftaran Clan
+              </Link>
+            </div>
+
+            {/* AREA BAWAH: Diisolasi menggunakan mt-auto agar menempel di bagian bawah sidebar */}
+            <div className="mt-auto flex flex-col gap-5">
+              
+              {/* Link Kontrol Akses Portal Admin */}
+              <Link 
+                href="/freedom/admin" 
+                onClick={() => setIsSidebarOpen(false)}
+                className="text-slate-500 hover:text-red-400 hover:bg-red-500/5 px-4 py-3 rounded-lg font-bold uppercase tracking-widest text-[10px] transition-all flex items-center gap-3 border border-white/5 bg-white/[0.01]"
+              >
+                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
+                </svg>
+                Portal Admin
+              </Link>
+
+              {/* Footer Sidebar */}
+              <div className="text-center text-[9px] text-slate-600 uppercase tracking-widest font-mono">
+                Freedom Database Center v2.0
+              </div>
+            </div>
+
+          </div>
         </div>
-      </div>
+      )}
     </>
   );
 }
