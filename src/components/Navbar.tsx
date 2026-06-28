@@ -66,7 +66,7 @@ export default function Navbar({ logoSrc }: { logoSrc: string }) {
             <div className="flex items-center justify-between pb-6 border-b border-white/5 mb-6">
               <div className="flex items-center gap-3">
                 <img src={logoSrc} alt="Logo" className="w-6 h-6 object-contain" />
-                <span className="text-sm font-black uppercase tracking-wider text-white">Menu Aliansi</span>
+                <span className="text-sm font-black uppercase tracking-wider text-white">Menu Clan</span>
               </div>
               <button onClick={() => setIsSidebarOpen(false)} className="text-slate-400 hover:text-white p-1 transition-colors">
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
