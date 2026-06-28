@@ -47,7 +47,7 @@ export default function Navbar({ logoSrc }: { logoSrc: string }) {
             <Link href="/freedom/alliance" className="text-xs font-bold uppercase tracking-widest text-slate-400 hover:text-white transition-colors">
               Aliansi
             </Link>
-            <Link href="/freedom/join" className="text-xs font-bold uppercase tracking-widest text-orange-500 hover:text-orange-400 transition-colors border border-orange-500/20 bg-orange-500/5 px-3 py-1.5 rounded-md shadow-sm shadow-orange-500/5">
+            <Link href="/freedom/daftar" className="text-xs font-bold uppercase tracking-widest text-orange-500 hover:text-orange-400 transition-colors border border-orange-500/20 bg-orange-500/5 px-3 py-1.5 rounded-md shadow-sm shadow-orange-500/5">
               Pendaftaran
             </Link>
           </div>
@@ -109,7 +109,7 @@ export default function Navbar({ logoSrc }: { logoSrc: string }) {
                 Aliansi
               </Link>
               <Link 
-                href="/freedom/join" 
+                href="/freedom/daftar" 
                 onClick={() => setIsSidebarOpen(false)} 
                 className="px-4 py-3 text-sm font-bold tracking-wide uppercase text-orange-500 bg-orange-500/5 border border-orange-500/10 rounded-lg transition-all"
               >
