@@ -7,6 +7,7 @@ import backgroundImage from '../../../assets/background.png';
 import RosterManager from './components/RosterManager';
 import FormBuilder from './components/FormBuilder';
 import InboxManager from './components/InboxManager';
+import AllianceManager from './components/AllianceManager.tsx';
 
 export default function AdminPortal() {
   const [password, setPassword] = useState('');
