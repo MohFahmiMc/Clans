@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import bannerImage from '../../../assets/banner.png';
+import bannerImage from '../../../assets/benner.png';
 
 interface Question {
   id: string;
