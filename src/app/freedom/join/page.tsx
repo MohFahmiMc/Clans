@@ -6,9 +6,12 @@ import bannerImage from '../../../assets/benner.png';
 interface Question {
   id: string;
   label: string;
-  type: 'text' | 'textarea';
-  placeholder: string;
+  type: 'text' | 'textarea' | 'radio' | 'file' | 'paragraph';
+  placeholder?: string;
   required: boolean;
+  options?: string[];
+  maxSizeMb?: number;
+  imageUrl?: string;
 }
 
 interface FormConfig {
@@ -22,7 +25,6 @@ export default function JoinPage() {
   const [config, setConfig] = useState<FormConfig | null>(null);
   const [loading, setLoading] = useState(true);
   const [answers, setAnswers] = useState<{ [key: string]: string }>({});
-  const [primaryName, setPrimaryName] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
   const getSrc = (asset: any) => asset?.src || (typeof asset === 'string' ? asset : '');
@@ -47,31 +49,57 @@ export default function JoinPage() {
   }, []);
 
   const handleInputChange = (questionId: string, value: string) => {
-    setAnswers(prev => ({ ...prev, [questionId]: value }));
+    setAnswers({ ...answers, [questionId]: value });
   };
 
-  const handleFormSubmit = async (e: React.FormEvent) => {
+  // Engine Pengubah File Menjadi Base64 String untuk Pengiriman Aman ke API MongoDB
+  const handleFileUpload = (questionId: string, e: React.ChangeEvent<HTMLInputElement>, maxMb: number = 5) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const maxSizeByte = maxMb * 1024 * 1024;
+    if (file.size > maxSizeByte) {
+      alert(`Berkas ditolak! Ukuran maksimal file adalah ${maxMb} MB.`);
+      e.target.value = '';
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setAnswers({ ...answers, [questionId]: reader.result as string });
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleSubmitForm = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!primaryName.trim()) return alert('Nama Utama / Gamertag wajib diisi!');
-    
+    if (!config) return;
+
     setSubmitting(true);
+
+    // Otomatis mengambil jawaban pertama dari form pendaftar sebagai 'name' identitas utama
+    const firstQuestionId = config.questions && config.questions[0]?.id;
+    const primaryPlayerName = answers[firstQuestionId] || 'Pendaftar Baru';
+
     try {
       const res = await fetch('/api/recruitment', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: primaryName, answers })
+        body: JSON.stringify({
+          name: primaryPlayerName,
+          answers: answers
+        })
       });
 
       const data = await res.json();
       if (res.ok && data.success) {
         alert(data.message);
-        setPrimaryName('');
         setAnswers({});
       } else {
-        alert(data.error || 'Gagal mengirimkan berkas pendaftaran.');
+        alert(data.error || 'Terjadi kesalahan sistem.');
       }
     } catch (err) {
-      alert('Terjadi kesalahan jaringan.');
+      alert('Gagal terhubung ke server pendaftaran.');
     } finally {
       setSubmitting(false);
     }
@@ -79,85 +107,75 @@ export default function JoinPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#050505] text-white flex items-center justify-center font-bold uppercase tracking-widest animate-pulse text-xs">
-        Membuka Formulir Pendaftaran Aliansi...
+      <div className="min-h-screen bg-[#050505] text-white flex items-center justify-center font-sans uppercase tracking-widest text-xs">
+        Memuat Struktur Berkas Rekrutmen...
+      </div>
+    );
+  }
+
+  if (!config) {
+    return (
+      <div className="min-h-screen bg-[#050505] text-white flex items-center justify-center font-sans uppercase tracking-widest text-xs">
+        Konfigurasi Sistem Aliansi Rusak.
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-[#050505] text-white font-sans py-12 px-4 relative overflow-x-hidden">
-      <div className="max-w-2xl mx-auto bg-[#0a0a0a] border border-white/10 rounded-2xl shadow-2xl overflow-hidden relative z-10">
+    <div className="min-h-screen bg-[#050505] text-white font-sans pb-20 relative overflow-x-hidden">
+      
+      {bannerSrc && (
+        <div className="w-full h-48 md:h-64 relative overflow-hidden border-b border-white/5 bg-neutral-900">
+          <img src={bannerSrc} alt="Freedom Registration Banner" className="w-full h-full object-cover opacity-60" />
+          <div className="absolute inset-0 bg-gradient-to-t from-[#050505] to-transparent" />
+        </div>
+      )}
+
+      <div className="max-w-2xl mx-auto px-4 -mt-16 relative z-10">
         
-        {/* BANNER RECRUITMENT DARI ASSETS BANNER.PNG */}
-        <div className="w-full h-44 md:h-56 bg-zinc-900 relative overflow-hidden border-b border-white/10">
-          {bannerSrc ? (
-            <img src={bannerSrc} alt="Banner" className="w-full h-full object-cover" />
-          ) : (
-            <div className="w-full h-full bg-gradient-to-r from-orange-600 to-amber-700 opacity-40" />
-          )}
-          <div className="absolute inset-0 bg-gradient-to-t from-[#0a0a0a] via-transparent to-transparent" />
-        </div>
-
-        {/* METADATA STATUS FORM OPERASIONAL */}
-        <div className="p-6 md:p-8 border-b border-white/5 bg-black/40">
-          <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
-            <h1 className="text-3xl font-black uppercase tracking-tight text-white">Pendaftaran Anggota</h1>
-            <span className={`text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-md border ${config?.status === 'open' ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400' : 'bg-red-500/10 border-red-500/30 text-red-400'}`}>
-              {config?.status === 'open' ? 'Terbuka' : 'Ditutup Admin'}
-            </span>
+        <div className="bg-[#0a0a0b]/90 backdrop-blur-md border border-white/10 p-6 md:p-8 rounded-2xl shadow-2xl mb-8 flex flex-col gap-2">
+          <div className="flex items-center gap-2">
+            <span className={`w-2.5 h-2.5 rounded-full ${config.status === 'open' ? 'bg-green-500 animate-pulse' : 'bg-red-500'}`} />
+            <span className="text-[10px] font-black uppercase tracking-widest text-orange-500">Official Recruitment</span>
           </div>
-
-          <div className="flex flex-col gap-2 text-xs font-medium text-slate-400">
-            <div className="flex gap-2 items-center">
-              <svg className="w-3.5 h-3.5 text-orange-500 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-              <span>Jadwal Operasional: <strong className="text-slate-200">{config?.schedule}</strong></span>
-            </div>
-            {config?.note && (
-              <div className="p-3 bg-white/[0.02] border border-white/5 rounded-lg text-slate-400 leading-relaxed mt-2">
-                <span className="font-bold text-[10px] text-orange-400 uppercase tracking-widest block mb-0.5">Catatan Penting:</span>
-                {config.note}
-              </div>
-            )}
+          <h1 className="text-2xl md:text-4xl font-black uppercase tracking-tight text-white mt-1">Registrasi Clan Freedom</h1>
+          <p className="text-xs text-slate-400 font-medium leading-relaxed mt-2 border-l-2 border-orange-500 pl-3 italic">
+            {config.note}
+          </p>
+          <div className="mt-4 pt-4 border-t border-white/5 flex flex-wrap justify-between gap-2 text-[10px] uppercase tracking-wider font-bold text-slate-500">
+            <span>Status: <span className={config.status === 'open' ? 'text-green-400' : 'text-red-400'}>{config.status === 'open' ? 'DIBUKA' : 'DITUTUP'}</span></span>
+            <span>Jadwal: <span className="text-slate-300">{config.schedule}</span></span>
           </div>
         </div>
 
-        {config?.status === 'closed' ? (
-          <div className="p-12 text-center flex flex-col items-center justify-center gap-3">
-            <svg className="w-12 h-12 text-slate-600 mb-2" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
-            </svg>
-            <h3 className="text-lg font-bold text-slate-300 uppercase tracking-wide">Formulir Dikunci</h3>
-            <p className="text-xs text-slate-500 max-w-sm leading-relaxed">Pendaftaran anggota baru clan Freedom saat ini sedang dinonaktifkan oleh administrasi.</p>
+        {config.status === 'closed' ? (
+          <div className="bg-red-600/10 border border-red-500/20 rounded-xl p-8 text-center text-xs uppercase font-black tracking-widest text-red-400">
+            Pendaftaran Saat Ini Sedang Ditutup Sementara Waktu.
           </div>
         ) : (
-          <form onSubmit={handleFormSubmit} className="p-6 md:p-8 flex flex-col gap-6">
+          <form onSubmit={handleSubmitForm} className="bg-[#0a0a0b]/60 border border-white/5 p-6 md:p-8 rounded-2xl flex flex-col gap-6 shadow-xl">
             
-            <div className="flex flex-col gap-2">
-              <label className="text-xs font-black uppercase tracking-widest text-slate-300 flex items-center gap-1">
-                Gamertag Player Utama / Nickname
-                <span className="text-orange-500">*</span>
-              </label>
-              <input 
-                type="text"
-                value={primaryName}
-                onChange={e => setPrimaryName(e.target.value)}
-                placeholder="Masukkan Nickname Minecraft Anda..."
-                className="bg-black border border-white/10 p-3 rounded-lg text-sm text-white focus:outline-none focus:border-orange-500 font-bold transition-all"
-                required
-              />
-            </div>
-
-            {config?.questions.map((q) => (
-              <div key={q.id} className="flex flex-col gap-2 border-t border-white/5 pt-4">
-                <label className="text-xs font-black uppercase tracking-widest text-slate-300 flex items-center gap-1">
-                  {q.label}
-                  {q.required && <span className="text-orange-500">*</span>}
-                </label>
+            {/* RENDER PERTANYAAN SECARA FULLY DINAMIS */}
+            {config.questions && config.questions.map((q) => (
+              <div key={q.id} className="flex flex-col gap-2 bg-black/30 border border-white/[0.03] p-4 rounded-xl">
                 
-                {q.type === 'textarea' ? (
+                {/* Judul / Atribut Soal */}
+                <label className="text-xs font-bold text-slate-300 flex items-center gap-1 flex-wrap">
+                  {q.label}
+                  {q.required && q.type !== 'paragraph' && <span className="text-red-500 font-black text-sm leading-none">*</span>}
+                </label>
+
+                {/* Preview Gambar Soal Seperti Google Form */}
+                {q.imageUrl && (
+                  <img src={q.imageUrl} alt="Pendukung Soal" className="max-h-60 rounded-lg object-contain bg-neutral-900 border border-white/5 mb-2 mt-1 self-start" onError={(e) => { (e.target as HTMLElement).style.display = 'none'; }} />
+                )}
+
+                {/* Logika Input Per Tipe Data */}
+                {q.type === 'paragraph' ? (
+                  <p className="text-xs text-slate-400 leading-relaxed font-medium whitespace-pre-wrap bg-white/[0.02] p-3 rounded border border-white/5 mt-1">
+                    {q.placeholder || 'Silakan baca informasi teks pengantar di atas.'}
+                  </p>
+                ) : q.type === 'textarea' ? (
                   <textarea
                     value={answers[q.id] || ''}
                     onChange={e => handleInputChange(q.id, e.target.value)}
@@ -165,6 +183,39 @@ export default function JoinPage() {
                     className="bg-black border border-white/10 p-3 rounded-lg text-xs text-slate-200 h-28 resize-none focus:outline-none focus:border-orange-500 leading-relaxed transition-all"
                     required={q.required}
                   />
+                ) : q.type === 'radio' ? (
+                  <div className="flex flex-col gap-2 mt-1">
+                    {(q.options || []).map((opt, oIdx) => (
+                      <label key={oIdx} className="flex items-center gap-3 bg-black/60 border border-white/5 px-3 py-2.5 rounded-lg cursor-pointer text-xs font-medium text-slate-300 hover:bg-neutral-900 transition-colors">
+                        <input
+                          type="radio"
+                          name={q.id}
+                          value={opt}
+                          checked={answers[q.id] === opt}
+                          onChange={e => handleInputChange(q.id, e.target.value)}
+                          className="w-4 h-4 accent-orange-600 cursor-pointer"
+                          required={q.required}
+                        />
+                        {opt}
+                      </label>
+                    ))}
+                  </div>
+                ) : q.type === 'file' ? (
+                  <div className="flex flex-col gap-2 mt-1">
+                    <input
+                      type="file"
+                      accept="image/*,application/pdf,.doc,.docx"
+                      onChange={e => handleFileUpload(q.id, e, q.maxSizeMb || 5)}
+                      className="text-xs text-slate-400 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-xs file:font-bold file:bg-orange-600/20 file:text-orange-400 file:cursor-pointer hover:file:bg-orange-600/30"
+                      required={q.required && !answers[q.id]}
+                    />
+                    <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wide">Maksimal Ukuran Berkas: {q.maxSizeMb || 5} MB</span>
+                    {answers[q.id] && answers[q.id].startsWith('data:image/') && (
+                      <div className="mt-2 p-2 bg-black border border-white/5 rounded-lg self-start">
+                        <img src={answers[q.id]} alt="Pratinjau Unggahan" className="max-h-32 object-contain rounded" />
+                      </div>
+                    )}
+                  </div>
                 ) : (
                   <input
                     type="text"
@@ -184,12 +235,13 @@ export default function JoinPage() {
               className="bg-orange-600 hover:bg-orange-500 text-white font-black p-4 rounded-xl text-xs uppercase tracking-widest transition-all disabled:opacity-50 mt-4 shadow-lg flex items-center justify-center gap-2"
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M6 12L3.269 3.126A59.768 59.768 0 0121.485 12 59.77 59.77 0 013.27 20.876L5.999 12zm0 0h7.5" />
+                <path strokeLinecap="round" strokeLinejoin="round" d="M6 12L3.269 3.126A59.768 59.768 0 0121.485 12 59.77 59.77 0 0118 19.333L6 12z" />
               </svg>
-              {submitting ? "Mengirim Berkas..." : "Kirim Jawaban Pendaftaran"}
+              {submitting ? "Mengirim Berkas..." : "Kirim Dokumen Lamaran"}
             </button>
           </form>
         )}
+
       </div>
     </div>
   );
