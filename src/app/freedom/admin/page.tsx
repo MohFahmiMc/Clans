@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import backgroundImage from '../../../assets/background.png';
 
 // Import Modul Manajemen Terpisah
@@ -11,11 +11,36 @@ import InboxManager from './components/InboxManager';
 export default function AdminPortal() {
   const [password, setPassword] = useState('');
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isCheckingSession, setIsCheckingSession] = useState(true);
   const [errorMsg, setErrorMsg] = useState('');
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState<'roster' | 'formBuilder' | 'inbox'>('roster');
 
   const bgImgSrc = backgroundImage?.src || (typeof backgroundImage === 'string' ? backgroundImage : '');
+
+  // PERSISTENT LOGIN CHECKER (Mencegah login berulang saat refresh halaman)
+  useEffect(() => {
+    const savedPassword = localStorage.getItem('freedom_admin_password');
+    if (savedPassword) {
+      fetch('/api/admin-login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ password: savedPassword }),
+      })
+        .then((res) => {
+          if (res.ok) {
+            setPassword(savedPassword);
+            setIsAuthenticated(true);
+          } else {
+            localStorage.removeItem('freedom_admin_password');
+          }
+        })
+        .catch((err) => console.error(err))
+        .finally(() => setIsCheckingSession(false));
+    } else {
+      setIsCheckingSession(false);
+    }
+  }, []);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -30,6 +55,7 @@ export default function AdminPortal() {
       });
 
       if (res.ok) {
+        localStorage.setItem('freedom_admin_password', password);
         setIsAuthenticated(true);
       } else {
         setErrorMsg('Kredensial Password Keamanan Salah!');
@@ -41,6 +67,29 @@ export default function AdminPortal() {
     }
   };
 
+  const handleLogout = () => {
+    if (confirm('Apakah Anda yakin ingin keluar dari sistem kontrol?')) {
+      localStorage.removeItem('freedom_admin_password');
+      setIsAuthenticated(false);
+      setPassword('');
+    }
+  };
+
+  // Tampilan Loading Awal saat memeriksa LocalStorage Session
+  if (isCheckingSession) {
+    return (
+      <div className="min-h-screen bg-[#030303] text-white font-sans flex items-center justify-center p-4">
+        <div className="text-center flex flex-col items-center gap-3">
+          <div className="w-10 h-10 border-4 border-orange-600 border-t-transparent rounded-full animate-spin" />
+          <p className="text-xs text-neutral-500 uppercase font-black tracking-widest animate-pulse">
+            Memverifikasi Sesi Keamanan Clan...
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  // Tampilan Form Login / Proteksi Gerbang Utama
   if (!isAuthenticated) {
     return (
       <div className="min-h-screen bg-[#030303] text-white font-sans flex items-center justify-center p-4 relative overflow-hidden">
@@ -56,7 +105,7 @@ export default function AdminPortal() {
               FN
             </div>
             <h1 className="text-xl font-black uppercase tracking-widest text-neutral-100">Portal Keamanan</h1>
-            <p className="text-xs text-neutral-500 mt-1 uppercase tracking-wider font-semibold">Otentikasi Manajemen Aliansi</p>
+            <p className="text-xs text-neutral-500 mt-1 uppercase tracking-wider font-semibold">Otentikasi Manajemen Clan</p>
           </div>
 
           <form onSubmit={handleLogin} className="flex flex-col gap-5">
@@ -91,30 +140,41 @@ export default function AdminPortal() {
     );
   }
 
+  // Tampilan Utama Admin Dashboard (Setelah Lolos Verifikasi)
   return (
     <div className="min-h-screen bg-[#050505] text-white font-sans flex flex-col">
-      <header className="bg-[#0b0b0c] border-b border-white/5 py-4 px-6 flex flex-col sm:flex-row justify-between items-center gap-4">
+      <header className="bg-[#0b0b0c] border-b border-white/5 py-4 px-6 flex flex-col lg:flex-row justify-between items-center gap-4">
         <div className="flex items-center gap-3">
           <div className="w-8 h-8 rounded-lg bg-orange-600 flex items-center justify-center font-black text-xs text-white">F</div>
           <div>
-            <h2 className="text-sm font-black uppercase tracking-widest">Freedom Admin</h2>
+            <h2 className="text-sm font-black uppercase tracking-widest">Freedom Clan Admin</h2>
             <p className="text-[9px] text-slate-500 font-bold uppercase">Dashboard Panel Kontrol</p>
           </div>
         </div>
-        <nav className="flex gap-2 bg-black p-1 rounded-lg border border-white/5">
-          {(['roster', 'formBuilder', 'inbox'] as const).map((tab) => (
-            <button
-              key={tab}
-              onClick={() => setActiveTab(tab)}
-              className={`px-4 py-2 text-xs font-bold uppercase tracking-wider rounded transition-all ${activeTab === tab ? 'bg-orange-600 text-white shadow' : 'text-slate-400 hover:text-white'}`}
-            >
-              {tab === 'roster' ? 'Manajemen Roster' : tab === 'formBuilder' ? 'Form Builder' : 'Inbox Lamaran'}
-            </button>
-          ))}
-        </nav>
+        
+        <div className="flex flex-col sm:flex-row items-center gap-3 w-full lg:w-auto justify-end">
+          <nav className="flex gap-2 bg-black p-1 rounded-lg border border-white/5 w-full sm:w-auto justify-center">
+            {(['roster', 'formBuilder', 'inbox'] as const).map((tab) => (
+              <button
+                key={tab}
+                onClick={() => setActiveTab(tab)}
+                className={`px-4 py-2 text-xs font-bold uppercase tracking-wider rounded transition-all ${activeTab === tab ? 'bg-orange-600 text-white shadow' : 'text-slate-400 hover:text-white'}`}
+              >
+                {tab === 'roster' ? 'Manajemen Roster' : tab === 'formBuilder' ? 'Form Builder' : 'Inbox Lamaran'}
+              </button>
+            ))}
+          </nav>
+
+          <button
+            onClick={handleLogout}
+            className="w-full sm:w-auto text-[11px] font-bold border border-white/10 bg-white/5 px-4 py-2 rounded-lg hover:bg-red-500/20 hover:text-red-500 transition-colors uppercase tracking-wider text-center"
+          >
+            Keluar
+          </button>
+        </div>
       </header>
 
-      <main className="flex-1 p-6 max-w-6xl w-full mx-auto">
+      <main className="flex-1 p-6 max-w-6xl w-full mx-auto animate-in fade-in duration-200">
         {activeTab === 'roster' && <RosterManager />}
         {activeTab === 'formBuilder' && <FormBuilder adminPassword={password} />}
         {activeTab === 'inbox' && <InboxManager adminPassword={password} />}
