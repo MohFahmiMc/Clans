@@ -7,6 +7,7 @@ import backgroundImage from '../../../assets/background.png';
 import RosterManager from './components/RosterManager';
 import FormBuilder from './components/FormBuilder';
 import InboxManager from './components/InboxManager';
+import AllianceManager from './components/AllianceManager'; // IMPORT KOMPONEN ALIANSI BARU
 
 export default function AdminPortal() {
   const [password, setPassword] = useState('');
@@ -14,7 +15,9 @@ export default function AdminPortal() {
   const [isCheckingSession, setIsCheckingSession] = useState(true);
   const [errorMsg, setErrorMsg] = useState('');
   const [loading, setLoading] = useState(false);
-  const [activeTab, setActiveTab] = useState<'roster' | 'formBuilder' | 'inbox'>('roster');
+  
+  // Menambahkan 'alliance' ke dalam state tipe Tab Navigation
+  const [activeTab, setActiveTab] = useState<'roster' | 'formBuilder' | 'inbox' | 'alliance'>('roster');
 
   const bgImgSrc = backgroundImage?.src || (typeof backgroundImage === 'string' ? backgroundImage : '');
 
@@ -153,14 +156,22 @@ export default function AdminPortal() {
         </div>
         
         <div className="flex flex-col sm:flex-row items-center gap-3 w-full lg:w-auto justify-end">
-          <nav className="flex gap-2 bg-black p-1 rounded-lg border border-white/5 w-full sm:w-auto justify-center">
-            {(['roster', 'formBuilder', 'inbox'] as const).map((tab) => (
+          {/* Navigasi Menu Tab Update (Menambahkan Loop Array 'alliance') */}
+          <nav className="flex flex-wrap gap-2 bg-black p-1 rounded-lg border border-white/5 w-full sm:w-auto justify-center">
+            {(['roster', 'formBuilder', 'inbox', 'alliance'] as const).map((tab) => (
               <button
                 key={tab}
                 onClick={() => setActiveTab(tab)}
                 className={`px-4 py-2 text-xs font-bold uppercase tracking-wider rounded transition-all ${activeTab === tab ? 'bg-orange-600 text-white shadow' : 'text-slate-400 hover:text-white'}`}
               >
-                {tab === 'roster' ? 'Manajemen Roster' : tab === 'formBuilder' ? 'Form Builder' : 'Inbox Lamaran'}
+                {tab === 'roster' 
+                  ? 'Manajemen Roster' 
+                  : tab === 'formBuilder' 
+                  ? 'Form Builder' 
+                  : tab === 'inbox' 
+                  ? 'Inbox Lamaran' 
+                  : 'Manajemen Aliansi'
+                }
               </button>
             ))}
           </nav>
@@ -175,9 +186,11 @@ export default function AdminPortal() {
       </header>
 
       <main className="flex-1 p-6 max-w-6xl w-full mx-auto animate-in fade-in duration-200">
+        {/* Kondisi Rendering Komponen Berdasarkan Tab yang Dipilih */}
         {activeTab === 'roster' && <RosterManager />}
         {activeTab === 'formBuilder' && <FormBuilder adminPassword={password} />}
         {activeTab === 'inbox' && <InboxManager adminPassword={password} />}
+        {activeTab === 'alliance' && <AllianceManager />} {/* RENDER HALAMAN ALIANSI */}
       </main>
     </div>
   );
