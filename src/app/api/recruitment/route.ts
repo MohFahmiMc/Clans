@@ -37,7 +37,6 @@ export async function GET(request: Request) {
     const isAdminMode = searchParams.get('admin') === 'true';
     const db = await getDB();
 
-    // Perbaikan: Tambahkan tipe data `: any` agar fleksibel saat assignment objek baru
     let config: any = await db.collection('recruitment_config').findOne({});
     if (!config) {
       config = {
@@ -45,9 +44,9 @@ export async function GET(request: Request) {
         schedule: "Setiap Hari 24 Jam",
         note: "Pastikan Anda mengisi data ulasan formulir pendaftaran dengan jujur.",
         questions: [
-          { id: "q1", label: "Gamertag / Nickname Minecraft", type: "text", placeholder: "Masukkan Nickname Bedrock/Java...", required: true },
-          { id: "q2", label: "Umur Anda Saat Ini", type: "text", placeholder: "Contoh: 16 Tahun...", required: true },
-          { id: "q3", label: "Alasan Ingin Bergabung dengan Freedom", type: "textarea", placeholder: "Tuliskan alasan rasional Anda...", required: true }
+          { id: "q1", label: "Gamertag / Nickname Minecraft Utama", type: "text", placeholder: "Masukkan Nickname Bedrock/Java...", required: true, imageUrl: "" },
+          { id: "q2", label: "Umur Anda Saat Ini", type: "text", placeholder: "Contoh: 16 Tahun...", required: true, imageUrl: "" },
+          { id: "q3", label: "Alasan Ingin Bergabung dengan Freedom", type: "textarea", placeholder: "Tuliskan alasan rasional Anda...", required: true, imageUrl: "" }
         ]
       };
       await db.collection('recruitment_config').insertOne(config);
