@@ -25,7 +25,7 @@ export default function InboxManager({ adminPassword }: { adminPassword: string 
       }
     } catch (err) {
       console.error(err);
-    } finaly {
+    } finally {
       setLoading(false);
     }
   };
