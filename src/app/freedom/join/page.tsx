@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import bannerImage from '../../../assets/benner.png';
+import background2Image from '../../../assets/background2.png';
 
 interface Question {
   id: string;
@@ -29,6 +30,7 @@ export default function JoinPage() {
 
   const getSrc = (asset: any) => asset?.src || (typeof asset === 'string' ? asset : '');
   const bannerSrc = getSrc(bannerImage);
+  const bg2ImgSrc = getSrc(background2Image);
 
   const fetchFormStructure = async () => {
     try {
@@ -124,8 +126,19 @@ export default function JoinPage() {
   return (
     <div className="min-h-screen bg-[#050505] text-white font-sans pb-20 relative overflow-x-hidden">
       
+      {/* --- BACKGROUND 2 UTAMA (MENGISI AREA KOSONG DI BAWAH BANNER) --- */}
+      {bg2ImgSrc && (
+        <div 
+          className="fixed inset-0 bg-cover bg-center bg-no-repeat opacity-60 z-0 pointer-events-none"
+          style={{ backgroundImage: `url(${bg2ImgSrc})` }}
+        />
+      )}
+      {/* Lapisan gradasi gelap tambahan untuk menjaga keterbacaan teks soal */}
+      <div className="fixed inset-0 bg-gradient-to-b from-transparent via-[#050505]/40 to-[#050505] z-0 pointer-events-none" />
+
+      {/* --- TOP BANNER IMAGE --- */}
       {bannerSrc && (
-        <div className="w-full h-48 md:h-64 relative overflow-hidden border-b border-white/5 bg-neutral-900">
+        <div className="w-full h-48 md:h-64 relative overflow-hidden border-b border-white/5 bg-neutral-900 z-10">
           <img src={bannerSrc} alt="Freedom Registration Banner" className="w-full h-full object-cover opacity-60" />
           <div className="absolute inset-0 bg-gradient-to-t from-[#050505] to-transparent" />
         </div>
@@ -133,6 +146,7 @@ export default function JoinPage() {
 
       <div className="max-w-2xl mx-auto px-4 -mt-16 relative z-10">
         
+        {/* INFO STATUS SEKSI */}
         <div className="bg-[#0a0a0b]/90 backdrop-blur-md border border-white/10 p-6 md:p-8 rounded-2xl shadow-2xl mb-8 flex flex-col gap-2">
           <div className="flex items-center gap-2">
             <span className={`w-2.5 h-2.5 rounded-full ${config.status === 'open' ? 'bg-green-500 animate-pulse' : 'bg-red-500'}`} />
@@ -153,11 +167,11 @@ export default function JoinPage() {
             Pendaftaran Saat Ini Sedang Ditutup Sementara Waktu.
           </div>
         ) : (
-          <form onSubmit={handleSubmitForm} className="bg-[#0a0a0b]/60 border border-white/5 p-6 md:p-8 rounded-2xl flex flex-col gap-6 shadow-xl">
+          <form onSubmit={handleSubmitForm} className="bg-[#0a0a0b]/80 backdrop-blur-sm border border-white/5 p-6 md:p-8 rounded-2xl flex flex-col gap-6 shadow-xl">
             
             {/* RENDER PERTANYAAN SECARA FULLY DINAMIS */}
             {config.questions && config.questions.map((q) => (
-              <div key={q.id} className="flex flex-col gap-2 bg-black/30 border border-white/[0.03] p-4 rounded-xl">
+              <div key={q.id} className="flex flex-col gap-2 bg-black/40 border border-white/[0.03] p-4 rounded-xl">
                 
                 {/* Judul / Atribut Soal */}
                 <label className="text-xs font-bold text-slate-300 flex items-center gap-1 flex-wrap">
