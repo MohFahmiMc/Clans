@@ -37,7 +37,8 @@ export async function GET(request: Request) {
     const isAdminMode = searchParams.get('admin') === 'true';
     const db = await getDB();
 
-    let config = await db.collection('recruitment_config').findOne({});
+    // Perbaikan: Tambahkan tipe data `: any` agar fleksibel saat assignment objek baru
+    let config: any = await db.collection('recruitment_config').findOne({});
     if (!config) {
       config = {
         status: "open",
