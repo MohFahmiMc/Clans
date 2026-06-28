@@ -44,6 +44,9 @@ export default function Navbar({ logoSrc }: { logoSrc: string }) {
             <Link href="/freedom/gallery" className="text-xs font-bold uppercase tracking-widest text-slate-400 hover:text-white transition-colors">
               Galeri
             </Link>
+            <Link href="/freedom/alliance" className="text-xs font-bold uppercase tracking-widest text-slate-400 hover:text-white transition-colors">
+              Aliansi
+            </Link>
             <Link href="/freedom/join" className="text-xs font-bold uppercase tracking-widest text-orange-500 hover:text-orange-400 transition-colors border border-orange-500/20 bg-orange-500/5 px-3 py-1.5 rounded-md shadow-sm shadow-orange-500/5">
               Pendaftaran
             </Link>
@@ -60,7 +63,7 @@ export default function Navbar({ logoSrc }: { logoSrc: string }) {
           <div className="fixed inset-0 bg-black/80 backdrop-blur-sm" onClick={() => setIsSidebarOpen(false)} />
           
           {/* Kontainer Utama Drawer Samping */}
-          <div className="relative flex flex-col w-full max-w-xs bg-[#0a0a0a] border-r border-white/10 p-6 text-white h-full z-10 animate-in slide-in-from-left duration-200">
+          <div className="relative flex flex-col w-full max-w-xs bg-[#0a0a0b] border-r border-white/10 p-6 text-white h-full z-10 animate-in slide-in-from-left duration-200">
             
             {/* Header Laci Samping */}
             <div className="flex items-center justify-between pb-6 border-b border-white/5 mb-6">
@@ -97,6 +100,13 @@ export default function Navbar({ logoSrc }: { logoSrc: string }) {
                 className="px-4 py-3 text-sm font-bold tracking-wide uppercase text-slate-300 hover:text-white hover:bg-white/5 rounded-lg transition-all"
               >
                 Galeri
+              </Link>
+              <Link 
+                href="/freedom/alliance" 
+                onClick={() => setIsSidebarOpen(false)} 
+                className="px-4 py-3 text-sm font-bold tracking-wide uppercase text-slate-300 hover:text-white hover:bg-white/5 rounded-lg transition-all"
+              >
+                Aliansi
               </Link>
               <Link 
                 href="/freedom/join" 
