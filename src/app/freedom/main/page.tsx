@@ -5,16 +5,27 @@ import logoPnAsset from '../../../assets/logo_pn.png';
 import mcProwAsset from '../../../assets/mc_prow.png';
 import backgroundImage from '../../../assets/background.png';
 import MinecraftSkin from '../../../components/MinecraftSkin';
+import Profile from '../../../components/Profile'; // IMPORT MODAL PROFILE UTAMA
 
 // IMPORT GAMBAR SKIN SEBAGAI FALLBACK DEFAULT JIKA BELUM SET SKIN
 import steveSkin from '../../../assets/steve.png';
+
+// IMPORT ICON ROLE PERAN MINECRAFT UNTUK SINKRONISASI MODAL PROFILE
+import redstonerAsset from '../../../assets/redstoner.png';
+import minerAsset from '../../../assets/miner.png';
+import builderAsset from '../../../assets/builder.png';
+import pvpAsset from '../../../assets/pvp.png';
+import farmerAsset from '../../../assets/farmer.png';
+import adventureAsset from '../../../assets/adventure.png';
 
 interface Member {
   _id?: string;
   name: string;
   role: string;
   specialRoles: string[];
+  description?: string;
   customSkinUrl?: string | null;
+  order?: number;
 }
 
 interface RatingItem {
@@ -30,7 +41,8 @@ export default function MainPage() {
   const [ratings, setRatings] = useState<RatingItem[]>([]);
   const [loadingStats, setLoadingStats] = useState(true);
 
-  // System States
+  // System States & Modal Profile Interactive
+  const [selectedMember, setSelectedMember] = useState<Member | null>(null);
   const [leaderMember, setLeaderMember] = useState<Member | null>(null);
   const [ratingHover, setRatingHover] = useState<number>(0);
   const [selectedStars, setSelectedStars] = useState<number>(0);
@@ -44,442 +56,351 @@ export default function MainPage() {
   // Password Verification Panel Admin States
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [adminPassword, setAdminPassword] = useState('');
-  const [isAdminMode, setIsAdminMode] = useState(false);
-  const [targetDeleteId, setTargetDeleteId] = useState<string | null>(null);
 
   const getSrc = (asset: any) => asset?.src || (typeof asset === 'string' ? asset : '');
-  const logoPnSrc = getSrc(logoPnAsset);
-  const mcProwSrc = getSrc(mcProwAsset);
   const bgImgSrc = getSrc(backgroundImage);
 
-  // Memuat data koleksi roster dan ulasan rating secara simultan
-  const loadDataCenter = async () => {
-    try {
-      const [resMembers, resRatings] = await Promise.all([
-        fetch('/api/members?t=' + new Date().getTime(), { cache: 'no-store' }),
-        fetch('/api/ratings?t=' + new Date().getTime(), { cache: 'no-store' })
-      ]);
+  // HELPER UNTUK MENYESUAIKAN WARNA JABATAN PADA MODAL PROFILE
+  const getRoleColor = (role: string) => {
+    switch (role) {
+      case 'Leader': return 'border-red-500/30 bg-red-500/5 text-red-400';
+      case 'Co-Leader': return 'border-orange-500/30 bg-orange-500/5 text-orange-400';
+      case 'Admin': return 'border-purple-500/30 bg-purple-500/5 text-purple-400';
+      case 'Staff': return 'border-blue-500/30 bg-blue-500/5 text-blue-400';
+      case 'Core Team': return 'border-green-500/30 bg-green-500/5 text-green-400';
+      default: return 'border-white/10 bg-white/5 text-slate-400';
+    }
+  };
 
+  // HELPER UNTUK SINKRONISASI ICON DI DALAM POPUP CARD INDIVIDU
+  const getSpecialIcon = (specialRole: string) => {
+    const roleKey = specialRole.toLowerCase().trim();
+    if (roleKey === 'redstoner') return getSrc(redstonerAsset);
+    if (roleKey === 'miner') return getSrc(minerAsset);
+    if (roleKey === 'builder') return getSrc(builderAsset);
+    if (roleKey === 'pvp') return getSrc(pvpAsset);
+    if (roleKey === 'farmer') return getSrc(farmerAsset);
+    if (roleKey === 'adventure') return getSrc(adventureAsset);
+    return null;
+  };
+
+  const fetchDashboardData = async () => {
+    setLoadingStats(true);
+    try {
+      // Ambil Data Roster Member
+      const resMembers = await fetch('/api/members?t=' + new Date().getTime());
       if (resMembers.ok) {
         const dataMembers: Member[] = await resMembers.json();
-        setMembers(dataMembers);
+        const sorted = dataMembers.sort((a, b) => (a.order || 0) - (b.order || 0));
+        setMembers(sorted);
         
-        // Auto-detect player yang menjabat sebagai Leader
-        const foundLeader = dataMembers.find(m => m.role.toLowerCase() === 'leader');
+        // Cari Leader untuk di-showcase di barisan depan banner utama
+        const foundLeader = sorted.find(m => m.role === 'Leader');
         if (foundLeader) setLeaderMember(foundLeader);
       }
 
-      if (resRatings.ok) {
-        const dataRatings: RatingItem[] = await resRatings.json();
-        setRatings(dataRatings);
+      // Ambil Data Ulasan / Rating Review
+      const resRates = await fetch('/api/ratings?t=' + new Date().getTime());
+      if (resRates.ok) {
+        const dataRates = await resRates.json();
+        setRatings(dataRates);
       }
     } catch (err) {
-      console.error("Gagal melakukan sinkronisasi dengan database:", err);
+      console.error("Gagal melakukan penarikan data Cloud MongoDB:", err);
     } finally {
       setLoadingStats(false);
     }
   };
 
   useEffect(() => {
-    loadDataCenter();
+    fetchDashboardData();
   }, []);
 
-  // Hitung Nilai Rata-Rata Rating Secara Dinamis
-  const calculateAverageRating = () => {
-    if (ratings.length === 0) return 0;
-    const totalStars = ratings.reduce((acc, curr) => acc + curr.stars, 0);
-    return (totalStars / ratings.length).toFixed(1);
-  };
-
-  const handleStarClick = (starValue: number) => {
-    setSelectedStars(starValue);
-    setShowRateModal(true);
-  };
-
-  const handleRateSubmit = async (e: React.FormEvent) => {
+  const handleAddRating = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!reviewerName.trim() || selectedStars === 0) return;
-
+    if (selectedStars === 0 || !reviewerName.trim() || !reviewerMessage.trim()) {
+      alert("Harap pilih bintang dan isi semua kolom ulasan!");
+      return;
+    }
     setSubmittingRate(true);
     try {
       const res = await fetch('/api/ratings', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          name: reviewerName,
-          message: reviewerMessage,
+          name: reviewerName.trim(),
+          message: reviewerMessage.trim(),
           stars: selectedStars
         })
       });
-
-      const data = await res.json();
-      if (res.ok && data.success) {
-        alert(data.message);
+      if (res.ok) {
         setShowRateModal(false);
         setReviewerName('');
         setReviewerMessage('');
         setSelectedStars(0);
-        loadDataCenter();
-      } else {
-        alert(data.error || 'Gagal mengirimkan ulasan.');
+        fetchDashboardData();
       }
     } catch (err) {
-      alert('Terjadi kesalahan jaringan.');
+      console.error(err);
     } finally {
       setSubmittingRate(false);
     }
   };
 
-  const verifyAdminAction = async (e: React.FormEvent) => {
-    e.preventDefault();
-    try {
-      const res = await fetch('/api/admin-login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ password: adminPassword })
-      });
-      if (res.ok) {
-        setIsAdminMode(true);
-        setShowAuthModal(false);
-        if (targetDeleteId) {
-          executeDeleteRating(targetDeleteId);
-        }
-      } else {
-        alert('Password administrasi salah!');
-      }
-    } catch (err) {
-      alert('Gagal terhubung ke modul otentikasi.');
-    }
-  };
-
-  const triggerDeleteRating = (id: string) => {
-    if (isAdminMode) {
-      executeDeleteRating(id);
-    } else {
-      setTargetDeleteId(id);
-      setShowAuthModal(true);
-    }
-  };
-
-  const executeDeleteRating = async (id: string) => {
-    if (!confirm('Apakah Anda yakin ingin memoderasi dan menghapus ulasan ini secara permanen?')) return;
+  const handleDeleteRating = async (id: string) => {
+    if (!confirm("Hapus ulasan review ini secara permanen?")) return;
     try {
       const res = await fetch('/api/ratings', {
         method: 'DELETE',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id, password: adminPassword })
       });
-
-      const data = await res.json();
-      if (res.ok && data.success) {
-        alert(data.message);
-        setTargetDeleteId(null);
-        loadDataCenter();
+      if (res.ok) {
+        fetchDashboardData();
       } else {
-        alert(data.error || 'Gagal menghapus ulasan.');
+        alert("Gagal menghapus! Password otentikasi salah.");
       }
     } catch (err) {
-      alert('Terjadi gangguan koneksi sistem.');
+      console.error(err);
     }
   };
 
-  const handleMinusAdminToggle = () => {
-    if (isAdminMode) {
-      setIsAdminMode(false);
-      setAdminPassword('');
-      alert('Mode otentikasi manajemen rating dinonaktifkan.');
-    } else {
-      setTargetDeleteId(null);
-      setShowAuthModal(true);
+  const verifyAdminAction = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (adminPassword.trim()) {
+      setShowAuthModal(false);
+      alert("Sesi otentikasi aktif. Anda sekarang dapat mengelola kolom rating ulasan.");
     }
   };
 
   return (
-    <div className="min-h-screen bg-[#050505] text-white font-sans relative overflow-x-hidden">
-      
-      {/* --- BACKGROUND IMAGE KUSTOM RESPONSIF (MOBILE & DESKTOP) --- */}
+    <div className="min-h-screen bg-[#050505] text-white font-sans relative pb-20 overflow-x-hidden">
+      {/* Background Wallpaper Efek Blend */}
       {bgImgSrc && (
-        <div 
-          className="fixed inset-0 bg-cover bg-center bg-no-repeat opacity-75 z-0 pointer-events-none"
-          style={{ backgroundImage: `url(${bgImgSrc})` }}
-        />
+        <div className="fixed inset-0 bg-cover bg-center opacity-[0.12] z-0 pointer-events-none mix-blend-lighten filter blur-[2px]" style={{ backgroundImage: `url(${bgImgSrc})` }} />
       )}
-      {/* Lapisan gradasi gelap yang dikunci mengikuti layar agar kontras teks tetap aman */}
-      <div className="fixed inset-0 bg-gradient-to-b from-[#050505]/10 via-[#050505]/45 to-[#050505] z-0 pointer-events-none" />
+      <div className="fixed inset-0 bg-gradient-to-b from-[#050505]/40 via-[#050505]/90 to-[#050505] z-0 pointer-events-none" />
 
-      <div className="relative z-10">
+      <div className="max-w-6xl mx-auto px-4 pt-12 relative z-10">
         
         {/* ======================================================== */}
-        {/* 1. HERO SECTION */}
+        {/* HERO HEADER SECTION BANNER */}
         {/* ======================================================== */}
-        <header className="pt-20 pb-12 md:pt-32 md:pb-16 px-4 text-center flex flex-col items-center">
-          <div className="max-w-4xl mx-auto w-full flex flex-col items-center">
-            <div className="flex items-center gap-2 mb-6 bg-black/50 px-4 py-2 rounded-full border border-orange-500/30 backdrop-blur-md">
-              <img src={logoPnSrc} alt="PN Logo" className="h-4 w-4 md:h-5 md:w-5 object-contain" />
-              <span className="text-[10px] md:text-xs font-bold uppercase tracking-widest text-orange-500">
-                ProwNetwork Official
-              </span>
-              <div className="w-px h-3 bg-white/20 mx-1" />
-              <span className="text-[9px] md:text-[10px] font-bold text-slate-400 uppercase tracking-widest">
-                Dibuat: 02-01-2023
-              </span>
+        <header className="flex flex-col md:flex-row items-center justify-between gap-8 border-b border-white/5 pb-12 mb-16">
+          <div className="flex flex-col gap-4 max-w-2xl text-center md:text-left">
+            <div className="flex items-center gap-3 justify-center md:justify-start">
+              <img src={getSrc(logoPnAsset)} alt="ProwNetwork" className="w-6 h-6 object-contain" />
+              <span className="text-[10px] font-black uppercase tracking-widest text-orange-500 bg-orange-500/10 px-2.5 py-1 rounded-full border border-orange-500/20">Official Core Clan</span>
             </div>
-            
-            <h1 className="text-6xl md:text-9xl font-black tracking-tighter uppercase text-white mb-4 drop-shadow-[0_0_40px_rgba(234,88,12,0.4)]">
-              FREEDOM
+            <h1 className="text-4xl md:text-6xl font-black uppercase tracking-tighter leading-none text-white">
+              FREEDOM <span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-500 to-red-600">CLAN</span>
             </h1>
-            
-            <p className="text-sm md:text-lg text-slate-300 max-w-xl mx-auto font-medium leading-relaxed mb-8 px-2">
-              Welcome to the official website of Clan Freedom, the first clan in <span className="text-yellow-500 font-bold">ProwNetwork</span>.
+            <p className="text-slate-400 text-sm md:text-base leading-relaxed font-medium">
+              Selamat datang di markas pusat pangkalan data resmi Freedom Clan. Kami adalah perserikatan klan Minecraft berdaulat tinggi yang berfokus pada pengembangan taktik perang PvP, rekayasa struktur arsitektur megah, serta perancangan sistem mekanika redstone otomatis.
             </p>
-            
-            <a href="https://discord.gg/2veK4TDWtF" target="_blank" rel="noreferrer" className="flex items-center justify-center gap-3 w-full sm:w-auto px-8 py-4 bg-orange-600 hover:bg-orange-500 text-white font-bold rounded shadow-[0_0_20px_rgba(234,88,12,0.4)] transition-all uppercase tracking-widest text-xs md:text-sm">
-              <svg className="w-5 h-5 fill-current" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M20.317 4.3698a19.7913 19.7913 0 00-4.8851-1.5152.0741.0741 0 00-.0785.0371c-.211.3753-.4447.8648-.6083 1.2495-1.8447-.2762-3.68-.2762-5.4868 0-.1636-.3933-.4058-.8742-.6177-1.2495a.077.077 0 00-.0785-.037 19.7363 19.7363 0 00-4.8852 1.515.0699.0699 0 00-.0321.0277C.5334 9.0458-.319 13.5799.0992 18.0578a.0824.0824 0 00.0312.0561c2.0528 1.5076 4.0413 2.4228 5.9929 3.0294a.0777.0777 0 00.0842-.0276c.4616-.6304.8731-1.2952 1.226-1.9942a.076.076 0 00-.0416-.1057c-.6528-.2476-1.2743-.5495-1.8722-.8923a.077.077 0 01-.0076-.1277c.1258-.0943.2517-.1923.3718-.2914a.0743.0743 0 01.0776-.0105c3.9278 1.7933 8.18 1.7933 12.0614 0a.0739.0739 0 01.0785.0095c.1202.099.246.1981.3728.2924a.077.077 0 01-.0066.1276 12.2986 12.2986 0 01-1.873.8914.0766.0766 0 00-.0407.1067c.3604.698.7719 1.3628 1.225 1.9932a.076.076 0 00.0842.0286c1.961-.6067 3.9495-1.5219 6.0023-3.0294a.077.077 0 00.0313-.0552c.5004-5.177-.8382-9.6739-3.5485-13.6604a.061.061 0 00-.0312-.0286zM8.02 15.3312c-1.1825 0-2.1569-1.0857-2.1569-2.419 0-1.3332.9555-2.4189 2.157-2.4189 1.2108 0 2.1757 1.0952 2.1568 2.419 0 1.3332-.9555 2.4189-2.1569 2.4189zm7.9748 0c-1.1825 0-2.1569-1.0857-2.1569-2.419 0-1.3332.9554-2.4189 2.1569-2.4189 1.2108 0 2.1757 1.0952 2.1568 2.419 0 h-.946 2.4189-2.1568 2.4189z"/></svg>
-              Join Server Discord
-            </a>
+            <div className="flex items-center gap-2 bg-black/60 p-3 rounded-xl border border-white/5 w-fit mx-auto md:mx-0 shadow-inner backdrop-blur-sm">
+              <img src={getSrc(mcProwAsset)} alt="Minecraft Server" className="w-5 h-5 object-contain" />
+              <span className="text-xs font-mono font-bold tracking-wider text-slate-300 select-all">Server IP: play.prownetwork.net</span>
+            </div>
           </div>
-        </header>
 
-        {/* ======================================================== */}
-        {/* CHARACTER SHOWCASE WITH FALLBACK AND OVERHEAD NAMETAG */}
-        {/* ======================================================== */}
-        {leaderMember && (
-          <section className="pb-20 px-4 w-full flex flex-col items-center animate-in fade-in zoom-in duration-300">
-            <div className="bg-[#0a0a0a]/80 backdrop-blur-md border border-white/10 p-6 rounded-2xl flex flex-col items-center w-full max-w-sm shadow-[0_0_50px_rgba(234,88,12,0.1)] group hover:border-orange-500/30 transition-all relative">
-              <span className="text-[9px] font-bold text-orange-400 uppercase tracking-widest border border-orange-500/20 bg-orange-500/5 px-2.5 py-1 rounded-full mb-4">
-                Clan Leader
-              </span>
-              
-              {/* MINECRAFT STYLE FLOATING OVERHEAD NAMETAG */}
-              <div className="mb-4 bg-black/75 border border-neutral-800 px-3 py-1.5 rounded shadow-xl relative z-20 select-none animate-bounce duration-1000">
-                <h3 className="text-xs font-black text-green-400 tracking-widest font-mono uppercase">
-                  {leaderMember.name}
-                </h3>
+          {/* SHOWCASE UTAMA CHARACTER 3D LEADER (BISA DIKLIK) */}
+          {leaderMember && (
+            <div 
+              onClick={() => setSelectedMember(leaderMember)}
+              className="flex flex-col items-center bg-gradient-to-b from-orange-500/10 via-transparent to-transparent border border-white/10 p-6 rounded-2xl relative group cursor-pointer transition-all hover:border-orange-500/40 hover:shadow-[0_0_40px_rgba(234,88,12,0.15)] hover:scale-[1.03]"
+              title={`Klik untuk melihat detail profil lengkap ${leaderMember.name}`}
+            >
+              <div className="absolute top-3 right-3 text-[9px] uppercase font-black text-orange-400 bg-orange-500/10 border border-orange-500/20 px-2 py-0.5 rounded-md tracking-widest opacity-60 group-hover:opacity-100 transition-opacity">
+                Klik View Profile
               </div>
-
-              {/* RENDER MODEL KONTUR 3D */}
-              <div className="h-48 flex items-end justify-center overflow-visible relative w-full">
+              <div className="w-40 h-52 flex items-end drop-shadow-[0_0_25px_rgba(0,0,0,0.5)] group-hover:drop-shadow-[0_0_30px_rgba(234,88,12,0.4)] transition-all">
                 <MinecraftSkin 
                   skinUrl={leaderMember.customSkinUrl ? leaderMember.customSkinUrl : getSrc(steveSkin)} 
-                  width={140} 
-                  height={180} 
+                  width={160} 
+                  height={200} 
                   isWalking={true} 
                 />
               </div>
+              <h2 className="text-base font-black text-white mt-4 uppercase tracking-wider">{leaderMember.name}</h2>
+              <span className="text-[10px] font-black text-red-500 uppercase tracking-widest mt-0.5">Clan Leader</span>
             </div>
-          </section>
-        )}
+          )}
+        </header>
 
         {/* ======================================================== */}
-        {/* 2. SERVER INFO */}
+        {/* CORE INTERACTIVE ROSTER FEATURING 3D MODELS SCREEN */}
         {/* ======================================================== */}
-        <section id="server" className="py-16 md:py-24 border-y border-white/5 bg-black/50 backdrop-blur-md">
-          <div className="max-w-5xl mx-auto px-4 text-center">
-            <img src={mcProwSrc} alt="Minecraft ProwNetwork" className="w-full max-w-[250px] md:max-w-[400px] mx-auto object-contain mb-10 drop-shadow-[0_10px_20px_rgba(0,0,0,0.8)]" />
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto">
-              <div className="bg-[#0f0f0f] border border-white/10 p-8 rounded-lg flex flex-col items-center justify-center group hover:border-orange-500 hover:bg-orange-500/5 transition-all">
-                <svg className="w-8 h-8 text-orange-500 mb-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9"></path></svg>
-                <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest block mb-2">Bedrock IP Server</span>
-                <span className="text-xl md:text-3xl font-black text-white tracking-widest group-hover:text-orange-400">
-                  be.prownetwork.net
-                </span>
-              </div>
-              
-              <a href="https://discord.gg/8X4rz7eARM" target="_blank" rel="noreferrer" className="bg-[#0f0f0f] border border-white/10 p-8 rounded-lg flex flex-col items-center justify-center group hover:border-[#5865F2] hover:bg-[#5865F2]/5 transition-all">
-                <svg className="w-8 h-8 text-[#5865F2] mb-4 fill-current" viewBox="0 0 24 24"><path d="M20.317 4.3698a19.7913 19.7913 0 00-4.8851-1.5152.0741.0741 0 00-.0785.0371c-.211.3753-.4447.8648-.6083 1.2495-1.8447-.2762-3.68-.2762-5.4868 0-.1636-.3933-.4058-.8742-.6177-1.2495a.077.077 0 00-.0785-.037 19.7363 19.7363 0 00-4.8852 1.515.0699.0699 0 00-.0321.0277C.5334 9.0458-.319 13.5799.0992 18.0578a.0824.0824 0 00.0312.0561c2.0528 1.5076 4.0413 2.4228 5.9929 3.0294a.0777.0777 0 00.0842-.0276c.4616-.6304.8731-1.2952 1.226-1.9942a.076.076 0 00-.0416-.1057c-.6528-.2476-1.2743-.5495-1.8722-.8923a.077.077 0 01-.0076-.1277c.1258-.0943.2517-.1923.3718-.2914a.0743.0743 0 01.0776-.0105c3.9278 1.7933 8.18 1.7933 12.0614 0a.0739.0739 0 01.0785.0095c.1202.099.246.1981.3728.2924a.077.077 0 01-.0066.1276 12.2986 12.2986 0 01-1.873.8914.0766.0766 0 00-.0407.1067c.3604.698.7719 1.3628 1.225 1.9932a.076.076 0 00.0842.0286c1.961-.6067 3.9495-1.5219 6.0023-3.0294a.077.077 0 00.0313-.0552c.5004-5.177-.8382-9.6739-3.5485-13.6604a.061.061 0 00-.0312-.0286zM8.02 15.3312c-1.1825 0-2.1569-1.0857-2.1569-2.419 0-1.3332.9555-2.4189 2.157-2.4189 1.2108 0 2.1757 1.0952 2.1568 2.419 0 1.3332-.9555 2.4189-2.1569 2.4189zm7.9748 0c-1.1825 0-2.1569-1.0857-2.1569-2.419 0-1.3332.9554-2.4189 2.1569-2.4189 1.2108 0 2.1757 1.0952 2.1568 2.419 0 1.3332-.946 2.4189-2.1568 2.4189z"/></svg>
-                <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest block mb-2">PN Official Community</span>
-                <span className="text-xl md:text-3xl font-black text-white uppercase tracking-wider group-hover:text-[#5865F2]">
-                  Join Prow Discord
-                </span>
-              </a>
+        <section className="mb-20">
+          <div className="flex justify-between items-end mb-8 border-b border-white/5 pb-3">
+            <div>
+              <h2 className="text-xl md:text-2xl font-black uppercase tracking-tight text-white">Struktur Elit Anggota</h2>
+              <p className="text-xs text-slate-500 uppercase tracking-widest mt-0.5">Klik pada model karakter untuk membuka berkas data profil</p>
             </div>
+            <span className="text-xs font-bold text-orange-400 bg-orange-500/5 px-3 py-1 rounded-full border border-orange-500/10">
+              {members.length} Player Terdaftar
+            </span>
           </div>
-        </section>
 
-        {/* ======================================================== */}
-        {/* 3. STATS GRID */}
-        {/* ======================================================== */}
-        <section className="py-12 md:py-20 px-4 w-full border-b border-white/5 bg-black/30 backdrop-blur-sm">
-          <div className="max-w-5xl mx-auto">
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              {[
-                { value: "95%", label: "Win Rate", icon: <svg className="w-5 h-5 mx-auto mb-2 text-orange-500" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg> },
-                { value: "S-Tier", label: "Clan Rank", icon: <svg className="w-5 h-5 mx-auto mb-2 text-yellow-500" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"></path></svg> },
-                { value: loadingStats ? "..." : `${members.length} Player`, label: "Active Members", icon: <svg className="w-5 h-5 mx-auto mb-2 text-slate-400" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 0 0-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path></svg> },
-                { value: "Full", label: "Kebebasan", icon: <svg className="w-5 h-5 mx-auto mb-2 text-orange-500" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path></svg> }
-              ].map((stat, i) => (
-                <div key={i} className="text-center p-6 bg-[#0f0f0f] border border-white/5 rounded-lg hover:border-orange-500/50 transition-all shadow-lg">
-                  {stat.icon}
-                  <h3 className="text-2xl md:text-4xl font-black text-white mb-1">{stat.value}</h3>
-                  <p className="text-slate-500 uppercase tracking-widest text-[9px] md:text-[10px] font-bold">{stat.label}</p>
+          {loadingStats ? (
+            <div className="text-center py-20 text-xs text-slate-500 uppercase tracking-widest font-bold animate-pulse">
+              Sinkronisasi data visualisasi 3D MongoDB...
+            </div>
+          ) : members.length === 0 ? (
+            <div className="text-center py-16 text-xs text-slate-600 border border-dashed border-white/5 rounded-xl">
+              Belum ada data roster player yang dimasukkan ke database admin.
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6">
+              {members.map((member) => (
+                <div
+                  key={member._id}
+                  onClick={() => setSelectedMember(member)}
+                  className="bg-black/40 border border-white/5 hover:border-orange-500/30 p-4 rounded-xl flex flex-col items-center justify-between relative group cursor-pointer transition-all hover:bg-black/80 hover:scale-[1.03] shadow-md hover:shadow-[0_15px_30px_rgba(0,0,0,0.5)]"
+                  title={`Lihat Profil ${member.name}`}
+                >
+                  {/* Penanda Hover Minimalis */}
+                  <div className="absolute inset-0 border border-orange-500 opacity-0 group-hover:opacity-10 rounded-xl transition-opacity pointer-events-none" />
+                  
+                  {/* 3D Skin Renderer Model */}
+                  <div className="w-24 h-36 flex items-end drop-shadow-md group-hover:drop-shadow-[0_0_15px_rgba(255,255,255,0.15)] transition-all transform group-hover:scale-105 duration-300">
+                    <MinecraftSkin 
+                      skinUrl={member.customSkinUrl ? member.customSkinUrl : getSrc(steveSkin)} 
+                      width={100} 
+                      height={140} 
+                      isWalking={false} 
+                    />
+                  </div>
+
+                  {/* Detail Teks Identitas Singkat */}
+                  <div className="text-center mt-3 w-full border-t border-white/5 pt-2.5">
+                    <h4 className="text-xs font-black text-white uppercase tracking-wider truncate group-hover:text-orange-400 transition-colors">
+                      {member.name}
+                    </h4>
+                    <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">
+                      {member.role}
+                    </p>
+                  </div>
                 </div>
               ))}
             </div>
-          </div>
+          )}
         </section>
 
         {/* ======================================================== */}
-        {/* NEW COMPONENT: PREMIUM DYNAMIC RATING & CHAT SYSTEM */}
+        {/* FEEDBACK REVIEW & RATING SYSTEM SECTION */}
         {/* ======================================================== */}
-        <section className="py-16 md:py-24 px-4 w-full max-w-5xl mx-auto relative">
-          
-          <div className="flex flex-col md:flex-row justify-between items-start md:items-center border-b border-white/5 pb-6 mb-8 gap-4">
+        <section className="bg-[#0a0a0b]/80 border border-white/5 p-6 md:p-8 rounded-2xl shadow-xl backdrop-blur-md">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-white/5 pb-4 mb-6">
             <div>
-              <h2 className="text-3xl font-black uppercase tracking-tight">Evaluasi Kepuasan website</h2>
-              <p className="text-xs text-slate-500 uppercase tracking-widest font-bold mt-1">Sistem Penilaian Global Real-Time</p>
+              <h2 className="text-lg font-black uppercase tracking-wider text-slate-100">Ulasan & Rating Komunitas</h2>
+              <p className="text-xs text-slate-500 mt-0.5">Pesan testimonial dan tingkat kepuasan pelayanan operasional klan</p>
             </div>
-            
-            <div className="flex items-center gap-4 bg-neutral-900/60 border border-white/10 px-5 py-3 rounded-xl backdrop-blur-md">
-              <div className="text-center">
-                <span className="text-2xl font-black text-yellow-500 block leading-none">{calculateAverageRating()}</span>
-                <span className="text-[8px] text-slate-400 font-bold uppercase tracking-widest">Skor Rata-Rata</span>
-              </div>
-              <div className="w-px h-8 bg-white/10" />
-              <div className="text-center">
-                <span className="text-2xl font-black text-white block leading-none">{ratings.length}</span>
-                <span className="text-[8px] text-slate-400 font-bold uppercase tracking-widest">Total Ulasan</span>
-              </div>
+            <div className="flex gap-2 w-full sm:w-auto">
+              <button onClick={() => setShowRateModal(true)} className="flex-1 sm:flex-none text-xs font-black uppercase tracking-widest bg-orange-600 hover:bg-orange-500 px-4 py-2.5 rounded-lg transition-colors shadow shadow-orange-600/10">
+                Berikan Rating
+              </button>
+              <button onClick={() => setShowAuthModal(true)} className="text-xs font-bold border border-white/10 bg-white/5 hover:bg-white/10 px-3 py-2.5 rounded-lg transition-colors text-slate-400 hover:text-white">
+                ⚙️ Admin Auth
+              </button>
             </div>
           </div>
 
-          <div className="bg-[#0a0a0a] border border-white/10 p-8 rounded-2xl flex flex-col items-center text-center max-w-xl mx-auto mb-12 shadow-xl">
-            <h4 className="text-sm font-bold uppercase tracking-widest text-slate-400 mb-3">Berikan Penilaian Anda terhadap Website</h4>
-            
-            <div className="flex items-center gap-2 mb-2">
-              {[1, 2, 3, 4, 5].map((star) => (
-                <button
-                  key={star}
-                  type="button"
-                  onClick={() => handleStarClick(star)}
-                  onMouseEnter={() => setRatingHover(star)}
-                  onMouseLeave={() => setRatingHover(0)}
-                  className="text-2xl transition-transform hover:scale-125 focus:outline-none"
-                >
-                  <svg 
-                    className={`w-8 h-8 ${star <= (ratingHover || selectedStars) ? 'text-yellow-500 fill-current' : 'text-slate-700'}`} 
-                    viewBox="0 0 24 24" 
-                    fill="none" 
-                    stroke="currentColor" 
-                    strokeWidth="2"
-                  >
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M11.48 3.499c.151-.312.596-.312.748 0l2.165 4.474 4.887.71c.343.05.48.474.231.719l-3.537 3.473.835 4.896c.059.344-.298.61-.606.44l-4.37-2.31-4.37 2.31c-.308.17-.665-.095-.606-.44l.835-4.896-3.537-3.473c-.249-.245-.113-.668.231-.72l4.888-.711 2.164-4.474z" />
-                  </svg>
-                </button>
+          {ratings.length === 0 ? (
+            <p className="text-center py-10 text-xs text-slate-600 uppercase tracking-widest">Belum ada ulasan bintang yang dikirimkan.</p>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-h-[400px] overflow-y-auto pr-2">
+              {ratings.map((rate) => (
+                <div key={rate._id} className="bg-black/50 border border-white/5 p-4 rounded-xl relative group flex flex-col justify-between">
+                  <div>
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-xs font-black text-orange-400 uppercase tracking-wider break-all">{rate.name}</span>
+                      <div className="flex gap-0.5">
+                        {Array.from({ length: 5 }).map((_, i) => (
+                          <span key={i} className={`text-xs ${i < rate.stars ? 'text-yellow-500' : 'text-neutral-700'}`}>★</span>
+                        ))}
+                      </div>
+                    </div>
+                    <p className="text-slate-300 text-xs leading-relaxed font-medium">"{rate.message}"</p>
+                  </div>
+                  <div className="flex justify-between items-center mt-3 pt-2 border-t border-white/[0.03]">
+                    <span className="text-[9px] text-neutral-600 font-mono">{new Date(rate.createdAt).toLocaleDateString('id-ID')}</span>
+                    {adminPassword && (
+                      <button onClick={() => handleDeleteRating(rate._id)} className="text-[9px] text-red-400 hover:underline uppercase font-bold tracking-wider">
+                        Hapus Ulasan
+                      </button>
+                    )}
+                  </div>
+                </div>
               ))}
             </div>
-            <p className="text-[10px] text-slate-500 uppercase tracking-wider">Klik bintang untuk melampirkan ulasan pesan tertulis</p>
-          </div>
+          )}
+        </section>
 
-          <div className="w-full overflow-hidden relative py-4 border-y border-white/5 bg-black/20 rounded-xl mb-6">
-            {ratings.length === 0 ? (
-              <p className="text-center text-xs text-slate-600 uppercase font-bold tracking-wider py-6">Belum ada obrolan ulasan bintang terdaftar.</p>
-            ) : (
-              <div className="flex gap-6 overflow-x-auto pb-3 px-4 scrollbar-thin scrollbar-thumb-white/10">
-                {ratings.map((item) => (
-                  <div 
-                    key={item._id} 
-                    className="flex-shrink-0 w-72 bg-[#0f0f0f] border border-white/5 p-5 rounded-xl flex flex-col justify-between shadow-md relative group"
-                  >
-                    <div>
-                      <div className="flex justify-between items-start mb-2 gap-2">
-                        <h5 className="text-sm font-black text-white truncate max-w-[150px]">{item.name}</h5>
-                        
-                        <div className="flex items-center gap-0.5 flex-shrink-0">
-                          {Array.from({ length: 5 }).map((_, idx) => (
-                            <svg 
-                              key={idx} 
-                              className={`w-3 h-3 ${idx < item.stars ? 'text-yellow-500 fill-current' : 'text-neutral-800'}`} 
-                              viewBox="0 0 24 24"
-                            >
-                              <path d="M12 .587l3.668 7.431 8.2 1.191-5.934 5.787 1.4 8.168L12 18.896l-7.334 3.857 1.4-8.168L.132 9.209l8.2-1.191L12 .587z"/>
-                            </svg>
-                          ))}
-                        </div>
-                      </div>
-                      
-                      <p className="text-xs text-slate-400 font-medium line-clamp-3 leading-relaxed break-words">
-                        {item.message}
-                      </p>
-                    </div>
-
-                    <span className="text-[8px] text-slate-600 font-bold uppercase tracking-widest mt-4 block">
-                      {new Date(item.createdAt).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })}
-                    </span>
-
-                    <button
-                      type="button"
-                      onClick={() => triggerDeleteRating(item._id)}
-                      className={`absolute bottom-4 right-4 p-1.5 rounded-md border border-red-500/20 bg-red-500/5 text-red-400 hover:bg-red-600 hover:text-white transition-all ${isAdminMode ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}
-                      title="Hapus Ulasan Chat"
-                    >
-                      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-4v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                      </svg>
-                    </button>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-
-          <div className="flex justify-end px-2">
-            <button
-              type="button"
-              onClick={handleMinusAdminToggle}
-              className={`w-7 h-7 rounded-md border flex items-center justify-center text-sm font-bold transition-all ${isAdminMode ? 'bg-red-600/20 border-red-500 text-red-400' : 'bg-white/5 border-white/10 text-slate-500 hover:text-white'}`}
-              title={isAdminMode ? "Matikan Panel Moderasi" : "Aktifkan Panel Moderasi"}
-                >
-                  －
-                </button>
-              </div>
-
-            </section>
-
-          </div>
+      </div>
 
       {/* ======================================================== */}
-      {/* JENDELA MODAL OVERLAY INPUT CHAT ULASAN BARU */}
+      {/* JENDELA POPUP MODAL PROFILE INTERACTIVE DISCORD CARD */}
+      {/* ======================================================== */}
+      {selectedMember && (
+        <Profile 
+          member={selectedMember} 
+          onClose={() => setSelectedMember(null)} 
+          getRoleColor={getRoleColor}
+          getSpecialIcon={getSpecialIcon}
+        />
+      )}
+
+      {/* ======================================================== */}
+      {/* MODAL INPUT RATING / BERIKAN RATE BARU */}
       {/* ======================================================== */}
       {showRateModal && (
-        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-[150] flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={() => setShowRateModal(false)}></div>
-          <div className="relative bg-[#0a0a0a] p-6 rounded-xl border border-white/10 w-full max-w-md shadow-2xl animate-in zoom-in-95 duration-200">
-            <div className="flex justify-between items-center mb-6 pb-2 border-b border-white/10">
-              <h3 className="text-md font-black uppercase tracking-wider text-white">Formulir Komentar Evaluasi</h3>
-              <button type="button" onClick={() => setShowRateModal(false)} className="text-slate-500 hover:text-white">✕</button>
-            </div>
-
-            <form onSubmit={handleRateSubmit} className="flex flex-col gap-4">
-              <div className="flex flex-col gap-1">
-                <label className="text-[10px] uppercase tracking-widest text-slate-400 font-bold">Nama / Gamertag</label>
-                <input 
-                  type="text"
-                  value={reviewerName}
-                  onChange={e => setReviewerName(e.target.value)}
-                  placeholder="Masukkan nama identitas Anda..."
-                  className="bg-black border border-white/10 p-3 rounded text-sm text-white focus:outline-none focus:border-orange-500"
-                  required
-                />
+          <div className="relative bg-[#0a0a0b] p-6 rounded-2xl border border-white/10 w-full max-w-md shadow-2xl animate-in zoom-in-95 duration-150">
+            <h3 className="text-sm font-black text-white uppercase tracking-wider border-b border-white/5 pb-2 mb-4">Berikan Ulasan Clan</h3>
+            <form onSubmit={handleAddRating} className="flex flex-col gap-4">
+              
+              {/* Star Picker Selection */}
+              <div className="flex flex-col gap-1 items-center py-2 bg-black/40 rounded-xl border border-white/5">
+                <label className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Tingkat Kepuasan</label>
+                <div className="flex gap-1.5 mt-1">
+                  {Array.from({ length: 5 }).map((_, i) => {
+                    const starVal = i + 1;
+                    return (
+                      <button
+                        key={i}
+                        type="button"
+                        onClick={() => setSelectedStars(starVal)}
+                        onMouseEnter={() => setRatingHover(starVal)}
+                        onMouseLeave={() => setRatingHover(0)}
+                        className="text-2xl transition-transform active:scale-95 focus:outline-none"
+                      >
+                        <span className={(ratingHover || selectedStars) >= starVal ? 'text-yellow-500' : 'text-neutral-700'}>★</span>
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
 
               <div className="flex flex-col gap-1">
-                <label className="text-[10px] uppercase tracking-widest text-slate-400 font-bold">Pesan Ulasan Umpan Balik</label>
-                <textarea 
-                  value={reviewerMessage}
-                  onChange={e => setReviewerMessage(e.target.value)}
-                  placeholder="Ketik impresi atau saran Anda untuk kemajuan clan Freedom..."
-                  className="bg-black border border-white/10 p-3 rounded text-xs text-slate-300 h-24 resize-none focus:outline-none focus:border-orange-500 leading-relaxed"
-                />
+                <label className="text-[10px] uppercase font-bold text-slate-400">Nama Pengulas</label>
+                <input type="text" value={reviewerName} onChange={e => setReviewerName(e.target.value)} placeholder="Masukkan nama atau nickname anda..." className="bg-black border border-white/10 p-3 rounded-lg text-xs text-white focus:outline-none focus:border-orange-500 font-bold" required />
               </div>
 
-              <button 
-                type="submit" 
-                disabled={submittingRate}
-                className="bg-orange-600 hover:bg-orange-500 text-white font-black p-4 rounded-lg text-xs uppercase tracking-widest transition-all disabled:opacity-50 shadow-lg mt-2"
-              >
-                {submittingRate ? "Menyimpan Data..." : "Kirim Ulasan Resmi"}
-              </button>
+              <div className="flex flex-col gap-1">
+                <label className="text-[10px] uppercase font-bold text-slate-400">Isi Pesan Testimoni</label>
+                <textarea value={reviewerMessage} onChange={e => setReviewerMessage(e.target.value)} placeholder="Tulis kritik, saran, atau testimonial unik anda..." className="bg-black border border-white/10 p-3 rounded-lg h-24 text-xs text-slate-300 leading-relaxed focus:outline-none focus:border-orange-500 resize-none" required />
+              </div>
+
+              <div className="flex gap-2 mt-2">
+                <button type="submit" disabled={submittingRate} className="flex-1 bg-orange-600 hover:bg-orange-500 font-black py-3 rounded-lg text-xs uppercase tracking-widest transition-all">
+                  {submittingRate ? 'Mengirimkan...' : 'Kirim Ulasan'}
+                </button>
+                <button type="button" onClick={() => setShowRateModal(false)} className="bg-neutral-800 hover:bg-neutral-700 font-bold px-4 rounded-lg text-xs uppercase transition-colors">
+                  Batal
+                </button>
+              </div>
             </form>
           </div>
         </div>
