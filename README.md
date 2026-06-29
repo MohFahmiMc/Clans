@@ -1,6 +1,6 @@
 # 🎮 Website Resmi Freedom Clan
 
-Website beranda resmi untuk **Zephyr Clan** yang dibangun menggunakan **Next.js**, **TypeScript**, dan **Tailwind CSS**. Project ini dibuat dan dikonfigurasi 100% langsung melalui Web UI GitHub dan dihosting secara otomatis menggunakan Vercel.
+Website beranda resmi untuk **Freedom Clan** yang dibangun menggunakan **Next.js**, **TypeScript**, dan **Tailwind CSS**. Project ini dibuat dan dikonfigurasi 100% langsung melalui Web UI GitHub dan dihosting secara otomatis menggunakan Vercel.
 
 ---
 
