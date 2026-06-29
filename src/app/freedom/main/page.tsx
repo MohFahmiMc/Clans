@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import logoPnAsset from '../../../assets/logo_pn.png';
 import mcProwAsset from '../../../assets/mc_prow.png';
 import backgroundImage from '../../../assets/background.png';
+import background2Asset from '../../../assets/background2.png'; // IMPORT ASSET BANNER BARU
 import Profile from '../../../components/Profile';
 
 // IMPORT GAMBAR SKIN SEBAGAI FALLBACK DEFAULT JIKA BELUM SET SKIN
@@ -62,6 +63,7 @@ export default function MainPage() {
   const logoPnSrc = getSrc(logoPnAsset);
   const mcProwSrc = getSrc(mcProwAsset);
   const bgImgSrc = getSrc(backgroundImage);
+  const bg2ImgSrc = getSrc(background2Asset); // MENDAPATKAN SOURCE PATH BANNER BARU
 
   const getRoleColor = (role: string) => {
     const r = role.toLowerCase();
@@ -276,21 +278,21 @@ export default function MainPage() {
         </header>
 
         {/* ======================================================== */}
-        {/* PREMIUM LEADER CARD (Screenshot_2026_0629_092448_3.png) */}
+        {/* PREMIUM LEADER CARD (Screenshot_2026_0629_102058.png) */}
         {/* ======================================================== */}
         {leaderMember && (
           <section className="pb-16 w-full flex flex-col items-center animate-in fade-in slide-in-from-bottom-8 duration-1000 delay-150">
             <div 
               onClick={() => setSelectedMember(leaderMember)}
-              className="relative w-full max-w-md bg-[#111214] border border-white/5 rounded-[24px] p-6 flex items-center gap-5 overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.7)] group hover:scale-[1.03] hover:border-red-500/30 hover:shadow-[0_25px_60px_rgba(239,68,68,0.12)] transition-all duration-300 cursor-pointer"
+              className="relative w-full max-w-md bg-[#0a0a0b] border border-white/5 rounded-[24px] p-6 flex items-center gap-5 overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.7)] group hover:scale-[1.03] hover:border-red-500/30 hover:shadow-[0_25px_60px_rgba(239,68,68,0.12)] transition-all duration-300 cursor-pointer"
               title="Klik untuk membuka Detail 3D Roster Profil Leader"
             >
-              {/* Efek Siluet Arena Background Kanan */}
-              <div className="absolute inset-0 bg-gradient-to-r from-[#111214] via-[#111214]/80 to-transparent z-10 pointer-events-none" />
-              {bgImgSrc && (
+              {/* Efek Gradasi & Siluet Arena Menggunakan background2.png */}
+              <div className="absolute inset-0 bg-gradient-to-r from-[#0a0a0b] via-[#0a0a0b]/80 to-transparent z-10 pointer-events-none" />
+              {bg2ImgSrc && (
                 <div 
-                  className="absolute right-0 inset-y-0 w-2/3 opacity-30 bg-cover bg-center mix-blend-overlay pointer-events-none z-0 transform group-hover:scale-105 transition-transform duration-700" 
-                  style={{ backgroundImage: `url(${bgImgSrc})` }} 
+                  className="absolute right-0 inset-y-0 w-2/3 opacity-45 bg-cover bg-center mix-blend-normal pointer-events-none z-0 transform group-hover:scale-105 transition-transform duration-700" 
+                  style={{ backgroundImage: `url(${bg2ImgSrc})` }} 
                 />
               )}
 
@@ -385,33 +387,6 @@ export default function MainPage() {
               </div>
             ))}
           </div>
-        </section>
-
-        {/* ======================================================== */}
-        {/* KOTAK SERVER DC PROW (Screenshot_2026_0629_092448_2.png) */}
-        {/* ======================================================== */}
-        <section className="mb-16 flex flex-col items-center w-full animate-in fade-in duration-1000">
-          <a 
-            href="https://discord.gg/8X4rz7eARM" 
-            target="_blank" 
-            rel="noreferrer" 
-            className="w-full max-w-xl bg-[#111214] border border-white/5 rounded-[20px] p-8 md:p-10 flex flex-col items-center justify-center text-center group hover:border-[#5865F2]/40 shadow-[0_20px_50px_rgba(0,0,0,0.6)] hover:shadow-[0_20px_50px_rgba(88,101,242,0.15)] transition-all duration-500 transform hover:-translate-y-1"
-          >
-            {/* Logo Blueprint Discord Original Sesuai Gambar */}
-            <svg className="w-12 h-12 text-[#5865F2] fill-current mb-4 drop-shadow-[0_0_15px_rgba(88,101,242,0.3)] transition-transform duration-300 group-hover:scale-105" viewBox="0 0 127.14 96.36" xmlns="http://www.w3.org/2000/svg">
-              <path d="M107.7,8.07A105.15,105.15,0,0,0,77.26,0a77.19,77.19,0,0,0-3.3,6.83A96.67,96.67,0,0,0,53.22,6.83,77.19,77.19,0,0,0,49.88,0,105.15,105.15,0,0,0,19.44,8.07C3.66,31.58-1.86,54.65,1,77.53A105.73,105.73,0,0,0,32,96.36a77.7,77.7,0,0,0,6.63-10.85,68.43,68.43,0,0,1-10.5-5c.9-.65,1.76-1.34,2.58-2a75.58,75.58,0,0,0,73,0c.83.71,1.69,1.4,2.58,2a68.43,68.43,0,0,1-10.5,5,77.7,77.7,0,0,0,6.63,10.85,105.73,105.73,0,0,0,31.05-18.83C129.83,48.24,123.41,25.43,107.7,8.07ZM42.45,65.69C36.18,65.69,31,60,31,53s5.14-12.67,11.43-12.67S53.94,46,53.86,53,48.74,65.69,42.45,65.69Zm42.24,0C78.41,65.69,73.24,60,73.24,53s5.14-12.67,11.43-12.67S96.13,46,96.05,53,90.93,65.69,84.69,65.69Z"/>
-            </svg>
-            
-            {/* Sub-Header Text */}
-            <span className="text-xs font-bold text-slate-400 uppercase tracking-[0.25em] mb-1.5 text-center">
-              PN OFFICIAL COMMUNITY
-            </span>
-            
-            {/* Big Main Title Header */}
-            <h2 className="text-2xl md:text-4xl font-extrabold text-white tracking-wide uppercase select-none">
-              JOIN PROW DISCORD
-            </h2>
-          </a>
         </section>
 
         {/* ======================================================== */}
