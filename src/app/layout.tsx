@@ -13,7 +13,7 @@ const getSrc = (asset: any) => asset?.src || (typeof asset === 'string' ? asset 
 
 export const metadata: Metadata = {
   metadataBase: new URL('https://freedom.scarily.my.id'),
-  title: 'FREEDOM CLAN | ProwNetwork',
+  title: 'THE FREEDOM CLAN | ProwNetwork',
   description: ' Clan pertama di server Minecraft Bedrock ProwNetwork. Simbol Kebebasan dan Kekuatan.',
   keywords: ['Freedom Clan', 'ProwNetwork', 'Minecraft Bedrock', 'Clan Elite', 'PVP'],
   authors: [{ name: 'M.K Fahmi', url: 'https://mifahmi.my.id' }],
