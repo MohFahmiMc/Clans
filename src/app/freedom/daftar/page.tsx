@@ -62,7 +62,7 @@ export default function JoinPage() {
       }
     } catch {
       // Quiet fail
-    } font-sans finally {
+    } finally {
       setLoading(false);
     }
   };
