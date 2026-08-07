@@ -2,9 +2,13 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 
 export default function Navbar({ logoSrc }: { logoSrc: string }) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const pathname = usePathname();
+
+  const isActive = (path: string) => pathname === path;
 
   return (
     <>
@@ -33,26 +37,61 @@ export default function Navbar({ logoSrc }: { logoSrc: string }) {
                 <img src={logoSrc} alt="Logo" className="w-8 h-8 object-contain relative z-10" />
               </div>
               <span className="text-sm font-black uppercase tracking-wider text-white group-hover:text-orange-400 transition-colors">
-                Freedom
+                The Freedom
               </span>
             </Link>
           </div>
 
           {/* SISI KANAN: Desktop Menu Navigasi Utama */}
           <div className="hidden md:flex items-center gap-1">
-            <Link href="/freedom/main" className="px-3.5 py-2 text-xs font-bold uppercase tracking-widest text-slate-400 hover:text-white hover:bg-white/5 rounded-lg transition-all">
+            <Link 
+              href="/freedom/main" 
+              className={`px-3.5 py-2 text-xs font-bold uppercase tracking-widest rounded-lg transition-all border ${
+                isActive('/freedom/main')
+                  ? 'text-orange-400 bg-orange-500/10 border-orange-500/30 shadow-sm shadow-orange-500/10 font-black'
+                  : 'text-slate-400 hover:text-white hover:bg-white/5 border-transparent'
+              }`}
+            >
               Utama
             </Link>
-            <Link href="/freedom/members" className="px-3.5 py-2 text-xs font-bold uppercase tracking-widest text-slate-400 hover:text-white hover:bg-white/5 rounded-lg transition-all">
+            <Link 
+              href="/freedom/members" 
+              className={`px-3.5 py-2 text-xs font-bold uppercase tracking-widest rounded-lg transition-all border ${
+                isActive('/freedom/members')
+                  ? 'text-orange-400 bg-orange-500/10 border-orange-500/30 shadow-sm shadow-orange-500/10 font-black'
+                  : 'text-slate-400 hover:text-white hover:bg-white/5 border-transparent'
+              }`}
+            >
               Roster
             </Link>
-            <Link href="/freedom/gallery" className="px-3.5 py-2 text-xs font-bold uppercase tracking-widest text-slate-400 hover:text-white hover:bg-white/5 rounded-lg transition-all">
+            <Link 
+              href="/freedom/gallery" 
+              className={`px-3.5 py-2 text-xs font-bold uppercase tracking-widest rounded-lg transition-all border ${
+                isActive('/freedom/gallery')
+                  ? 'text-orange-400 bg-orange-500/10 border-orange-500/30 shadow-sm shadow-orange-500/10 font-black'
+                  : 'text-slate-400 hover:text-white hover:bg-white/5 border-transparent'
+              }`}
+            >
               Galeri
             </Link>
-            <Link href="/freedom/alliance" className="px-3.5 py-2 text-xs font-bold uppercase tracking-widest text-slate-400 hover:text-white hover:bg-white/5 rounded-lg transition-all">
+            <Link 
+              href="/freedom/alliance" 
+              className={`px-3.5 py-2 text-xs font-bold uppercase tracking-widest rounded-lg transition-all border ${
+                isActive('/freedom/alliance')
+                  ? 'text-orange-400 bg-orange-500/10 border-orange-500/30 shadow-sm shadow-orange-500/10 font-black'
+                  : 'text-slate-400 hover:text-white hover:bg-white/5 border-transparent'
+              }`}
+            >
               Aliansi
             </Link>
-            <Link href="/freedom/daftar" className="ml-2 text-xs font-bold uppercase tracking-widest text-orange-400 hover:text-orange-300 border border-orange-500/30 bg-orange-500/10 hover:bg-orange-500/20 px-4 py-2 rounded-xl shadow-lg shadow-orange-500/10 hover:shadow-orange-500/20 active:scale-95 transition-all">
+            <Link 
+              href="/freedom/daftar" 
+              className={`ml-2 text-xs font-bold uppercase tracking-widest px-4 py-2 rounded-xl shadow-lg active:scale-95 transition-all border ${
+                isActive('/freedom/daftar')
+                  ? 'text-orange-300 bg-orange-500/25 border-orange-400 shadow-orange-500/20 font-black'
+                  : 'text-orange-400 hover:text-orange-300 border-orange-500/30 bg-orange-500/10 hover:bg-orange-500/20 shadow-orange-500/10'
+              }`}
+            >
               Pendaftaran
             </Link>
           </div>
@@ -102,39 +141,59 @@ export default function Navbar({ logoSrc }: { logoSrc: string }) {
           <Link 
             href="/freedom/main" 
             onClick={() => setIsSidebarOpen(false)} 
-            className="px-4 py-3 text-xs font-bold tracking-wider uppercase text-slate-300 hover:text-white hover:bg-white/10 active:scale-[0.98] rounded-xl transition-all flex items-center justify-between group"
+            className={`px-4 py-3 text-xs font-bold tracking-wider uppercase active:scale-[0.98] rounded-xl transition-all flex items-center justify-between group border ${
+              isActive('/freedom/main')
+                ? 'text-orange-400 bg-orange-500/10 border-orange-500/30'
+                : 'text-slate-300 hover:text-white hover:bg-white/10 border-transparent'
+            }`}
           >
             <span>Utama</span>
-            <span className="text-xs text-slate-500 group-hover:text-orange-400 group-hover:translate-x-1 transition-all">→</span>
+            <span className={`text-xs transition-all ${isActive('/freedom/main') ? 'text-orange-400 font-bold' : 'text-slate-500 group-hover:text-orange-400 group-hover:translate-x-1'}`}>→</span>
           </Link>
           <Link 
             href="/freedom/members" 
             onClick={() => setIsSidebarOpen(false)} 
-            className="px-4 py-3 text-xs font-bold tracking-wider uppercase text-slate-300 hover:text-white hover:bg-white/10 active:scale-[0.98] rounded-xl transition-all flex items-center justify-between group"
+            className={`px-4 py-3 text-xs font-bold tracking-wider uppercase active:scale-[0.98] rounded-xl transition-all flex items-center justify-between group border ${
+              isActive('/freedom/members')
+                ? 'text-orange-400 bg-orange-500/10 border-orange-500/30'
+                : 'text-slate-300 hover:text-white hover:bg-white/10 border-transparent'
+            }`}
           >
             <span>Roster</span>
-            <span className="text-xs text-slate-500 group-hover:text-orange-400 group-hover:translate-x-1 transition-all">→</span>
+            <span className={`text-xs transition-all ${isActive('/freedom/members') ? 'text-orange-400 font-bold' : 'text-slate-500 group-hover:text-orange-400 group-hover:translate-x-1'}`}>→</span>
           </Link>
           <Link 
             href="/freedom/gallery" 
             onClick={() => setIsSidebarOpen(false)} 
-            className="px-4 py-3 text-xs font-bold tracking-wider uppercase text-slate-300 hover:text-white hover:bg-white/10 active:scale-[0.98] rounded-xl transition-all flex items-center justify-between group"
+            className={`px-4 py-3 text-xs font-bold tracking-wider uppercase active:scale-[0.98] rounded-xl transition-all flex items-center justify-between group border ${
+              isActive('/freedom/gallery')
+                ? 'text-orange-400 bg-orange-500/10 border-orange-500/30'
+                : 'text-slate-300 hover:text-white hover:bg-white/10 border-transparent'
+            }`}
           >
             <span>Galeri</span>
-            <span className="text-xs text-slate-500 group-hover:text-orange-400 group-hover:translate-x-1 transition-all">→</span>
+            <span className={`text-xs transition-all ${isActive('/freedom/gallery') ? 'text-orange-400 font-bold' : 'text-slate-500 group-hover:text-orange-400 group-hover:translate-x-1'}`}>→</span>
           </Link>
           <Link 
             href="/freedom/alliance" 
             onClick={() => setIsSidebarOpen(false)} 
-            className="px-4 py-3 text-xs font-bold tracking-wider uppercase text-slate-300 hover:text-white hover:bg-white/10 active:scale-[0.98] rounded-xl transition-all flex items-center justify-between group"
+            className={`px-4 py-3 text-xs font-bold tracking-wider uppercase active:scale-[0.98] rounded-xl transition-all flex items-center justify-between group border ${
+              isActive('/freedom/alliance')
+                ? 'text-orange-400 bg-orange-500/10 border-orange-500/30'
+                : 'text-slate-300 hover:text-white hover:bg-white/10 border-transparent'
+            }`}
           >
             <span>Aliansi</span>
-            <span className="text-xs text-slate-500 group-hover:text-orange-400 group-hover:translate-x-1 transition-all">→</span>
+            <span className={`text-xs transition-all ${isActive('/freedom/alliance') ? 'text-orange-400 font-bold' : 'text-slate-500 group-hover:text-orange-400 group-hover:translate-x-1'}`}>→</span>
           </Link>
           <Link 
             href="/freedom/daftar" 
             onClick={() => setIsSidebarOpen(false)} 
-            className="mt-2 px-4 py-3 text-xs font-bold tracking-wider uppercase text-orange-400 bg-orange-500/10 border border-orange-500/20 hover:bg-orange-500/20 active:scale-[0.98] rounded-xl transition-all flex items-center justify-between shadow-lg shadow-orange-500/5"
+            className={`mt-2 px-4 py-3 text-xs font-bold tracking-wider uppercase active:scale-[0.98] rounded-xl transition-all flex items-center justify-between shadow-lg border ${
+              isActive('/freedom/daftar')
+                ? 'text-orange-300 bg-orange-500/25 border-orange-400 shadow-orange-500/15'
+                : 'text-orange-400 bg-orange-500/10 border-orange-500/20 hover:bg-orange-500/20 shadow-orange-500/5'
+            }`}
           >
             <span>Pendaftaran Clan</span>
             <span className="text-xs text-orange-400">★</span>
@@ -146,7 +205,11 @@ export default function Navbar({ logoSrc }: { logoSrc: string }) {
           <Link 
             href="/freedom/admin" 
             onClick={() => setIsSidebarOpen(false)}
-            className="text-slate-400 hover:text-red-400 hover:bg-red-500/10 hover:border-red-500/30 px-4 py-3 rounded-xl font-bold uppercase tracking-widest text-[10px] transition-all flex items-center justify-between border border-white/10 bg-black/40 group"
+            className={`px-4 py-3 rounded-xl font-bold uppercase tracking-widest text-[10px] transition-all flex items-center justify-between border group ${
+              isActive('/freedom/admin')
+                ? 'text-red-400 bg-red-500/20 border-red-500/40'
+                : 'text-slate-400 hover:text-red-400 hover:bg-red-500/10 hover:border-red-500/30 border-white/10 bg-black/40'
+            }`}
           >
             <div className="flex items-center gap-2.5">
               <svg className="w-4 h-4 text-slate-500 group-hover:text-red-400 transition-colors" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
@@ -159,7 +222,7 @@ export default function Navbar({ logoSrc }: { logoSrc: string }) {
 
           <div className="text-center text-[9px] text-slate-600 uppercase tracking-widest font-mono flex items-center justify-center gap-1.5">
             <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
-            Freedom Database v2.0
+            Copyright The Freedom
           </div>
         </div>
       </aside>
