@@ -76,12 +76,12 @@ export default function MembersPage() {
   const getRoleColor = (role: string) => {
     const r = role.toLowerCase();
     if (r === 'leader' || r === 'owner') {
-      return 'text-red-400 border-red-500/40 bg-red-500/10 shadow-[0_0_10px_rgba(239,68,68,0.2)]';
+      return 'text-red-400 border-red-500/50 bg-red-950/80 shadow-[0_0_12px_rgba(239,68,68,0.3)]';
     }
     if (r === 'admin' || r === 'co-leader') {
-      return 'text-orange-400 border-orange-500/40 bg-orange-500/10 shadow-[0_0_10px_rgba(249,115,22,0.2)]';
+      return 'text-orange-400 border-orange-500/50 bg-orange-950/80 shadow-[0_0_12px_rgba(249,115,22,0.3)]';
     }
-    return 'text-yellow-400 border-yellow-500/40 bg-yellow-500/10 shadow-[0_0_10px_rgba(234,179,8,0.15)]';
+    return 'text-amber-300 border-amber-500/40 bg-neutral-900/90 shadow-[0_0_10px_rgba(245,158,11,0.2)]';
   };
 
   // Ikon keahlian
@@ -112,60 +112,78 @@ export default function MembersPage() {
 
   return (
     <>
-      <section className="max-w-7xl mx-auto py-12 md:py-20 px-4 sm:px-6 lg:px-8 w-full mb-12">
-        {/* HEADER SECTION */}
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end mb-8 md:mb-12 gap-4 pb-6 border-b border-white/10">
-          <div>
-            <span className="text-orange-500 text-xs md:text-sm font-black tracking-widest uppercase flex items-center gap-2 mb-1">
-              <span className="w-1.5 h-1.5 rounded-full bg-orange-500 inline-block animate-ping" />
-              The Faces of Freedom
-            </span>
-            <h2 className="text-3xl sm:text-5xl md:text-6xl font-black uppercase tracking-tight text-white drop-shadow-md">
-              CLAN <span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-500 to-amber-400">ROSTER</span>
-            </h2>
-          </div>
+      <section className="max-w-7xl mx-auto py-10 md:py-16 px-4 sm:px-6 lg:px-8 w-full mb-16">
+        
+        {/* HEADER & CONTROL BAR */}
+        <div className="bg-neutral-950/80 border border-white/10 rounded-3xl p-6 md:p-8 mb-10 backdrop-blur-xl relative overflow-hidden shadow-2xl">
+          {/* Subtle Glow Background Accent */}
+          <div className="absolute top-0 right-0 w-96 h-96 bg-orange-600/10 rounded-full blur-3xl pointer-events-none" />
           
-          {/* Status Indicator */}
-          <div className="text-green-400 font-bold uppercase tracking-widest text-[10px] md:text-xs bg-neutral-900/80 backdrop-blur-md px-3.5 py-2 rounded-full border border-white/10 flex items-center gap-2.5 shadow-inner">
-            <span className={`w-2.5 h-2.5 rounded-full ${loadingMembers ? 'bg-orange-500 animate-pulse' : errorMembers ? 'bg-red-500' : 'bg-emerald-500 shadow-[0_0_10px_#10b981]'}`} />
-            <span className="font-mono">{loadingMembers ? "CONNECTING..." : errorMembers ? "DB ERROR" : "MONGODB ONLINE"}</span>
+          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 relative z-10">
+            <div>
+              <div className="flex items-center gap-2 mb-2">
+                <span className="h-2 w-2 rounded-full bg-orange-500 animate-pulse" />
+                <span className="text-orange-500 text-xs font-black tracking-widest uppercase">Official Clan Roster</span>
+              </div>
+              <h2 className="text-3xl sm:text-5xl lg:text-6xl font-black uppercase tracking-tight text-white">
+                CLAN <span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-500 via-amber-400 to-yellow-500">ROSTER</span>
+              </h2>
+              <p className="text-neutral-400 text-xs sm:text-sm mt-1 max-w-xl">
+                Daftar anggota resmi dan jajaran petinggi clan. Klik pada kartu member untuk melihat info detail profile.
+              </p>
+            </div>
+
+            {/* Stats & Status Bar */}
+            <div className="flex flex-wrap sm:flex-nowrap items-center gap-3 shrink-0">
+              <div className="bg-neutral-900/90 border border-white/10 px-4 py-2.5 rounded-2xl flex items-center gap-3">
+                <span className="text-neutral-400 text-[11px] font-bold uppercase tracking-wider">Total Roster</span>
+                <span className="text-orange-400 font-mono font-black text-base">{members.length}</span>
+              </div>
+
+              <div className="bg-neutral-900/90 border border-white/10 px-4 py-2.5 rounded-2xl flex items-center gap-3">
+                <span className={`w-2.5 h-2.5 rounded-full ${loadingMembers ? 'bg-orange-500 animate-pulse' : errorMembers ? 'bg-red-500' : 'bg-emerald-500 shadow-[0_0_10px_#10b981]'}`} />
+                <span className="text-neutral-300 text-[11px] font-mono font-bold tracking-wider uppercase">
+                  {loadingMembers ? "CONNECTING..." : errorMembers ? "DB ERROR" : "CLUSTER0 ONLINE"}
+                </span>
+              </div>
+            </div>
           </div>
         </div>
 
-        {/* LOADING STATE - SKELETON */}
+        {/* LOADING STATE - SKELETON CARDS */}
         {loadingMembers ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 2xl:grid-cols-4 gap-4 md:gap-6">
-            {[...Array(6)].map((_, i) => (
-              <div key={i} className="h-28 bg-neutral-900/60 rounded-xl border border-white/5 p-4 animate-pulse flex items-center gap-4">
-                <div className="w-14 h-14 bg-neutral-800 rounded-lg shrink-0" />
-                <div className="flex-1 space-y-2">
-                  <div className="w-16 h-3 bg-neutral-800 rounded" />
-                  <div className="w-32 h-5 bg-neutral-800 rounded" />
-                  <div className="w-24 h-3 bg-neutral-800 rounded" />
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            {[...Array(8)].map((_, i) => (
+              <div key={i} className="bg-neutral-950 border border-white/5 rounded-2xl overflow-hidden animate-pulse h-80 flex flex-col justify-between p-4">
+                <div className="h-28 bg-neutral-900 rounded-xl w-full" />
+                <div className="space-y-3 mt-4">
+                  <div className="h-5 bg-neutral-900 rounded w-3/4" />
+                  <div className="h-4 bg-neutral-900 rounded w-1/2" />
                 </div>
+                <div className="h-8 bg-neutral-900 rounded-lg w-full mt-auto" />
               </div>
             ))}
           </div>
         ) : errorMembers ? (
           /* ERROR STATE */
-          <div className="text-center py-12 px-4 bg-red-950/30 border border-red-500/30 rounded-2xl backdrop-blur-sm max-w-2xl mx-auto">
-            <div className="w-12 h-12 bg-red-500/10 border border-red-500/20 rounded-full flex items-center gap-0 justify-center mx-auto mb-3 text-red-500 font-bold text-xl">
+          <div className="text-center py-16 px-6 bg-red-950/20 border border-red-500/30 rounded-3xl backdrop-blur-md max-w-xl mx-auto shadow-2xl">
+            <div className="w-14 h-14 bg-red-500/10 border border-red-500/30 rounded-2xl flex items-center justify-center mx-auto mb-4 text-red-500 font-black text-2xl">
               !
             </div>
-            <h3 className="text-red-400 font-bold text-base uppercase tracking-wider mb-2">Gagal Sinkronisasi Database</h3>
-            <p className="text-slate-400 text-xs md:text-sm leading-relaxed max-w-md mx-auto">
-              Periksa kembali string koneksi <code className="text-orange-400 bg-black/50 px-1.5 py-0.5 rounded font-mono">MONGODB_URI</code> di environment variables project kamu.
+            <h3 className="text-red-400 font-black text-lg uppercase tracking-wider mb-2">Gagal Sinkronisasi Database</h3>
+            <p className="text-neutral-400 text-xs sm:text-sm leading-relaxed">
+              Koneksi ke database terputus. Pastikan variabel <code className="text-orange-400 bg-black/60 px-2 py-0.5 rounded font-mono">MONGODB_URI</code> diatur dengan benar di Vercel/Environment.
             </p>
           </div>
         ) : members.length === 0 ? (
           /* EMPTY STATE */
-          <div className="text-center py-16 px-4 bg-neutral-900/40 border border-white/5 rounded-2xl backdrop-blur-sm">
-            <h3 className="text-orange-500 font-bold text-sm uppercase tracking-widest mb-1">Roster Kosong</h3>
-            <p className="text-slate-400 text-xs">Belum ada data member yang terdaftar di database.</p>
+          <div className="text-center py-20 px-6 bg-neutral-950/60 border border-white/5 rounded-3xl backdrop-blur-md max-w-lg mx-auto">
+            <h3 className="text-orange-500 font-black text-base uppercase tracking-widest mb-1">Roster Kosong</h3>
+            <p className="text-neutral-400 text-xs">Belum ada anggota yang terdaftar di database clan.</p>
           </div>
         ) : (
-          /* MEMBER GRID */
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-4 md:gap-6">
+          /* MEMBER GRID - HIGH RESOLUTION DESKTOP FRIENDLY */
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {members.map((member, index) => {
               const roleStyle = getRoleColor(member.role);
               const bannerSrc = getBannerImage(member.specialRoles?.[0]);
@@ -175,74 +193,79 @@ export default function MembersPage() {
                 <div 
                   key={member._id || index} 
                   onClick={() => setSelectedMember(member)} 
-                  className="group relative overflow-hidden p-4 md:p-5 rounded-2xl border border-white/10 hover:border-orange-500/60 bg-neutral-950 transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_8px_30px_rgba(234,88,12,0.2)] cursor-pointer flex items-center gap-4"
+                  className="group relative bg-neutral-950 border border-white/10 hover:border-orange-500/60 rounded-2xl overflow-hidden transition-all duration-300 hover:-translate-y-2 hover:shadow-[0_16px_36px_rgba(234,88,12,0.18)] cursor-pointer flex flex-col justify-between"
                 >
-                  {/* Banner Image Background Overlay */}
-                  <div 
-                    className="absolute inset-0 bg-cover bg-center opacity-25 group-hover:opacity-45 group-hover:scale-105 transition-all duration-500 ease-out"
-                    style={{ backgroundImage: `url(${bannerSrc})` }}
-                  />
-                  {/* Subtle Gradient Mask for readability */}
-                  <div className="absolute inset-0 bg-gradient-to-r from-neutral-950 via-neutral-950/90 to-transparent" />
-
-                  {/* Card Content */}
-                  <div className="relative z-10 flex items-center gap-4 w-full min-w-0">
+                  {/* TOP BANNER SECTION */}
+                  <div className="relative h-28 w-full overflow-hidden bg-neutral-900 shrink-0">
+                    <div 
+                      className="absolute inset-0 bg-cover bg-center opacity-50 group-hover:opacity-75 group-hover:scale-110 transition-all duration-500 ease-out"
+                      style={{ backgroundImage: `url(${bannerSrc})` }}
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-neutral-950 via-neutral-950/20 to-black/40" />
                     
-                    {/* Minecraft Skin Avatar */}
-                    <div className="w-14 h-14 md:w-16 md:h-16 shrink-0 rounded-xl border-2 border-white/15 group-hover:border-orange-400 transition-colors shadow-lg overflow-hidden bg-neutral-900 relative">
-                      <div 
-                        className="w-full h-full relative"
-                        style={{ imageRendering: 'pixelated' }}
-                      >
-                        {/* Base Skin Layer */}
-                        <img 
-                          src={currentSkinUrl} 
-                          alt={member.name} 
-                          className="absolute max-w-none"
-                          style={{ 
-                            width: '800%', 
-                            height: 'auto', 
-                            left: '-100%', 
-                            top: '-100%' 
-                          }} 
-                        />
-                        {/* Hat / Outer Skin Layer */}
-                        <img 
-                          src={currentSkinUrl} 
-                          alt="" 
-                          className="absolute max-w-none"
-                          style={{ 
-                            width: '800%', 
-                            height: 'auto', 
-                            left: '-500%', 
-                            top: '-100%' 
-                          }} 
-                        />
-                      </div>
+                    {/* Role Badge Pinned Top-Right */}
+                    <div className="absolute top-3 right-3 z-10">
+                      <span className={`text-[10px] font-black uppercase tracking-widest px-2.5 py-1 rounded-lg border backdrop-blur-md ${roleStyle}`}>
+                        {member.role}
+                      </span>
                     </div>
-                    
-                    {/* Details Column */}
-                    <div className="flex-1 min-w-0 flex flex-col justify-center">
-                      <div className="mb-1">
-                        <span className={`text-[9px] md:text-[10px] font-black uppercase tracking-widest inline-block px-2 py-0.5 rounded-md border ${roleStyle}`}>
-                          {member.role}
-                        </span>
+                  </div>
+
+                  {/* MAIN CARD BODY */}
+                  <div className="px-5 pb-5 pt-0 relative flex-1 flex flex-col justify-between">
+                    <div>
+                      {/* Avatar Overlapping Banner */}
+                      <div className="flex items-end justify-between -mt-10 mb-3 relative z-10">
+                        <div className="w-16 h-16 rounded-2xl border-4 border-neutral-950 bg-neutral-900 overflow-hidden shadow-2xl group-hover:border-orange-500 transition-colors shrink-0 relative">
+                          <div 
+                            className="w-full h-full relative"
+                            style={{ imageRendering: 'pixelated' }}
+                          >
+                            {/* Base Layer */}
+                            <img 
+                              src={currentSkinUrl} 
+                              alt={member.name} 
+                              className="absolute max-w-none"
+                              style={{ 
+                                width: '800%', 
+                                height: 'auto', 
+                                left: '-100%', 
+                                top: '-100%' 
+                              }} 
+                            />
+                            {/* Hat/Outer Layer */}
+                            <img 
+                              src={currentSkinUrl} 
+                              alt="" 
+                              className="absolute max-w-none"
+                              style={{ 
+                                width: '800%', 
+                                height: 'auto', 
+                                left: '-500%', 
+                                top: '-100%' 
+                              }} 
+                            />
+                          </div>
+                        </div>
                       </div>
-                      
-                      <h3 className="text-base md:text-lg font-black tracking-tight text-white group-hover:text-orange-400 transition-colors truncate">
+
+                      {/* Gamertag Name */}
+                      <h3 className="text-lg font-black tracking-tight text-white group-hover:text-orange-400 transition-colors truncate mb-1">
                         {member.name}
                       </h3>
-                      
-                      {/* Special Roles / Skills Icons */}
-                      {member.specialRoles && member.specialRoles.length > 0 && (
-                        <div className="flex flex-wrap items-center gap-1.5 mt-1.5">
+                    </div>
+
+                    {/* Special Roles Badges */}
+                    <div className="pt-3 border-t border-white/5 mt-4">
+                      {member.specialRoles && member.specialRoles.length > 0 ? (
+                        <div className="flex flex-wrap gap-1.5">
                           {member.specialRoles.map((role, i) => {
                             const iconSrc = getSpecialIcon(role);
                             if (!iconSrc) return null;
                             return (
                               <div 
                                 key={i} 
-                                className="flex items-center gap-1 bg-black/60 px-2 py-0.5 rounded-md border border-white/10 backdrop-blur-md"
+                                className="flex items-center gap-1.5 bg-neutral-900/90 px-2.5 py-1 rounded-lg border border-white/10 backdrop-blur-md group-hover:border-white/20 transition-colors"
                                 title={role}
                               >
                                 <img 
@@ -250,16 +273,21 @@ export default function MembersPage() {
                                   alt={role} 
                                   className="w-3.5 h-3.5 object-contain" 
                                 />
-                                <span className="text-[9px] text-slate-300 font-semibold uppercase tracking-wider leading-none">
+                                <span className="text-[10px] text-neutral-300 font-bold uppercase tracking-wider leading-none">
                                   {role}
                                 </span>
                               </div>
                             );
                           })}
                         </div>
+                      ) : (
+                        <span className="text-[10px] text-neutral-600 uppercase tracking-widest font-bold">Standard Member</span>
                       )}
                     </div>
                   </div>
+
+                  {/* Bottom Hover Glow Bar */}
+                  <div className="h-1 w-full bg-gradient-to-r from-transparent via-orange-500/0 to-transparent group-hover:via-orange-500 transition-all duration-500" />
                 </div>
               );
             })}
