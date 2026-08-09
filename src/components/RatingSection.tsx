@@ -177,8 +177,31 @@ export default function RatingSection() {
     }
   };
 
+  // Duplikasi rating list untuk animasi auto-scroll loop yang halus
+  const displayRatings = ratings.length > 2 ? [...ratings, ...ratings] : ratings;
+
   return (
     <>
+      {/* STYLE UNTUK AUTO-SCROLL MARQUEE & CUSTOM ANIMATION */}
+      <style jsx global>{`
+        @keyframes ratingMarquee {
+          0% {
+            transform: translateX(0%);
+          }
+          100% {
+            transform: translateX(-50%);
+          }
+        }
+        .animate-rating-scroll {
+          display: flex;
+          width: max-content;
+          animation: ratingMarquee 35s linear infinite;
+        }
+        .animate-rating-scroll:hover {
+          animation-play-state: paused;
+        }
+      `}</style>
+
       {/* ======================================================== */}
       {/* FLOATING TOAST NOTIFICATION SYSTEM */}
       {/* ======================================================== */}
@@ -212,37 +235,54 @@ export default function RatingSection() {
       {/* ======================================================== */}
       {/* EVALUASI KEPUASAN & RATING SYSTEM */}
       {/* ======================================================== */}
-      <section className="py-10 px-6 bg-[#0a0a0c]/80 border border-white/10 rounded-2xl backdrop-blur-xl p-6 md:p-8 shadow-[0_20px_50px_rgba(0,0,0,0.6)] relative overflow-hidden">
+      <section className="py-10 px-4 sm:px-6 bg-[#0a0a0d]/90 border border-white/10 rounded-3xl backdrop-blur-2xl p-6 md:p-10 shadow-[0_20px_60px_rgba(0,0,0,0.8)] relative overflow-hidden">
         
         {/* Glow Decor Background */}
-        <div className="absolute -top-24 -right-24 w-60 h-60 bg-orange-600/10 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute -top-28 -right-28 w-80 h-80 bg-orange-500/15 rounded-full blur-[100px] pointer-events-none" />
+        <div className="absolute -bottom-28 -left-28 w-80 h-80 bg-amber-500/10 rounded-full blur-[100px] pointer-events-none" />
 
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center border-b border-white/5 pb-6 mb-8 gap-4 relative z-10">
+        {/* HEADER SECTION */}
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center border-b border-white/10 pb-6 mb-8 gap-4 relative z-10">
           <div>
-            <h2 className="text-2xl font-black uppercase tracking-tight text-white flex items-center gap-2">
+            <div className="flex items-center gap-2 mb-1">
+              <span className="w-2.5 h-2.5 rounded-full bg-orange-500 animate-ping" />
+              <span className="text-[10px] font-black uppercase tracking-widest text-orange-400">Live Feedback</span>
+            </div>
+            <h2 className="text-2xl sm:text-3xl font-black uppercase tracking-tight text-white flex items-center gap-2">
               Evaluasi Kepuasan Website
             </h2>
-            <p className="text-xs text-slate-400 uppercase tracking-widest font-semibold mt-1">Sistem Penilaian Global Real-Time</p>
+            <p className="text-xs text-slate-400 uppercase tracking-widest font-bold mt-1">
+              Sistem Penilaian Ulasan Komunitas Real-Time
+            </p>
           </div>
           
-          <div className="flex items-center gap-4 bg-black/50 border border-white/10 px-5 py-3 rounded-xl backdrop-blur-md shadow-inner">
+          <div className="flex items-center gap-5 bg-black/60 border border-white/10 px-6 py-3.5 rounded-2xl backdrop-blur-md shadow-2xl">
             <div className="text-center">
-              <span className="text-2xl font-black text-amber-400 block leading-none drop-shadow-[0_0_10px_rgba(251,191,36,0.3)]">{calculateAverageRating()}</span>
-              <span className="text-[8px] text-slate-400 font-bold uppercase tracking-widest mt-1 block">Skor Rata-Rata</span>
+              <div className="flex items-center justify-center gap-1.5">
+                <span className="text-3xl font-black text-amber-400 leading-none drop-shadow-[0_0_15px_rgba(251,191,36,0.5)]">
+                  {calculateAverageRating()}
+                </span>
+                <svg className="w-5 h-5 text-amber-400 fill-amber-400 drop-shadow-[0_0_10px_rgba(251,191,36,0.6)]" viewBox="0 0 24 24">
+                  <path d="M12 .587l3.668 7.431 8.2 1.191-5.934 5.787 1.4 8.168L12 18.896l-7.334 3.857 1.4-8.168L.132 9.209l8.2-1.191L12 .587z"/>
+                </svg>
+              </div>
+              <span className="text-[9px] text-slate-400 font-bold uppercase tracking-widest mt-1 block">Skor Rata-Rata</span>
             </div>
-            <div className="w-px h-8 bg-white/10" />
+            <div className="w-px h-9 bg-white/10" />
             <div className="text-center">
-              <span className="text-2xl font-black text-white block leading-none">{ratings.length}</span>
-              <span className="text-[8px] text-slate-400 font-bold uppercase tracking-widest mt-1 block">Total Ulasan</span>
+              <span className="text-3xl font-black text-white leading-none">{ratings.length}</span>
+              <span className="text-[9px] text-slate-400 font-bold uppercase tracking-widest mt-1 block">Total Ulasan</span>
             </div>
           </div>
         </div>
 
-        {/* STAR INPUT CARD */}
-        <div className="bg-gradient-to-b from-black/60 to-black/30 border border-white/10 p-8 rounded-2xl flex flex-col items-center text-center max-w-xl mx-auto mb-10 shadow-2xl relative z-10">
-          <h4 className="text-xs font-extrabold uppercase tracking-widest text-slate-300 mb-4">Berikan Penilaian Anda terhadap Website</h4>
+        {/* STAR INPUT CARD (PILIH BINTANG) */}
+        <div className="bg-gradient-to-b from-white/[0.06] to-white/[0.02] border border-white/10 p-8 rounded-2xl flex flex-col items-center text-center max-w-xl mx-auto mb-10 shadow-2xl relative z-10 backdrop-blur-md">
+          <h4 className="text-xs sm:text-sm font-black uppercase tracking-widest text-slate-200 mb-4">
+            Berikan Penilaian Anda Terhadap Website
+          </h4>
           
-          <div className="flex items-center gap-2 mb-3">
+          <div className="flex items-center gap-2 sm:gap-3 mb-3">
             {[1, 2, 3, 4, 5].map((star) => (
               <button
                 key={star}
@@ -250,10 +290,15 @@ export default function RatingSection() {
                 onClick={() => handleStarClick(star)}
                 onMouseEnter={() => setRatingHover(star)}
                 onMouseLeave={() => setRatingHover(0)}
-                className="p-1 transition-transform hover:scale-125 focus:outline-none group"
+                className="p-1.5 transition-all duration-200 hover:scale-125 active:scale-95 focus:outline-none group"
+                aria-label={`Beri ${star} Bintang`}
               >
                 <svg 
-                  className={`w-9 h-9 ${star <= (ratingHover || selectedStars) ? 'text-amber-400 fill-amber-400 drop-shadow-[0_0_12px_rgba(251,191,36,0.6)]' : 'text-neutral-700 fill-neutral-800'} transition-all duration-200`} 
+                  className={`w-9 h-9 sm:w-11 sm:h-11 ${
+                    star <= (ratingHover || selectedStars) 
+                      ? 'text-amber-400 fill-amber-400 drop-shadow-[0_0_18px_rgba(251,191,36,0.8)] scale-110' 
+                      : 'text-neutral-700 fill-neutral-800 hover:text-neutral-500'
+                  } transition-all duration-200`} 
                   viewBox="0 0 24 24" 
                   stroke="currentColor" 
                   strokeWidth="1.5"
@@ -263,52 +308,80 @@ export default function RatingSection() {
               </button>
             ))}
           </div>
-          <p className="text-[10px] text-slate-400 uppercase tracking-wider font-medium">Klik bintang untuk melampirkan ulasan pesan tertulis</p>
+          <p className="text-[11px] text-slate-400 uppercase tracking-wider font-semibold">
+            Klik bintang di atas untuk menulis ulasan pesan
+          </p>
         </div>
 
-        {/* CAROUSEL / REVIEWS DISPLAY */}
-        <div className="w-full overflow-hidden relative py-4 border-y border-white/5 bg-black/30 rounded-xl mb-6 z-10">
+        {/* ======================================================== */}
+        {/* CAROUSEL / ULASAN SLIDER OTOMATIS (AUTO-SCROLL MARQUEE) */}
+        {/* ======================================================== */}
+        <div className="w-full overflow-hidden relative py-6 border-y border-white/10 bg-black/40 rounded-2xl mb-6 z-10">
           {ratings.length === 0 ? (
-            <p className="text-center text-xs text-slate-500 uppercase font-bold tracking-wider py-8">Belum ada obrolan ulasan bintang terdaftar.</p>
+            <p className="text-center text-xs text-slate-500 uppercase font-bold tracking-widest py-10">
+              Belum ada ulasan bintang yang terdaftar. Jadilah yang pertama memberi ulasan!
+            </p>
           ) : (
-            <div className="flex gap-5 overflow-x-auto pb-4 px-4 scrollbar-thin scrollbar-thumb-orange-500/30 scrollbar-track-transparent">
-              {ratings.map((item) => (
+            <div className={ratings.length > 2 ? "animate-rating-scroll gap-6 px-4" : "flex gap-6 overflow-x-auto pb-2 px-4 scrollbar-none"}>
+              {displayRatings.map((item, index) => (
                 <div 
-                  key={item._id} 
-                  className="flex-shrink-0 w-72 bg-[#0e0e12] border border-white/10 p-5 rounded-2xl flex flex-col justify-between shadow-lg relative group hover:border-orange-500/40 transition-all duration-300 hover:-translate-y-1"
+                  key={`${item._id}-${index}`} 
+                  className="flex-shrink-0 w-80 sm:w-85 bg-gradient-to-b from-[#12121a]/90 to-[#0a0a0f]/90 border border-white/10 hover:border-orange-500/50 p-6 rounded-2xl flex flex-col justify-between shadow-xl relative group transition-all duration-300 hover:-translate-y-1.5 backdrop-blur-md"
                 >
                   <div>
-                    <div className="flex justify-between items-start mb-3 gap-2">
-                      <div className="flex items-center gap-2.5 min-w-0">
-                        <div className="w-7 h-7 rounded-lg bg-orange-600/20 border border-orange-500/30 flex items-center justify-center text-orange-400 font-black text-xs flex-shrink-0 uppercase">
+                    {/* Header Kartu Ulasan: Avatar + Nama + Bintang */}
+                    <div className="flex justify-between items-start mb-4 gap-3">
+                      <div className="flex items-center gap-3 min-w-0">
+                        {/* Avatar Initial dengan Glow Ring */}
+                        <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-orange-500 to-amber-600 border border-amber-300/40 flex items-center justify-center text-white font-black text-sm flex-shrink-0 uppercase shadow-[0_0_15px_rgba(234,88,12,0.4)]">
                           {item.name.charAt(0)}
                         </div>
-                        <h5 className="text-xs font-bold text-white truncate max-w-[130px]">{item.name}</h5>
+                        <div className="min-w-0">
+                          <h5 className="text-xs font-black text-white truncate max-w-[140px] tracking-wide group-hover:text-orange-400 transition-colors">
+                            {item.name}
+                          </h5>
+                          <span className="text-[9px] text-slate-400 font-mono font-semibold block mt-0.5">
+                            {new Date(item.createdAt).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}
+                          </span>
+                        </div>
                       </div>
-                      <div className="flex items-center gap-0.5 flex-shrink-0 bg-black/40 px-2 py-1 rounded-md border border-white/5">
-                        <span className="text-[10px] font-black text-amber-400 mr-1">{item.stars}</span>
-                        <svg className="w-3 h-3 text-amber-400 fill-amber-400" viewBox="0 0 24 24">
+
+                      {/* Badge Bintang */}
+                      <div className="flex items-center gap-1 flex-shrink-0 bg-amber-500/10 border border-amber-500/30 px-2.5 py-1 rounded-lg shadow-sm">
+                        <span className="text-xs font-black text-amber-400">{item.stars}</span>
+                        <svg className="w-3.5 h-3.5 text-amber-400 fill-amber-400 drop-shadow-[0_0_6px_rgba(251,191,36,0.8)]" viewBox="0 0 24 24">
                           <path d="M12 .587l3.668 7.431 8.2 1.191-5.934 5.787 1.4 8.168L12 18.896l-7.334 3.857 1.4-8.168L.132 9.209l8.2-1.191L12 .587z"/>
                         </svg>
                       </div>
                     </div>
-                    <p className="text-xs text-slate-300 font-normal line-clamp-3 leading-relaxed break-words bg-black/20 p-3 rounded-xl border border-white/5">
-                      {item.message || <span className="italic text-slate-500 text-[10px]">Tanpa komentar tertulis.</span>}
-                    </p>
+
+                    {/* Pesan Komentar / Review Text */}
+                    <div className="relative bg-black/40 p-4 rounded-xl border border-white/5 shadow-inner">
+                      <p className="text-xs text-slate-200 font-medium leading-relaxed line-clamp-4 break-words">
+                        {item.message ? (
+                          `"${item.message}"`
+                        ) : (
+                          <span className="italic text-slate-500 text-[11px]">Tanpa komentar tertulis.</span>
+                        )}
+                      </p>
+                    </div>
                   </div>
 
-                  <div className="flex justify-between items-center mt-4 pt-2 border-t border-white/5">
-                    <span className="text-[9px] text-slate-500 font-mono font-bold uppercase tracking-wider">
-                      {new Date(item.createdAt).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}
+                  {/* Footer Kartu & Tombol Hapus */}
+                  <div className="flex justify-between items-center mt-5 pt-3 border-t border-white/5">
+                    <span className="text-[9px] text-slate-500 uppercase tracking-widest font-extrabold flex items-center gap-1">
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" /> Terverifikasi
                     </span>
 
                     <button
                       type="button"
                       onClick={() => triggerDeleteRating(item._id)}
-                      className={`p-1.5 rounded-lg border border-rose-500/30 bg-rose-500/10 text-rose-400 hover:bg-rose-600 hover:text-white transition-all ${isAdminMode ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}
-                      title="Hapus Ulasan Chat"
+                      className={`p-1.5 rounded-lg border border-rose-500/30 bg-rose-500/10 text-rose-400 hover:bg-rose-600 hover:text-white transition-all duration-200 ${
+                        isAdminMode ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
+                      }`}
+                      title="Hapus Ulasan Ini"
                     >
-                      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-4v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                       </svg>
                     </button>
@@ -319,11 +392,19 @@ export default function RatingSection() {
           )}
         </div>
 
-        <div className="flex justify-end px-2 z-10 relative">
+        {/* Toggle Admin Panel Moderasi */}
+        <div className="flex justify-between items-center px-2 z-10 relative">
+          <p className="text-[10px] text-slate-500 font-semibold tracking-wider">
+            * Layar komentar bergeser otomatis. Arahkan kursor untuk pause.
+          </p>
           <button
             type="button"
             onClick={handleMinusAdminToggle}
-            className={`w-8 h-8 rounded-lg border flex items-center justify-center text-sm font-bold transition-all ${isAdminMode ? 'bg-rose-600/20 border-rose-500 text-rose-400 shadow-[0_0_15px_rgba(244,63,94,0.3)]' : 'bg-white/5 border-white/10 text-slate-500 hover:text-white hover:border-white/20'}`}
+            className={`w-8 h-8 rounded-lg border flex items-center justify-center text-sm font-bold transition-all ${
+              isAdminMode 
+                ? 'bg-rose-600/20 border-rose-500 text-rose-400 shadow-[0_0_15px_rgba(244,63,94,0.3)]' 
+                : 'bg-white/5 border-white/10 text-slate-500 hover:text-white hover:border-white/20'
+            }`}
             title={isAdminMode ? "Matikan Panel Moderasi" : "Aktifkan Panel Moderasi"}
           >
             －
@@ -338,12 +419,14 @@ export default function RatingSection() {
       {showRateModal && (
         <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-black/80 backdrop-blur-md animate-in fade-in duration-200" onClick={() => setShowRateModal(false)} />
-          <div className="relative bg-[#0d0d12] border border-orange-500/30 p-6 md:p-8 rounded-2xl w-full max-w-md shadow-[0_0_50px_rgba(234,88,12,0.15)] animate-in zoom-in-95 duration-200">
+          <div className="relative bg-[#0d0d12] border border-orange-500/40 p-6 md:p-8 rounded-2xl w-full max-w-md shadow-[0_0_60px_rgba(234,88,12,0.25)] animate-in zoom-in-95 duration-200">
             
             <div className="flex justify-between items-center mb-6 pb-3 border-b border-white/10">
               <div>
                 <h3 className="text-base font-black uppercase tracking-wider text-white">Formulir Evaluasi</h3>
-                <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-0.5">Rating Terpilih: <span className="text-amber-400">{selectedStars} Bintang</span></p>
+                <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-0.5">
+                  Rating Terpilih: <span className="text-amber-400 font-black">{selectedStars} Bintang</span>
+                </p>
               </div>
               <button 
                 type="button" 
@@ -361,7 +444,7 @@ export default function RatingSection() {
                   type="text"
                   value={reviewerName}
                   onChange={e => setReviewerName(e.target.value)}
-                  placeholder="Masukkan nama identitas Anda..."
+                  placeholder="Masukkan nama Anda..."
                   className="bg-black/60 border border-white/10 px-4 py-3 rounded-xl text-sm text-white focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500 font-bold transition-all placeholder:text-slate-600"
                   required
                 />
@@ -372,7 +455,7 @@ export default function RatingSection() {
                 <textarea 
                   value={reviewerMessage}
                   onChange={e => setReviewerMessage(e.target.value)}
-                  placeholder="Ketik impresi atau saran Anda untuk kemajuan clan Freedom..."
+                  placeholder="Ketik impresi atau saran Anda untuk kemajuan clan..."
                   className="bg-black/60 border border-white/10 px-4 py-3 rounded-xl text-xs text-slate-200 h-28 resize-none focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500 leading-relaxed transition-all placeholder:text-slate-600"
                 />
               </div>
@@ -380,7 +463,7 @@ export default function RatingSection() {
               <button 
                 type="submit" 
                 disabled={submittingRate}
-                className="bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-500 hover:to-amber-500 text-white font-black py-4 rounded-xl text-xs uppercase tracking-widest transition-all disabled:opacity-50 shadow-[0_0_20px_rgba(234,88,12,0.4)] mt-2 active:scale-95"
+                className="bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-500 hover:to-amber-500 text-white font-black py-4 rounded-xl text-xs uppercase tracking-widest transition-all disabled:opacity-50 shadow-[0_0_25px_rgba(234,88,12,0.4)] mt-2 active:scale-95"
               >
                 {submittingRate ? "Menyimpan Data..." : "Kirim Ulasan Resmi"}
               </button>
@@ -395,7 +478,7 @@ export default function RatingSection() {
       {showAuthModal && (
         <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-black/80 backdrop-blur-md animate-in fade-in duration-200" onClick={() => setShowAuthModal(false)} />
-          <div className="relative bg-[#0d0d12] border border-orange-500/30 p-6 rounded-2xl w-full max-w-sm shadow-[0_0_40px_rgba(234,88,12,0.2)] animate-in zoom-in-95 duration-200">
+          <div className="relative bg-[#0d0d12] border border-orange-500/40 p-6 rounded-2xl w-full max-w-sm shadow-[0_0_50px_rgba(234,88,12,0.25)] animate-in zoom-in-95 duration-200">
             
             <div className="text-center mb-5">
               <div className="w-10 h-10 rounded-xl bg-orange-500/10 border border-orange-500/30 text-orange-500 flex items-center justify-center mx-auto mb-3">
@@ -428,12 +511,12 @@ export default function RatingSection() {
       )}
 
       {/* ======================================================== */}
-      {/* MODAL KONFIRMASI HAPUS (GANTI PROMPT CHROME NATIVE) */}
+      {/* MODAL KONFIRMASI HAPUS */}
       {/* ======================================================== */}
       {confirmDeleteId && (
         <div className="fixed inset-0 z-[250] flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-black/80 backdrop-blur-md animate-in fade-in duration-200" onClick={() => setConfirmDeleteId(null)} />
-          <div className="relative bg-[#0d0d12] border border-rose-500/30 p-6 rounded-2xl w-full max-w-sm text-center shadow-[0_0_50px_rgba(244,63,94,0.25)] animate-in zoom-in-95 duration-200">
+          <div className="relative bg-[#0d0d12] border border-rose-500/40 p-6 rounded-2xl w-full max-w-sm text-center shadow-[0_0_60px_rgba(244,63,94,0.3)] animate-in zoom-in-95 duration-200">
             
             <div className="w-12 h-12 rounded-2xl bg-rose-500/10 border border-rose-500/30 text-rose-500 flex items-center justify-center mx-auto mb-4">
               <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
