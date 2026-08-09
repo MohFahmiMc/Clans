@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import bannerImage from '../../../assets/benner.png';
 import background2Image from '../../../assets/background2.png';
-import defaultEagleLogo from '../../../assets/steve.png';
+import freedomLogo from '../../../assets/logo.png';
 
 interface Alliance {
   _id: string;
@@ -138,7 +138,7 @@ export default function AlliancePage() {
                     </h3>
                   </div>
 
-                  {/* Info Grid (Owner, Network, Date) - Menggantikan spasi karakter "|" */}
+                  {/* Info Grid (Owner, Network, Date) */}
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6 bg-black/40 p-4 rounded-xl border border-white/5">
                     <div>
                       <span className="text-[10px] text-slate-500 font-bold uppercase tracking-widest block mb-1">Owner</span>
@@ -186,11 +186,11 @@ export default function AlliancePage() {
                 <div className="w-full md:w-40 flex-shrink-0 flex items-center justify-center md:items-start z-10 pt-2">
                   <div className="w-32 h-32 md:w-36 md:h-36 bg-[#050507] border border-white/10 rounded-2xl p-3 shadow-inner group-hover:border-yellow-500/40 transition-colors relative">
                     <img 
-                      src={clan.logoUrl || getSrc(defaultEagleLogo)} 
+                      src={clan.logoUrl || getSrc(freedomLogo)} 
                       alt={`Logo ${clan.name}`} 
                       className="w-full h-full object-contain filter drop-shadow-[0_0_12px_rgba(255,255,255,0.1)] group-hover:drop-shadow-[0_0_20px_rgba(234,179,8,0.4)] transition-all duration-300 group-hover:scale-105"
                       onError={(e) => {
-                        (e.target as HTMLImageElement).src = getSrc(defaultEagleLogo);
+                        (e.target as HTMLImageElement).src = getSrc(freedomLogo);
                       }}
                     />
                   </div>
