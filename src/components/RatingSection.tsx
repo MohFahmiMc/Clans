@@ -177,31 +177,8 @@ export default function RatingSection() {
     }
   };
 
-  // Duplikasi rating list untuk animasi auto-scroll loop yang halus
-  const displayRatings = ratings.length > 2 ? [...ratings, ...ratings] : ratings;
-
   return (
     <>
-      {/* STYLE UNTUK AUTO-SCROLL MARQUEE & CUSTOM ANIMATION */}
-      <style jsx global>{`
-        @keyframes ratingMarquee {
-          0% {
-            transform: translateX(0%);
-          }
-          100% {
-            transform: translateX(-50%);
-          }
-        }
-        .animate-rating-scroll {
-          display: flex;
-          width: max-content;
-          animation: ratingMarquee 35s linear infinite;
-        }
-        .animate-rating-scroll:hover {
-          animation-play-state: paused;
-        }
-      `}</style>
-
       {/* ======================================================== */}
       {/* FLOATING TOAST NOTIFICATION SYSTEM */}
       {/* ======================================================== */}
@@ -314,22 +291,22 @@ export default function RatingSection() {
         </div>
 
         {/* ======================================================== */}
-        {/* CAROUSEL / ULASAN SLIDER OTOMATIS (AUTO-SCROLL MARQUEE) */}
+        {/* ULASAN KOMENTAR STATIS (DIEM Saja & BINTANG LANGSUNG LENGKAP) */}
         {/* ======================================================== */}
-        <div className="w-full overflow-hidden relative py-6 border-y border-white/10 bg-black/40 rounded-2xl mb-6 z-10">
+        <div className="w-full py-6 border-y border-white/10 bg-black/40 rounded-2xl mb-6 z-10">
           {ratings.length === 0 ? (
             <p className="text-center text-xs text-slate-500 uppercase font-bold tracking-widest py-10">
               Belum ada ulasan bintang yang terdaftar. Jadilah yang pertama memberi ulasan!
             </p>
           ) : (
-            <div className={ratings.length > 2 ? "animate-rating-scroll gap-6 px-4" : "flex gap-6 overflow-x-auto pb-2 px-4 scrollbar-none"}>
-              {displayRatings.map((item, index) => (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 px-4">
+              {ratings.map((item) => (
                 <div 
-                  key={`${item._id}-${index}`} 
-                  className="flex-shrink-0 w-80 sm:w-85 bg-gradient-to-b from-[#12121a]/90 to-[#0a0a0f]/90 border border-white/10 hover:border-orange-500/50 p-6 rounded-2xl flex flex-col justify-between shadow-xl relative group transition-all duration-300 hover:-translate-y-1.5 backdrop-blur-md"
+                  key={item._id} 
+                  className="w-full bg-gradient-to-b from-[#12121a]/90 to-[#0a0a0f]/90 border border-white/10 hover:border-orange-500/50 p-6 rounded-2xl flex flex-col justify-between shadow-xl relative group transition-all duration-300 hover:-translate-y-1 backdrop-blur-md"
                 >
                   <div>
-                    {/* Header Kartu Ulasan: Avatar + Nama + Bintang */}
+                    {/* Header Kartu Ulasan: Avatar + Nama + 5 Bintang Langsung */}
                     <div className="flex justify-between items-start mb-4 gap-3">
                       <div className="flex items-center gap-3 min-w-0">
                         {/* Avatar Initial dengan Glow Ring */}
@@ -337,7 +314,7 @@ export default function RatingSection() {
                           {item.name.charAt(0)}
                         </div>
                         <div className="min-w-0">
-                          <h5 className="text-xs font-black text-white truncate max-w-[140px] tracking-wide group-hover:text-orange-400 transition-colors">
+                          <h5 className="text-xs font-black text-white truncate max-w-[120px] tracking-wide group-hover:text-orange-400 transition-colors">
                             {item.name}
                           </h5>
                           <span className="text-[9px] text-slate-400 font-mono font-semibold block mt-0.5">
@@ -346,18 +323,27 @@ export default function RatingSection() {
                         </div>
                       </div>
 
-                      {/* Badge Bintang */}
-                      <div className="flex items-center gap-1 flex-shrink-0 bg-amber-500/10 border border-amber-500/30 px-2.5 py-1 rounded-lg shadow-sm">
-                        <span className="text-xs font-black text-amber-400">{item.stars}</span>
-                        <svg className="w-3.5 h-3.5 text-amber-400 fill-amber-400 drop-shadow-[0_0_6px_rgba(251,191,36,0.8)]" viewBox="0 0 24 24">
-                          <path d="M12 .587l3.668 7.431 8.2 1.191-5.934 5.787 1.4 8.168L12 18.896l-7.334 3.857 1.4-8.168L.132 9.209l8.2-1.191L12 .587z"/>
-                        </svg>
+                      {/* Barisan Bintang Langsung Sesuai Jumlah Rating (Misal Bintang 5 Langsung Ada 5 Bintang) */}
+                      <div className="flex items-center gap-1 flex-shrink-0 bg-amber-500/10 border border-amber-500/30 px-2.5 py-1.5 rounded-lg shadow-sm">
+                        {[1, 2, 3, 4, 5].map((starIndex) => (
+                          <svg
+                            key={starIndex}
+                            className={`w-3.5 h-3.5 ${
+                              starIndex <= item.stars
+                                ? 'text-amber-400 fill-amber-400 drop-shadow-[0_0_6px_rgba(251,191,36,0.8)]'
+                                : 'text-neutral-700 fill-neutral-800'
+                            }`}
+                            viewBox="0 0 24 24"
+                          >
+                            <path d="M12 .587l3.668 7.431 8.2 1.191-5.934 5.787 1.4 8.168L12 18.896l-7.334 3.857 1.4-8.168L.132 9.209l8.2-1.191L12 .587z" />
+                          </svg>
+                        ))}
                       </div>
                     </div>
 
                     {/* Pesan Komentar / Review Text */}
                     <div className="relative bg-black/40 p-4 rounded-xl border border-white/5 shadow-inner">
-                      <p className="text-xs text-slate-200 font-medium leading-relaxed line-clamp-4 break-words">
+                      <p className="text-xs text-slate-200 font-medium leading-relaxed break-words">
                         {item.message ? (
                           `"${item.message}"`
                         ) : (
@@ -395,7 +381,7 @@ export default function RatingSection() {
         {/* Toggle Admin Panel Moderasi */}
         <div className="flex justify-between items-center px-2 z-10 relative">
           <p className="text-[10px] text-slate-500 font-semibold tracking-wider">
-            * Layar komentar bergeser otomatis. Arahkan kursor untuk pause.
+            * Daftar ulasan komunitas terverifikasi.
           </p>
           <button
             type="button"
@@ -455,7 +441,7 @@ export default function RatingSection() {
                 <textarea 
                   value={reviewerMessage}
                   onChange={e => setReviewerMessage(e.target.value)}
-                  placeholder="Ketik impresi atau saran Anda untuk kemajuan clan..."
+                  placeholder="Ketik impresi atau saran Anda..."
                   className="bg-black/60 border border-white/10 px-4 py-3 rounded-xl text-xs text-slate-200 h-28 resize-none focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500 leading-relaxed transition-all placeholder:text-slate-600"
                 />
               </div>
