@@ -56,7 +56,7 @@ export default function RatingSection() {
         setRatings(dataRatings);
       }
     } catch {
-      // Quiet fail or handled gracefully
+      // Quiet fail
     }
   };
 
@@ -179,9 +179,7 @@ export default function RatingSection() {
 
   return (
     <>
-      {/* ======================================================== */}
       {/* FLOATING TOAST NOTIFICATION SYSTEM */}
-      {/* ======================================================== */}
       {toast.show && (
         <div className="fixed top-6 right-6 z-[300] flex items-center gap-3 px-5 py-3.5 rounded-xl border backdrop-blur-xl shadow-[0_10px_30px_rgba(0,0,0,0.8)] animate-in slide-in-from-top-5 duration-300 max-w-md border-white/10 bg-[#0d0d11]/90">
           {toast.type === 'success' && (
@@ -209,9 +207,7 @@ export default function RatingSection() {
         </div>
       )}
 
-      {/* ======================================================== */}
       {/* EVALUASI KEPUASAN & RATING SYSTEM */}
-      {/* ======================================================== */}
       <section className="py-10 px-4 sm:px-6 bg-[#0a0a0d]/90 border border-white/10 rounded-3xl backdrop-blur-2xl p-6 md:p-10 shadow-[0_20px_60px_rgba(0,0,0,0.8)] relative overflow-hidden">
         
         {/* Glow Decor Background */}
@@ -253,7 +249,7 @@ export default function RatingSection() {
           </div>
         </div>
 
-        {/* STAR INPUT CARD (PILIH BINTANG) */}
+        {/* STAR INPUT CARD */}
         <div className="bg-gradient-to-b from-white/[0.06] to-white/[0.02] border border-white/10 p-8 rounded-2xl flex flex-col items-center text-center max-w-xl mx-auto mb-10 shadow-2xl relative z-10 backdrop-blur-md">
           <h4 className="text-xs sm:text-sm font-black uppercase tracking-widest text-slate-200 mb-4">
             Berikan Penilaian Anda Terhadap Website
@@ -290,9 +286,7 @@ export default function RatingSection() {
           </p>
         </div>
 
-        {/* ======================================================== */}
-        {/* ULASAN KOMENTAR STATIS (DIEM Saja & BINTANG LANGSUNG LENGKAP) */}
-        {/* ======================================================== */}
+        {/* ULASAN KOMENTAR */}
         <div className="w-full py-6 border-y border-white/10 bg-black/40 rounded-2xl mb-6 z-10">
           {ratings.length === 0 ? (
             <p className="text-center text-xs text-slate-500 uppercase font-bold tracking-widest py-10">
@@ -306,15 +300,14 @@ export default function RatingSection() {
                   className="w-full bg-gradient-to-b from-[#12121a]/90 to-[#0a0a0f]/90 border border-white/10 hover:border-orange-500/50 p-6 rounded-2xl flex flex-col justify-between shadow-xl relative group transition-all duration-300 hover:-translate-y-1 backdrop-blur-md"
                 >
                   <div>
-                    {/* Header Kartu Ulasan: Avatar + Nama + 5 Bintang Langsung */}
-                    <div className="flex justify-between items-start mb-4 gap-3">
-                      <div className="flex items-center gap-3 min-w-0">
-                        {/* Avatar Initial dengan Glow Ring */}
+                    {/* Header Kartu: Avatar, Nama (Penuh), dan Bintang Horizontal Tanpa Kotak */}
+                    <div className="flex items-center justify-between gap-3 mb-4">
+                      <div className="flex items-center gap-3 min-w-0 flex-1">
                         <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-orange-500 to-amber-600 border border-amber-300/40 flex items-center justify-center text-white font-black text-sm flex-shrink-0 uppercase shadow-[0_0_15px_rgba(234,88,12,0.4)]">
                           {item.name.charAt(0)}
                         </div>
-                        <div className="min-w-0">
-                          <h5 className="text-xs font-black text-white truncate max-w-[120px] tracking-wide group-hover:text-orange-400 transition-colors">
+                        <div className="min-w-0 flex-1">
+                          <h5 className="text-xs font-black text-white tracking-wide break-words group-hover:text-orange-400 transition-colors">
                             {item.name}
                           </h5>
                           <span className="text-[9px] text-slate-400 font-mono font-semibold block mt-0.5">
@@ -323,12 +316,12 @@ export default function RatingSection() {
                         </div>
                       </div>
 
-                      {/* Barisan Bintang Langsung Sesuai Jumlah Rating (Misal Bintang 5 Langsung Ada 5 Bintang) */}
-                      <div className="flex items-center gap-1 flex-shrink-0 bg-amber-500/10 border border-amber-500/30 px-2.5 py-1.5 rounded-lg shadow-sm">
+                      {/* Barisan Bintang Polos Berjajar Kesamping */}
+                      <div className="flex items-center gap-1 flex-shrink-0">
                         {[1, 2, 3, 4, 5].map((starIndex) => (
                           <svg
                             key={starIndex}
-                            className={`w-3.5 h-3.5 ${
+                            className={`w-4 h-4 ${
                               starIndex <= item.stars
                                 ? 'text-amber-400 fill-amber-400 drop-shadow-[0_0_6px_rgba(251,191,36,0.8)]'
                                 : 'text-neutral-700 fill-neutral-800'
@@ -341,7 +334,7 @@ export default function RatingSection() {
                       </div>
                     </div>
 
-                    {/* Pesan Komentar / Review Text */}
+                    {/* Pesan Ulasan */}
                     <div className="relative bg-black/40 p-4 rounded-xl border border-white/5 shadow-inner">
                       <p className="text-xs text-slate-200 font-medium leading-relaxed break-words">
                         {item.message ? (
@@ -399,9 +392,7 @@ export default function RatingSection() {
 
       </section>
 
-      {/* ======================================================== */}
       {/* MODAL INPUT CHAT ULASAN BARU */}
-      {/* ======================================================== */}
       {showRateModal && (
         <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-black/80 backdrop-blur-md animate-in fade-in duration-200" onClick={() => setShowRateModal(false)} />
@@ -458,9 +449,7 @@ export default function RatingSection() {
         </div>
       )}
 
-      {/* ======================================================== */}
       {/* MODAL VERIFIKASI ADMIN */}
-      {/* ======================================================== */}
       {showAuthModal && (
         <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-black/80 backdrop-blur-md animate-in fade-in duration-200" onClick={() => setShowAuthModal(false)} />
@@ -496,9 +485,7 @@ export default function RatingSection() {
         </div>
       )}
 
-      {/* ======================================================== */}
       {/* MODAL KONFIRMASI HAPUS */}
-      {/* ======================================================== */}
       {confirmDeleteId && (
         <div className="fixed inset-0 z-[250] flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-black/80 backdrop-blur-md animate-in fade-in duration-200" onClick={() => setConfirmDeleteId(null)} />
