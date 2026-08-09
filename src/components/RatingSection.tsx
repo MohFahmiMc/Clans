@@ -286,21 +286,21 @@ export default function RatingSection() {
           </p>
         </div>
 
-        {/* ULASAN KOMENTAR */}
+        {/* ULASAN KOMENTAR (HORIZONTAL SCROLL KESAMPING) */}
         <div className="w-full py-6 border-y border-white/10 bg-black/40 rounded-2xl mb-6 z-10">
           {ratings.length === 0 ? (
             <p className="text-center text-xs text-slate-500 uppercase font-bold tracking-widest py-10">
               Belum ada ulasan bintang yang terdaftar. Jadilah yang pertama memberi ulasan!
             </p>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 px-4">
+            <div className="flex gap-4 overflow-x-auto px-4 pb-4 snap-x snap-mandatory scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent">
               {ratings.map((item) => (
                 <div 
                   key={item._id} 
-                  className="w-full bg-gradient-to-b from-[#12121a]/90 to-[#0a0a0f]/90 border border-white/10 hover:border-orange-500/50 p-6 rounded-2xl flex flex-col justify-between shadow-xl relative group transition-all duration-300 hover:-translate-y-1 backdrop-blur-md"
+                  className="w-[280px] sm:w-[320px] md:w-[350px] flex-shrink-0 snap-start bg-gradient-to-b from-[#12121a]/90 to-[#0a0a0f]/90 border border-white/10 hover:border-orange-500/50 p-6 rounded-2xl flex flex-col justify-between shadow-xl relative group transition-all duration-300 hover:-translate-y-1 backdrop-blur-md"
                 >
                   <div>
-                    {/* Header Kartu: Avatar, Nama (Penuh), dan Bintang Horizontal Tanpa Kotak */}
+                    {/* Header Kartu: Avatar, Nama (Penuh), dan Bintang Horizontal */}
                     <div className="flex items-center justify-between gap-3 mb-4">
                       <div className="flex items-center gap-3 min-w-0 flex-1">
                         <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-orange-500 to-amber-600 border border-amber-300/40 flex items-center justify-center text-white font-black text-sm flex-shrink-0 uppercase shadow-[0_0_15px_rgba(234,88,12,0.4)]">
