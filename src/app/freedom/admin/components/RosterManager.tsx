@@ -12,6 +12,16 @@ interface Member {
   order?: number;
 }
 
+// Warna khusus berdasarkan pangkat (Rank Clan)
+const ROLE_BADGES: Record<string, string> = {
+  Leader: 'bg-red-500/15 text-red-400 border-red-500/30 shadow-red-500/10',
+  'Co-Leader': 'bg-amber-500/15 text-amber-400 border-amber-500/30 shadow-amber-500/10',
+  Admin: 'bg-purple-500/15 text-purple-400 border-purple-500/30 shadow-purple-500/10',
+  Staff: 'bg-blue-500/15 text-blue-400 border-blue-500/30 shadow-blue-500/10',
+  'Core Team': 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30 shadow-emerald-500/10',
+  Member: 'bg-slate-500/15 text-slate-400 border-slate-500/30 shadow-slate-500/10',
+};
+
 export default function RosterManager() {
   const [members, setMembers] = useState<Member[]>([]);
   const [loadingMembers, setLoadingMembers] = useState(false);
@@ -19,7 +29,7 @@ export default function RosterManager() {
   const [savingOrder, setSavingOrder] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  // Form Member States (Sinkron dengan cara AdminPortal)
+  // Form Member States
   const [isEditing, setIsEditing] = useState(false);
   const [currentMemberId, setCurrentMemberId] = useState<string | null>(null);
   const [gamertag, setGamertag] = useState('');
@@ -28,7 +38,6 @@ export default function RosterManager() {
   const [desc, setDesc] = useState('');
   const [skinUrl, setSkinUrl] = useState('');
 
-  // Mengambil password otomatis dari localStorage agar lolos validasi API Route
   const getAdminPassword = () => {
     if (typeof window !== 'undefined') {
       return localStorage.getItem('freedom_admin_password') || '';
@@ -79,7 +88,6 @@ export default function RosterManager() {
     setLoading(true);
 
     const password = getAdminPassword();
-    // Konversi ke lowercase agar pembacaan banner di Profile.tsx 100% sinkron & akurat
     const specialRolesArray = specialRoleInput 
       ? specialRoleInput.split(',').map(r => r.trim().toLowerCase()).filter(Boolean) 
       : [];
@@ -107,7 +115,6 @@ export default function RosterManager() {
       });
 
       if (res.ok) {
-        alert('Data member berhasil disinkronisasi ke MongoDB.');
         resetMemberForm();
         fetchMembers();
       } else {
@@ -167,7 +174,6 @@ export default function RosterManager() {
     setSavingOrder(true);
     const password = getAdminPassword();
     try {
-      // Menyinkronkan urutan struktur tanpa menghilangkan isi deskripsi atau data skin lama
       await Promise.all(members.map((m, idx) => 
         fetch('/api/members', {
           method: 'PUT',
@@ -185,7 +191,6 @@ export default function RosterManager() {
         })
       ));
       setOrderChanged(false);
-      alert('Urutan susunan posisi Roster berhasil disinkronisasi ke MongoDB Atlas!');
       fetchMembers();
     } catch (err) {
       alert('Gagal menyimpan posisi urutan.');
@@ -205,24 +210,51 @@ export default function RosterManager() {
   };
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+    <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+      
       {/* SEKSI FORM INPUT */}
-      <div className="bg-[#0a0a0b]/90 backdrop-blur-sm p-6 rounded-xl border border-white/10 shadow-xl h-fit">
-        <h3 className="text-sm font-black uppercase tracking-wider mb-4 border-b border-white/5 pb-2 text-orange-500">
-          {isEditing ? 'Edit Profil Member' : 'Tambah Member Baru'}
-        </h3>
+      <div className="lg:col-span-5 bg-[#09090d]/90 backdrop-blur-xl p-6 rounded-2xl border border-white/10 shadow-2xl h-fit">
+        
+        {/* Header Form */}
+        <div className="flex items-center justify-between border-b border-white/5 pb-4 mb-5">
+          <div className="flex items-center gap-2.5">
+            <div className={`w-2 h-6 rounded-full ${isEditing ? 'bg-amber-500' : 'bg-orange-500'}`} />
+            <h3 className="text-sm font-black uppercase tracking-wider text-white">
+              {isEditing ? 'Edit Profil Member' : 'Tambah Member Baru'}
+            </h3>
+          </div>
+          {isEditing && (
+            <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-amber-500/10 text-amber-400 border border-amber-500/20">
+              Editing Mode
+            </span>
+          )}
+        </div>
+
         <form onSubmit={handleSaveMember} className="flex flex-col gap-4">
           
           {/* Nickname */}
-          <div className="flex flex-col gap-1">
-            <label className="text-[10px] uppercase font-bold tracking-widest text-slate-400">Gamertag Player</label>
-            <input type="text" value={gamertag} onChange={e => setGamertag(e.target.value)} placeholder="Contoh: MohFahmiMc" className="bg-black border border-white/10 p-3 rounded text-sm text-white font-bold focus:outline-none focus:border-orange-500" required />
+          <div className="flex flex-col gap-1.5">
+            <label className="text-[10px] uppercase font-bold tracking-widest text-slate-400">
+              Gamertag Player <span className="text-orange-500">*</span>
+            </label>
+            <input 
+              type="text" 
+              value={gamertag} 
+              onChange={e => setGamertag(e.target.value)} 
+              placeholder="Contoh: MohFahmiMc" 
+              className="bg-black/60 border border-white/10 p-3 rounded-xl text-sm text-white font-bold focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500 transition-all placeholder:text-slate-600" 
+              required 
+            />
           </div>
 
-          {/* Jabatan */}
-          <div className="flex flex-col gap-1">
+          {/* Jabatan / Role */}
+          <div className="flex flex-col gap-1.5">
             <label className="text-[10px] uppercase font-bold tracking-widest text-slate-400">Pangkat Clan</label>
-            <select value={role} onChange={e => setRole(e.target.value)} className="bg-black border border-white/10 p-3 rounded text-sm text-white font-bold focus:outline-none focus:border-orange-500">
+            <select 
+              value={role} 
+              onChange={e => setRole(e.target.value)} 
+              className="bg-black/60 border border-white/10 p-3 rounded-xl text-sm text-white font-bold focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500 transition-all cursor-pointer"
+            >
               <option value="Leader">Leader</option>
               <option value="Co-Leader">Co-Leader</option>
               <option value="Admin">Admin</option>
@@ -232,44 +264,102 @@ export default function RosterManager() {
             </select>
           </div>
 
-          {/* Klasifikasi Peran */}
-          <div className="flex flex-col gap-1">
-            <label className="text-[10px] uppercase font-bold tracking-widest text-slate-400">Keahlian (Pisahkan dengan koma)</label>
-            <input type="text" value={specialRoleInput} onChange={e => setSpecialRoleInput(e.target.value)} placeholder="pvp, builder, redstoner, miner" className="bg-black border border-white/10 p-3 rounded text-sm text-slate-300 focus:outline-none focus:border-orange-500" />
+          {/* Klasifikasi Keahlian */}
+          <div className="flex flex-col gap-1.5">
+            <label className="text-[10px] uppercase font-bold tracking-widest text-slate-400 flex items-center justify-between">
+              <span>Keahlian / Tag</span>
+              <span className="text-[9px] text-slate-500">Pisahkan koma</span>
+            </label>
+            <input 
+              type="text" 
+              value={specialRoleInput} 
+              onChange={e => setSpecialRoleInput(e.target.value)} 
+              placeholder="pvp, builder, redstoner" 
+              className="bg-black/60 border border-white/10 p-3 rounded-xl text-xs text-slate-200 focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500 transition-all placeholder:text-slate-600" 
+            />
           </div>
 
-          {/* Deskripsi Member */}
-          <div className="flex flex-col gap-1">
-            <label className="text-[10px] uppercase font-bold tracking-widest text-slate-400">Bio Profil / Deskripsi</label>
-            <textarea value={desc} onChange={e => setDesc(e.target.value)} placeholder="Quote atau info kontribusi player..." className="bg-black border border-white/10 p-3 rounded h-20 text-xs text-slate-300 leading-relaxed focus:outline-none focus:border-orange-500 resize-none" />
+          {/* Bio Profil */}
+          <div className="flex flex-col gap-1.5">
+            <label className="text-[10px] uppercase font-bold tracking-widest text-slate-400">Bio Profil / Catatan</label>
+            <textarea 
+              value={desc} 
+              onChange={e => setDesc(e.target.value)} 
+              placeholder="Info kontribusi atau kata mutiara..." 
+              className="bg-black/60 border border-white/10 p-3 rounded-xl h-20 text-xs text-slate-300 leading-relaxed focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500 transition-all resize-none placeholder:text-slate-600" 
+            />
           </div>
           
-          {/* Input Link Skin URL */}
-          <div className="flex flex-col gap-1">
-            <label className="text-[10px] uppercase font-bold tracking-widest text-slate-400">Link URL Skin PNG</label>
-            <input type="text" value={skinUrl} onChange={e => setSkinUrl(e.target.value)} placeholder="https://link-gambar-skin.com/skin.png" className="bg-black border border-white/10 p-3 rounded text-xs text-white focus:outline-none focus:border-orange-500" />
+          {/* Input Link Skin PNG */}
+          <div className="flex flex-col gap-1.5">
+            <label className="text-[10px] uppercase font-bold tracking-widest text-slate-400">URL Gambar Skin (.png)</label>
+            <input 
+              type="text" 
+              value={skinUrl} 
+              onChange={e => setSkinUrl(e.target.value)} 
+              placeholder="https://.../skin.png" 
+              className="bg-black/60 border border-white/10 p-3 rounded-xl text-xs text-white focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500 transition-all placeholder:text-slate-600" 
+            />
           </div>
 
-          {/* Upload File Skin */}
-          <div className="flex flex-col gap-1">
-            <label className="text-[10px] uppercase font-bold tracking-widest text-slate-400">Atau Unggah Berkas Skin (.png)</label>
-            <input type="file" accept="image/png" onChange={handleSkinUpload} className="text-xs text-slate-400 file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:text-xs file:font-bold file:bg-orange-500/20 file:text-orange-400 file:cursor-pointer hover:file:bg-orange-500/30" />
+          {/* Upload File Skin & Preview Box */}
+          <div className="flex flex-col gap-1.5">
+            <label className="text-[10px] uppercase font-bold tracking-widest text-slate-400">Upload File Skin PNG</label>
+            <input 
+              type="file" 
+              accept="image/png" 
+              onChange={handleSkinUpload} 
+              className="text-xs text-slate-400 file:mr-3 file:py-2 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-bold file:bg-orange-500/10 file:text-orange-400 file:border file:border-orange-500/20 hover:file:bg-orange-500/20 file:cursor-pointer transition-all" 
+            />
             
+            {/* Skin Preview Container */}
             {skinUrl && (
-              <div className="mt-2 p-2 bg-black border border-white/5 rounded flex flex-col items-center">
-                <img src={skinUrl} alt="Skin Preview" className="max-h-24 object-contain" style={{ imageRendering: 'pixelated' }} />
-                <button type="button" onClick={() => setSkinUrl('')} className="text-[10px] text-red-400 mt-1 hover:underline">Hapus Skin</button>
+              <div className="mt-2 p-3 bg-black/80 border border-white/10 rounded-xl flex items-center justify-between gap-3">
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 rounded-lg bg-[#141419] border border-white/10 flex items-center justify-center p-1 overflow-hidden">
+                    <img 
+                      src={skinUrl} 
+                      alt="Skin Preview" 
+                      className="max-h-full max-w-full object-contain" 
+                      style={{ imageRendering: 'pixelated' }} 
+                    />
+                  </div>
+                  <span className="text-xs font-semibold text-slate-300">Custom Skin Terdeteksi</span>
+                </div>
+                <button 
+                  type="button" 
+                  onClick={() => setSkinUrl('')} 
+                  className="text-[10px] font-bold text-rose-400 hover:text-rose-300 bg-rose-500/10 hover:bg-rose-500/20 px-2.5 py-1.5 rounded-lg border border-rose-500/20 transition-all uppercase"
+                >
+                  Hapus
+                </button>
               </div>
             )}
           </div>
 
-          {/* Tombol Aksi */}
-          <div className="flex gap-2 mt-2">
-            <button type="submit" disabled={loading} className="flex-1 bg-orange-600 hover:bg-orange-500 font-black py-3 rounded-lg text-xs uppercase tracking-widest text-white transition-all">
-              {loading ? "Sinkronisasi..." : (isEditing ? 'Perbarui Data' : 'Simpan Member')}
+          {/* Action Buttons */}
+          <div className="flex gap-2.5 mt-2 pt-2 border-t border-white/5">
+            <button 
+              type="submit" 
+              disabled={loading} 
+              className="flex-1 bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-500 hover:to-red-500 active:scale-[0.99] font-black py-3 rounded-xl text-xs uppercase tracking-widest text-white transition-all shadow-lg shadow-orange-600/20 flex items-center justify-center gap-2 disabled:opacity-50"
+            >
+              {loading ? (
+                <>
+                  <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  <span>Menyimpan...</span>
+                </>
+              ) : (
+                <span>{isEditing ? 'Perbarui Roster' : 'Simpan Member'}</span>
+              )}
             </button>
+            
             {isEditing && (
-              <button type="button" onClick={resetMemberForm} className="bg-neutral-800 hover:bg-neutral-700 font-bold px-4 rounded-lg text-xs uppercase transition-colors">
+              <button 
+                type="button" 
+                onClick={resetMemberForm} 
+                className="bg-white/5 hover:bg-white/10 border border-white/10 font-bold px-4 rounded-xl text-xs uppercase text-slate-300 transition-all"
+              >
                 Batal
               </button>
             )}
@@ -278,76 +368,169 @@ export default function RosterManager() {
       </div>
 
       {/* SEKSI DAFTAR ROSTER */}
-      <div className="lg:col-span-2 bg-[#0a0a0b]/90 backdrop-blur-sm p-6 rounded-xl border border-white/10 shadow-xl h-fit">
+      <div className="lg:col-span-7 bg-[#09090d]/90 backdrop-blur-xl p-6 rounded-2xl border border-white/10 shadow-2xl h-fit">
+        
+        {/* Header List Roster */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 border-b border-white/10 pb-4 gap-3">
-          <h2 className="text-xl font-bold text-white uppercase tracking-tight">Roster Terdaftar di MongoDB</h2>
-          <div className="flex items-center gap-2 w-full sm:w-auto justify-between sm:justify-end">
-            {orderChanged && (
-              <button type="button" onClick={saveRosterOrder} disabled={savingOrder} className="bg-emerald-600 hover:bg-emerald-500 text-white text-[11px] font-black uppercase tracking-widest px-3 py-2 rounded-lg transition-all flex items-center gap-1 shadow-lg">
-                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" /></svg>
-                Simpan Urutan
-              </button>
-            )}
-            <span className="text-xs bg-orange-500/10 text-orange-400 font-bold px-2.5 py-1 rounded-full border border-orange-500/20 whitespace-nowrap">Total: {members.length} Player</span>
+          <div>
+            <h2 className="text-base font-black text-white uppercase tracking-wider flex items-center gap-2">
+              <span>Roster Clan</span>
+              <span className="text-xs bg-orange-500/10 text-orange-400 font-bold px-2.5 py-0.5 rounded-full border border-orange-500/20">
+                {members.length} Player
+              </span>
+            </h2>
+            <p className="text-[11px] text-slate-400 font-medium mt-0.5">Kelola posisi, pangkat, dan profil roster clan</p>
           </div>
+
+          {orderChanged && (
+            <button 
+              type="button" 
+              onClick={saveRosterOrder} 
+              disabled={savingOrder} 
+              className="w-full sm:w-auto bg-emerald-600 hover:bg-emerald-500 text-white text-[11px] font-black uppercase tracking-widest px-4 py-2.5 rounded-xl transition-all flex items-center justify-center gap-2 shadow-lg shadow-emerald-600/20 animate-pulse"
+            >
+              {savingOrder ? (
+                <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+              ) : (
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                </svg>
+              )}
+              <span>Simpan Urutan Baru</span>
+            </button>
+          )}
         </div>
 
+        {/* State Loading & Kosong */}
         {loadingMembers ? (
-          <p className="text-xs text-slate-500 uppercase tracking-widest text-center py-8 animate-pulse">Memasang jaringan sinkronisasi database roster...</p>
+          <div className="flex flex-col items-center justify-center py-16 gap-3">
+            <div className="w-8 h-8 border-2 border-orange-500 border-t-transparent rounded-full animate-spin" />
+            <p className="text-xs text-slate-400 font-bold uppercase tracking-widest animate-pulse">
+              Memuat Roster Clan...
+            </p>
+          </div>
         ) : members.length === 0 ? (
-          <p className="text-xs text-slate-600 text-center py-8">Belum ada roster clan terdaftar.</p>
+          <div className="text-center py-16 bg-black/40 border border-white/5 rounded-2xl p-6">
+            <p className="text-xs text-slate-500 font-bold uppercase tracking-wider">Belum Ada Roster Terdaftar</p>
+            <p className="text-[11px] text-slate-600 mt-1">Gunakan formulir di samping untuk menambahkan player pertama.</p>
+          </div>
         ) : (
-          <div className="flex flex-col gap-3 max-h-[650px] overflow-y-auto pr-1">
-            {members.map((m, idx) => (
-              <div key={m._id || idx} className="bg-black/40 border border-white/5 rounded-lg p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:border-white/10 transition-colors">
-                <div className="flex items-center gap-3 min-w-0 w-full sm:w-auto">
-                  {/* Navigasi Posisi Urutan */}
-                  <div className="flex flex-col gap-1 bg-black/80 p-1 rounded-md border border-white/5">
-                    <button type="button" onClick={() => moveRoster(idx, 'up')} disabled={idx === 0} className="text-slate-500 hover:text-orange-500 disabled:opacity-20 transition-colors p-0.5">
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M4.5 15.75l7.5-7.5 7.5 7.5" /></svg>
-                    </button>
-                    <button type="button" onClick={() => moveRoster(idx, 'down')} disabled={idx === members.length - 1} className="text-slate-500 hover:text-orange-500 disabled:opacity-20 transition-colors p-0.5">
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" /></svg>
-                    </button>
-                  </div>
-                  
-                  {/* Detail Member */}
-                  <div className="min-w-0 flex-1">
-                    <div className="flex flex-wrap items-center gap-2 mb-0.5">
-                      <h4 className="text-sm font-black text-white break-all whitespace-normal">{m.name}</h4>
-                      <span className="text-[8px] uppercase font-bold tracking-widest px-1.5 py-0.5 rounded border border-white/10 text-slate-400">{m.role}</span>
-                      {m.specialRoles?.length > 0 && (
-                        <span className="text-[8px] uppercase font-bold tracking-widest px-1.5 py-0.5 rounded border border-orange-500/20 bg-orange-500/5 text-orange-400">
-                          {m.specialRoles.join(', ')}
+          <div className="flex flex-col gap-3 max-h-[680px] overflow-y-auto pr-1 custom-scrollbar">
+            {members.map((m, idx) => {
+              const badgeStyle = ROLE_BADGES[m.role] || ROLE_BADGES['Member'];
+              const avatarUrl = m.customSkinUrl || `https://mc-heads.net/avatar/${m.name}/48`;
+
+              return (
+                <div 
+                  key={m._id || idx} 
+                  className="bg-black/50 border border-white/10 hover:border-white/20 rounded-xl p-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 transition-all group hover:bg-black/70"
+                >
+                  <div className="flex items-center gap-3.5 min-w-0 flex-1">
+                    
+                    {/* Controls Urutan Posisi */}
+                    <div className="flex flex-col gap-1 bg-white/5 p-1 rounded-lg border border-white/5 shrink-0">
+                      <button 
+                        type="button" 
+                        onClick={() => moveRoster(idx, 'up')} 
+                        disabled={idx === 0} 
+                        className="text-slate-500 hover:text-orange-400 disabled:opacity-20 transition-colors p-0.5"
+                        title="Naikkan Posisi"
+                      >
+                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="3" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 15.75l7.5-7.5 7.5 7.5" />
+                        </svg>
+                      </button>
+                      <button 
+                        type="button" 
+                        onClick={() => moveRoster(idx, 'down')} 
+                        disabled={idx === members.length - 1} 
+                        className="text-slate-500 hover:text-orange-400 disabled:opacity-20 transition-colors p-0.5"
+                        title="Turunkan Posisi"
+                      >
+                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="3" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
+                        </svg>
+                      </button>
+                    </div>
+
+                    {/* Avatar Head Preview Minecraft */}
+                    <div className="w-10 h-10 rounded-lg bg-[#141419] border border-white/10 p-1 shrink-0 flex items-center justify-center relative shadow-md">
+                      <img 
+                        src={avatarUrl} 
+                        alt={m.name} 
+                        className="w-full h-full object-contain rounded" 
+                        style={{ imageRendering: 'pixelated' }}
+                        onError={(e) => {
+                          // Fallback jika avatar gagal dimuat
+                          (e.target as HTMLElement).style.display = 'none';
+                        }}
+                      />
+                    </div>
+                    
+                    {/* Detail Information Member */}
+                    <div className="min-w-0 flex-1">
+                      <div className="flex flex-wrap items-center gap-2 mb-1">
+                        <h4 className="text-sm font-black text-white truncate max-w-[180px]">
+                          {m.name}
+                        </h4>
+                        
+                        {/* Badge Rank */}
+                        <span className={`text-[9px] uppercase font-extrabold tracking-wider px-2 py-0.5 rounded border ${badgeStyle}`}>
+                          {m.role}
                         </span>
+
+                        {/* Special Role Tags */}
+                        {m.specialRoles?.map((sRole, sIdx) => (
+                          <span 
+                            key={sIdx} 
+                            className="text-[8px] uppercase font-bold tracking-wider px-1.5 py-0.5 rounded border border-white/10 bg-white/5 text-slate-300"
+                          >
+                            {sRole}
+                          </span>
+                        ))}
+                      </div>
+
+                      {/* Bio Description */}
+                      {m.description ? (
+                        <p className="text-[11px] text-slate-400 truncate italic">
+                          "{m.description}"
+                        </p>
+                      ) : (
+                        <p className="text-[10px] text-slate-600 italic">Tidak ada deskripsi profil.</p>
                       )}
                     </div>
-                    {m.description && (
-                      <p className="text-[11px] text-slate-400 mt-1 max-w-md line-clamp-1 italic">
-                        "{m.description}"
-                      </p>
-                    )}
+                  </div>
+                  
+                  {/* Action Buttons (Edit & Delete) */}
+                  <div className="flex items-center justify-end gap-1.5 pt-2 sm:pt-0 border-t border-white/5 sm:border-t-0 shrink-0">
+                    <button 
+                      type="button" 
+                      onClick={() => handleEditClick(m)} 
+                      className="p-2 text-slate-400 hover:text-amber-400 bg-white/5 hover:bg-amber-500/10 rounded-lg border border-white/10 hover:border-amber-500/20 transition-all"
+                      title="Edit Member"
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                      </svg>
+                    </button>
+                    <button 
+                      type="button" 
+                      onClick={() => handleDeleteMember(m._id!, m.name)} 
+                      className="p-2 text-slate-400 hover:text-rose-400 bg-white/5 hover:bg-rose-500/10 rounded-lg border border-white/10 hover:border-rose-500/20 transition-all"
+                      title="Hapus Member"
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-4v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                      </svg>
+                    </button>
                   </div>
                 </div>
-                
-                {/* Tombol Manajemen (Edit & Delete) */}
-                <div className="flex items-center justify-end gap-2 pt-2 sm:pt-0 border-t border-white/5 sm:border-t-0 flex-shrink-0 w-full sm:w-auto">
-                  <button type="button" onClick={() => handleEditClick(m)} className="p-2 text-blue-400 hover:text-white bg-blue-500/5 hover:bg-blue-600 rounded-lg border border-blue-500/10">
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
-                    </svg>
-                  </button>
-                  <button type="button" onClick={() => handleDeleteMember(m._id!, m.name)} className="p-2 text-red-400 hover:text-white bg-red-500/5 hover:bg-red-600 rounded-lg border border-red-500/10">
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-4v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                    </svg>
-                  </button>
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>
+
     </div>
   );
 }
