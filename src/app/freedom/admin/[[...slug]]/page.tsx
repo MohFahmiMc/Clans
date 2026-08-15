@@ -9,9 +9,9 @@ import backgroundImage from '../../../../assets/background.png';
 // Loading Placeholder saat komponen dinamis dimuat
 function ComponentLoader({ name }: { name: string }) {
   return (
-    <div className="w-full p-16 border border-white/5 rounded-2xl bg-[#0a0a0d]/80 backdrop-blur-xl flex flex-col items-center justify-center gap-3 shadow-2xl">
+    <div className="w-full p-12 sm:p-16 border border-white/5 rounded-2xl bg-[#0a0a0d]/80 backdrop-blur-xl flex flex-col items-center justify-center gap-3 shadow-2xl">
       <div className="w-8 h-8 border-2 border-orange-500 border-t-transparent rounded-full animate-spin" />
-      <p className="text-xs font-bold text-slate-400 animate-pulse uppercase tracking-widest">
+      <p className="text-xs font-bold text-slate-400 animate-pulse uppercase tracking-widest text-center">
         Memuat Modul {name}...
       </p>
     </div>
@@ -177,7 +177,7 @@ export default function AdminPortal() {
         <div className="absolute bottom-[-10%] right-[-10%] w-[500px] h-[500px] bg-red-600/10 rounded-full blur-[140px] pointer-events-none" />
         <div className="absolute inset-0 bg-[linear-[#ffffff03]_1px,transparent_1px] bg-[size:32px_32px] pointer-events-none opacity-20" />
 
-        <div className="w-full max-w-md bg-[#0a0a0d]/90 border border-white/10 p-8 rounded-3xl relative z-10 shadow-[0_32px_64px_-16px_rgba(0,0,0,0.8)] backdrop-blur-2xl">
+        <div className="w-full max-w-md bg-[#0a0a0d]/90 border border-white/10 p-6 sm:p-8 rounded-3xl relative z-10 shadow-[0_32px_64px_-16px_rgba(0,0,0,0.8)] backdrop-blur-2xl">
           <div className="text-center mb-8">
             <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-gradient-to-tr from-orange-600 via-orange-500 to-amber-500 p-0.5 shadow-xl shadow-orange-600/20 mb-4 group transition-all duration-300 hover:scale-105">
               <div className="w-full h-full bg-[#0a0a0d] rounded-[14px] flex items-center justify-center">
@@ -275,52 +275,76 @@ export default function AdminPortal() {
   // 3. DASHBOARD UTAMA
   return (
     <div className="min-h-screen bg-[#050507] text-white font-sans flex flex-col">
-      <header className="bg-[#09090c]/90 backdrop-blur-md border-b border-white/10 py-3.5 px-6 flex flex-col lg:flex-row justify-between items-center gap-4 sticky top-0 z-40">
-        <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-xl bg-orange-600 flex items-center justify-center font-black text-sm text-white shadow-lg shadow-orange-600/20">
-            F
-          </div>
-          <div>
-            <h2 className="text-sm font-black uppercase tracking-wider text-white">Freedom Admin Panel</h2>
-            <p className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider">
-              Aktif: <span className="text-orange-400">{ActiveTabConfig.label}</span>
-            </p>
-          </div>
-        </div>
+      {/* HEADER RESPONSIVE & MOBILE-FRIENDLY */}
+      <header className="bg-[#09090c]/95 backdrop-blur-xl border-b border-white/10 sticky top-0 z-40 transition-all">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3 flex flex-col lg:flex-row lg:items-center justify-between gap-3">
+          
+          {/* BARIS TOP: Logo & Status + Tombol Keluar (Mobile) */}
+          <div className="flex items-center justify-between w-full lg:w-auto">
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-orange-600 to-amber-500 flex items-center justify-center font-black text-sm text-white shadow-lg shadow-orange-600/20 shrink-0">
+                F
+              </div>
+              <div>
+                <h2 className="text-sm font-black uppercase tracking-wider text-white">
+                  Freedom Admin Panel
+                </h2>
+                <p className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider">
+                  Aktif: <span className="text-orange-400">{ActiveTabConfig.label}</span>
+                </p>
+              </div>
+            </div>
 
-        <div className="flex flex-col sm:flex-row items-center gap-3 w-full lg:w-auto justify-end">
-          <nav className="flex flex-wrap gap-1.5 bg-black/60 p-1 rounded-xl border border-white/10 w-full sm:w-auto justify-center">
-            {Object.values(TAB_REGISTRY).map((tab) => {
-              const isActive = activeSlug === tab.slug;
-              return (
-                <button
-                  key={tab.slug}
-                  onClick={() => handleTabChange(tab.slug)}
-                  className={`px-3.5 py-2 text-xs font-bold uppercase tracking-wider rounded-lg transition-all ${
-                    isActive
-                      ? 'bg-orange-600 text-white shadow-md shadow-orange-600/20'
-                      : 'text-slate-400 hover:text-white hover:bg-white/5'
-                  }`}
-                >
-                  {tab.label}
-                </button>
-              );
-            })}
-          </nav>
+            {/* Tombol Logout Khusus Tampilan Mobile (Ikon Ringkas) */}
+            <button
+              onClick={() => setShowLogoutModal(true)}
+              className="lg:hidden p-2.5 rounded-xl border border-rose-500/20 bg-rose-500/10 text-rose-300 hover:bg-rose-600 hover:text-white transition-all flex items-center justify-center shrink-0"
+              title="Keluar"
+            >
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+              </svg>
+            </button>
+          </div>
 
-          <button
-            onClick={() => setShowLogoutModal(true)}
-            className="w-full sm:w-auto text-[11px] font-bold border border-rose-500/20 bg-rose-500/10 text-rose-300 px-4 py-2 rounded-xl hover:bg-rose-600 hover:text-white transition-all uppercase tracking-wider flex items-center justify-center gap-1.5"
-          >
-            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-            </svg>
-            <span>Keluar</span>
-          </button>
+          {/* BARIS TAB NAVIGASI: Horizontal Scroll Smooth di Mobile */}
+          <div className="flex items-center gap-3 w-full lg:w-auto justify-between border-t lg:border-t-0 border-white/5 pt-2.5 lg:pt-0">
+            <nav className="flex items-center gap-1.5 bg-black/60 p-1.5 rounded-2xl border border-white/10 w-full lg:w-auto overflow-x-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
+              {Object.values(TAB_REGISTRY).map((tab) => {
+                const isActive = activeSlug === tab.slug;
+                return (
+                  <button
+                    key={tab.slug}
+                    onClick={() => handleTabChange(tab.slug)}
+                    className={`px-3.5 py-2 text-xs font-bold uppercase tracking-wider rounded-xl transition-all whitespace-nowrap shrink-0 flex items-center justify-center min-h-[38px] ${
+                      isActive
+                        ? 'bg-gradient-to-r from-orange-600 to-amber-600 text-white shadow-md shadow-orange-600/30'
+                        : 'text-slate-400 hover:text-white hover:bg-white/5'
+                    }`}
+                  >
+                    {tab.label}
+                  </button>
+                );
+              })}
+            </nav>
+
+            {/* Tombol Logout Tampilan Desktop */}
+            <button
+              onClick={() => setShowLogoutModal(true)}
+              className="hidden lg:flex text-[11px] font-bold border border-rose-500/20 bg-rose-500/10 text-rose-300 px-4 py-2.5 rounded-xl hover:bg-rose-600 hover:text-white transition-all uppercase tracking-wider items-center justify-center gap-1.5 shrink-0"
+            >
+              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+              </svg>
+              <span>Keluar</span>
+            </button>
+          </div>
+
         </div>
       </header>
 
-      <main className="flex-1 p-6 max-w-7xl w-full mx-auto animate-in fade-in duration-200">
+      {/* MAIN CONTAINER: Padding disesuaikan (p-3 sm:p-6) untuk keleluasaan pengeditan */}
+      <main className="flex-1 p-3 sm:p-6 max-w-7xl w-full mx-auto animate-in fade-in duration-200">
         <DynamicActiveComponent adminPassword={password} />
       </main>
 
