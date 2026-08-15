@@ -2,8 +2,9 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
 import dynamic from 'next/dynamic';
-import { useRouter, usePathname } from 'next/navigation';
-import backgroundImage from '../../../assets/background.png';
+import { useRouter, usePathname, useParams } from 'next/navigation';
+// Naik 4 tingkat ke folder assets
+import backgroundImage from '../../../../assets/background.png';
 
 // Loading Placeholder saat komponen dinamis dimuat
 function ComponentLoader({ name }: { name: string }) {
@@ -17,7 +18,7 @@ function ComponentLoader({ name }: { name: string }) {
   );
 }
 
-// REGISTRY KOMPONEN DINAMIS (Otomatis termuat berdasarkan route slug di URL)
+// REGISTRY KOMPONEN DINAMIS (Import naik 1 tingkat menggunakan ../components)
 const TAB_REGISTRY: Record<
   string, 
   { label: string; slug: string; component: React.ComponentType<any> }
@@ -25,28 +26,28 @@ const TAB_REGISTRY: Record<
   member: {
     label: 'Manajemen Roster',
     slug: 'member',
-    component: dynamic(() => import('./components/RosterManager'), {
+    component: dynamic(() => import('../components/RosterManager'), {
       loading: () => <ComponentLoader name="Roster Manager" />,
     }),
   },
   'form-builder': {
     label: 'Form Builder',
     slug: 'form-builder',
-    component: dynamic(() => import('./components/FormBuilder'), {
+    component: dynamic(() => import('../components/FormBuilder'), {
       loading: () => <ComponentLoader name="Form Builder" />,
     }),
   },
   inbox: {
     label: 'Inbox Lamaran',
     slug: 'inbox',
-    component: dynamic(() => import('./components/InboxManager'), {
+    component: dynamic(() => import('../components/InboxManager'), {
       loading: () => <ComponentLoader name="Inbox Manager" />,
     }),
   },
   alliance: {
     label: 'Manajemen Aliansi',
     slug: 'alliance',
-    component: dynamic(() => import('./components/AllianceManager'), {
+    component: dynamic(() => import('../components/AllianceManager'), {
       loading: () => <ComponentLoader name="Alliance Manager" />,
     }),
   },
@@ -55,6 +56,7 @@ const TAB_REGISTRY: Record<
 export default function AdminPortal() {
   const router = useRouter();
   const pathname = usePathname();
+  const params = useParams();
 
   // Auth States
   const [password, setPassword] = useState('');
@@ -69,12 +71,19 @@ export default function AdminPortal() {
 
   const bgImgSrc = backgroundImage?.src || (typeof backgroundImage === 'string' ? backgroundImage : '');
 
-  // Ekstraksi Slug Aktif dari URL secara Dinamis (Contoh: /freedom/admin/member -> "member")
+  // Ekstraksi Slug Aktif dari URL secara Dinamis via useParams
   const activeSlug = useMemo(() => {
+    const rawSlug = params?.slug;
+    const currentSlug = Array.isArray(rawSlug) ? rawSlug[0] : rawSlug;
+    
+    if (currentSlug && TAB_REGISTRY[currentSlug]) {
+      return currentSlug;
+    }
+
     const parts = pathname.split('/').filter(Boolean);
     const lastPart = parts[parts.length - 1];
     return TAB_REGISTRY[lastPart] ? lastPart : 'member';
-  }, [pathname]);
+  }, [params, pathname]);
 
   // PERSISTENT LOGIN CHECKER
   useEffect(() => {
@@ -100,7 +109,7 @@ export default function AdminPortal() {
     }
   }, []);
 
-  // Handler Navigasi Tab (Mengubah URL secara real-time)
+  // Handler Navigasi Tab
   const handleTabChange = (slug: string) => {
     router.push(`/freedom/admin/${slug}`);
   };
@@ -137,7 +146,7 @@ export default function AdminPortal() {
     setShowLogoutModal(false);
   };
 
-  // 1. LOADING SCREEN SAAT CEK SESI
+  // 1. LOADING SCREEN
   if (isCheckingSession) {
     return (
       <div className="min-h-screen bg-[#040406] text-white font-sans flex items-center justify-center p-4">
@@ -154,12 +163,10 @@ export default function AdminPortal() {
     );
   }
 
-  // 2. GERBANG LOGIN MODERN & SLEEK
+  // 2. GERBANG LOGIN
   if (!isAuthenticated) {
     return (
       <div className="min-h-screen bg-[#030305] text-white font-sans flex items-center justify-center p-4 relative overflow-hidden select-none">
-        
-        {/* Background Overlay & Light Orbs */}
         {bgImgSrc && (
           <div 
             className="absolute inset-0 bg-cover bg-center opacity-10 filter blur-md z-0 pointer-events-none scale-105" 
@@ -170,10 +177,7 @@ export default function AdminPortal() {
         <div className="absolute bottom-[-10%] right-[-10%] w-[500px] h-[500px] bg-red-600/10 rounded-full blur-[140px] pointer-events-none" />
         <div className="absolute inset-0 bg-[linear-[#ffffff03]_1px,transparent_1px] bg-[size:32px_32px] pointer-events-none opacity-20" />
 
-        {/* Card Container Login */}
         <div className="w-full max-w-md bg-[#0a0a0d]/90 border border-white/10 p-8 rounded-3xl relative z-10 shadow-[0_32px_64px_-16px_rgba(0,0,0,0.8)] backdrop-blur-2xl">
-          
-          {/* Header Brand */}
           <div className="text-center mb-8">
             <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-gradient-to-tr from-orange-600 via-orange-500 to-amber-500 p-0.5 shadow-xl shadow-orange-600/20 mb-4 group transition-all duration-300 hover:scale-105">
               <div className="w-full h-full bg-[#0a0a0d] rounded-[14px] flex items-center justify-center">
@@ -190,7 +194,6 @@ export default function AdminPortal() {
             <p className="text-xs text-slate-400 mt-1 font-medium">Otentikasi Enkripsi Panel Kontrol Clan</p>
           </div>
 
-          {/* Form Login */}
           <form onSubmit={handleLogin} className="flex flex-col gap-5">
             <div className="flex flex-col gap-2">
               <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 flex items-center justify-between">
@@ -228,7 +231,7 @@ export default function AdminPortal() {
             </div>
 
             {errorMsg && (
-              <div className="p-3.5 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-300 text-xs font-semibold flex items-center gap-2.5 animate-shake">
+              <div className="p-3.5 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-300 text-xs font-semibold flex items-center gap-2.5">
                 <svg className="w-4 h-4 text-rose-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
@@ -272,8 +275,6 @@ export default function AdminPortal() {
   // 3. DASHBOARD UTAMA
   return (
     <div className="min-h-screen bg-[#050507] text-white font-sans flex flex-col">
-      
-      {/* HEADER NAVIGASI DASHBOARD */}
       <header className="bg-[#09090c]/90 backdrop-blur-md border-b border-white/10 py-3.5 px-6 flex flex-col lg:flex-row justify-between items-center gap-4 sticky top-0 z-40">
         <div className="flex items-center gap-3">
           <div className="w-9 h-9 rounded-xl bg-orange-600 flex items-center justify-center font-black text-sm text-white shadow-lg shadow-orange-600/20">
@@ -288,8 +289,6 @@ export default function AdminPortal() {
         </div>
 
         <div className="flex flex-col sm:flex-row items-center gap-3 w-full lg:w-auto justify-end">
-          
-          {/* NAVIGASI MENU TAB (Routing Dinamis Berdasarkan URL) */}
           <nav className="flex flex-wrap gap-1.5 bg-black/60 p-1 rounded-xl border border-white/10 w-full sm:w-auto justify-center">
             {Object.values(TAB_REGISTRY).map((tab) => {
               const isActive = activeSlug === tab.slug;
@@ -309,7 +308,6 @@ export default function AdminPortal() {
             })}
           </nav>
 
-          {/* TOMBOL KELUAR */}
           <button
             onClick={() => setShowLogoutModal(true)}
             className="w-full sm:w-auto text-[11px] font-bold border border-rose-500/20 bg-rose-500/10 text-rose-300 px-4 py-2 rounded-xl hover:bg-rose-600 hover:text-white transition-all uppercase tracking-wider flex items-center justify-center gap-1.5"
@@ -322,12 +320,11 @@ export default function AdminPortal() {
         </div>
       </header>
 
-      {/* RENDER KOMPONEN DINAMIS DENGAN PROPS AUTOMATIS */}
       <main className="flex-1 p-6 max-w-7xl w-full mx-auto animate-in fade-in duration-200">
         <DynamicActiveComponent adminPassword={password} />
       </main>
 
-      {/* MODAL POP-UP LOGOUT CUSTOM (YES / NO) */}
+      {/* MODAL POP-UP LOGOUT */}
       {showLogoutModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
           <div className="bg-[#0f0f13] border border-white/10 w-full max-w-md rounded-2xl p-6 shadow-2xl flex flex-col gap-4">
@@ -364,7 +361,6 @@ export default function AdminPortal() {
           </div>
         </div>
       )}
-
     </div>
   );
 }
