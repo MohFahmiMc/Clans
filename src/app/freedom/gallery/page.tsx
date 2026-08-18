@@ -17,6 +17,48 @@ interface ToastState {
   type: 'success' | 'error' | 'info';
 }
 
+// Fungsi helper kompresi gambar otomatis menggunakan HTML Canvas
+const compressImage = (file: File, maxWidth = 1200, maxHeight = 1200, quality = 0.75): Promise<string> => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = (event) => {
+      const img = new Image();
+      img.src = event.target?.result as string;
+      img.onload = () => {
+        let width = img.width;
+        let height = img.height;
+
+        if (width > height) {
+          if (width > maxWidth) {
+            height = Math.round((height * maxWidth) / width);
+            width = maxWidth;
+          }
+        } else {
+          if (height > maxHeight) {
+            width = Math.round((width * maxHeight) / height);
+            height = maxHeight;
+          }
+        }
+
+        const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        if (ctx) {
+          ctx.drawImage(img, 0, 0, width, height);
+          const compressedDataUrl = canvas.toDataURL('image/jpeg', quality);
+          resolve(compressedDataUrl);
+        } else {
+          reject(new Error('Gagal memproses kanvas gambar'));
+        }
+      };
+      img.onerror = (err) => reject(err);
+    };
+    reader.onerror = (err) => reject(err);
+  });
+};
+
 export default function GalleryPage() {
   const [items, setItems] = useState<GalleryItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -80,22 +122,25 @@ export default function GalleryPage() {
     fetchGallery();
   }, []);
 
-  // Konversi file gambar lokal dari input browser menjadi string Base64 Data URL
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  // Konversi & kompresi file gambar lokal dari input browser menjadi string Base64 ringan
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    if (file.size > 10 * 1024 * 1024) {
-      triggerToast('Ukuran file maksimal 10 MB!', 'error');
+    if (file.size > 20 * 1024 * 1024) {
+      triggerToast('Ukuran file maksimal 20 MB!', 'error');
       return;
     }
 
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      setImageFile(reader.result as string);
-      triggerToast('Gambar berhasil dimuat', 'success');
-    };
-    reader.readAsDataURL(file);
+    try {
+      triggerToast('Mengompresi gambar...', 'info');
+      const compressedDataUrl = await compressImage(file, 1200, 1200, 0.75);
+      setImageFile(compressedDataUrl);
+      triggerToast('Gambar berhasil dimuat dan dikompresi', 'success');
+    } catch (err) {
+      console.error(err);
+      triggerToast('Gagal memproses dan mengompresi gambar', 'error');
+    }
   };
 
   // Verifikasi login admin galeri via tombol minus (-)
@@ -316,11 +361,16 @@ export default function GalleryPage() {
                       <img 
                         src={item.imageUrl} 
                         alt={item.title} 
+                        loading="lazy"
+                        decoding="async"
                         className="w-full h-full object-cover group-hover/img:scale-110 transition-transform duration-700 ease-out" 
                       />
                       <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-0 group-hover/img:opacity-100 transition-opacity duration-300 flex items-center justify-center">
-                        <span className="text-xs bg-orange-600/90 hover:bg-orange-500 px-4 py-2 rounded-xl font-bold border border-orange-400/30 text-white shadow-lg backdrop-blur-md transform translate-y-2 group-hover/img:translate-y-0 transition-all duration-300">
-                          🔍 Perbesar Foto
+                        <span className="text-xs bg-orange-600/90 hover:bg-orange-500 px-4 py-2 rounded-xl font-bold border border-orange-400/30 text-white shadow-lg backdrop-blur-md transform translate-y-2 group-hover/img:translate-y-0 transition-all duration-300 flex items-center gap-1.5">
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
+                          </svg>
+                          Perbesar Foto
                         </span>
                       </div>
                     </div>
@@ -451,10 +501,19 @@ export default function GalleryPage() {
                     <svg className="w-6 h-6 text-orange-500 mb-1" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" />
                     </svg>
-                    <span className="text-xs text-slate-300 font-bold">
-                      {imageFile && !isEditing ? "✅ Gambar Terpilih" : imageFile && isEditing ? "✅ Gambar Diperbarui" : "Klik untuk Pilih Gambar"}
+                    <span className="text-xs text-slate-300 font-bold flex items-center justify-center gap-1.5">
+                      {imageFile ? (
+                        <>
+                          <svg className="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                          </svg>
+                          {isEditing ? "Gambar Diperbarui" : "Gambar Terpilih & Terkompresi"}
+                        </>
+                      ) : (
+                        "Klik untuk Pilih Gambar"
+                      )}
                     </span>
-                    <span className="text-[10px] text-slate-500 font-semibold">Maksimal Ukuran File: 10 MB</span>
+                    <span className="text-[10px] text-slate-500 font-semibold">Otomatis dikompresi agar cepat dimuat</span>
                   </div>
                 </div>
               </div>
@@ -557,6 +616,8 @@ export default function GalleryPage() {
               <img 
                 src={lightboxItem.imageUrl} 
                 alt={lightboxItem.title} 
+                loading="lazy"
+                decoding="async"
                 className="max-w-full max-h-[70vh] object-contain rounded-xl"
               />
             </div>
