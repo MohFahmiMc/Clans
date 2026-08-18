@@ -83,12 +83,16 @@ export default function MainPage() {
   useEffect(() => {
     loadMembersData();
 
-    // PROCESS ASYNCHRONOUS PRELOADING LATAR BELAKANG
+    // PROCESS ASYNCHRONOUS PRELOADING LATAR BELAKANG DENGAN DETEKSI CACHE
     if (bgImgSrc) {
       const img1 = new Image();
       img1.src = bgImgSrc;
-      img1.onload = () => setIsBgLoaded(true);
-      img1.onerror = () => setIsBgLoaded(true);
+      if (img1.complete) {
+        setIsBgLoaded(true);
+      } else {
+        img1.onload = () => setIsBgLoaded(true);
+        img1.onerror = () => setIsBgLoaded(true);
+      }
     } else {
       setIsBgLoaded(true);
     }
@@ -96,29 +100,38 @@ export default function MainPage() {
     if (bg2ImgSrc) {
       const img2 = new Image();
       img2.src = bg2ImgSrc;
-      img2.onload = () => setIsBg2Loaded(true);
-      img2.onerror = () => setIsBg2Loaded(true);
+      if (img2.complete) {
+        setIsBg2Loaded(true);
+      } else {
+        img2.onload = () => setIsBg2Loaded(true);
+        img2.onerror = () => setIsBg2Loaded(true);
+      }
     } else {
       setIsBg2Loaded(true);
     }
-  }, []);
+  }, [bgImgSrc, bg2ImgSrc]);
 
   const leaderSkinUrl = leaderMember?.customSkinUrl ? leaderMember.customSkinUrl : getSrc(steveSkin);
 
   return (
     <div className="min-h-screen bg-[#050505] text-white font-sans relative overflow-x-hidden transition-all duration-500 animate-in fade-in">
       
-      {/* --- BACKGROUND WALLPAPER SKELETON & IMAGE --- */}
-      {!isBgLoaded && (
-        <div className="fixed inset-0 bg-gradient-to-r from-[#050505] via-[#121215] to-[#050505] opacity-80 z-0 pointer-events-none animate-pulse" />
-      )}
-      {bgImgSrc && (
-        <div 
-          className={`fixed inset-0 bg-cover bg-center bg-no-repeat z-0 pointer-events-none transition-opacity duration-1000 ${isBgLoaded ? 'opacity-40' : 'opacity-0'}`}
-          style={{ backgroundImage: `url(${bgImgSrc})` }}
-        />
-      )}
-      <div className="fixed inset-0 bg-gradient-to-b from-[#050505]/20 via-[#050505]/50 to-[#050505] z-0 pointer-events-none" />
+      {/* --- BACKGROUND WALLPAPER SKELETON & IMAGE INTEGRATION --- */}
+      <div className="fixed inset-0 z-0 pointer-events-none overflow-hidden">
+        {!isBgLoaded && (
+          <div className="absolute inset-0 bg-[#050505]">
+            <div className="absolute inset-0 bg-gradient-to-r from-[#050505] via-[#121215] to-[#050505] animate-pulse" />
+            <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-orange-950/20 via-transparent to-transparent opacity-60 animate-pulse" />
+          </div>
+        )}
+        {bgImgSrc && (
+          <div 
+            className={`absolute inset-0 bg-cover bg-center bg-no-repeat transition-opacity duration-700 ease-in-out ${isBgLoaded ? 'opacity-40' : 'opacity-0'}`}
+            style={{ backgroundImage: `url(${bgImgSrc})` }}
+          />
+        )}
+        <div className="absolute inset-0 bg-gradient-to-b from-[#050505]/20 via-[#050505]/50 to-[#050505]" />
+      </div>
 
       <div className="relative z-10 max-w-5xl mx-auto px-4 pb-20">
         
