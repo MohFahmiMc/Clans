@@ -132,16 +132,35 @@ export default function MembersPage() {
           </div>
         </div>
 
-        {/* LOADING STATE - SKELETON */}
+        {/* LOADING STATE - ENHANCED CRISP SKELETON */}
         {loadingMembers ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 2xl:grid-cols-4 gap-4 md:gap-6">
-            {[...Array(6)].map((_, i) => (
-              <div key={i} className="h-28 bg-neutral-900/60 rounded-xl border border-white/5 p-4 animate-pulse flex items-center gap-4">
-                <div className="w-14 h-14 bg-neutral-800 rounded-lg shrink-0" />
-                <div className="flex-1 space-y-2">
-                  <div className="w-16 h-3 bg-neutral-800 rounded" />
-                  <div className="w-32 h-5 bg-neutral-800 rounded" />
-                  <div className="w-24 h-3 bg-neutral-800 rounded" />
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-4 md:gap-6">
+            {[...Array(8)].map((_, i) => (
+              <div 
+                key={i} 
+                className="relative overflow-hidden p-4 md:p-5 rounded-2xl border border-white/10 bg-neutral-950/90 shadow-xl flex items-center gap-4"
+              >
+                {/* Visual Skeleton Glow Background */}
+                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-orange-500/5 to-transparent animate-pulse" />
+                
+                {/* Skeleton Avatar Skin Box */}
+                <div className="w-14 h-14 md:w-16 md:h-16 shrink-0 rounded-xl border border-white/15 bg-neutral-900 relative overflow-hidden animate-pulse">
+                  <div className="w-full h-full bg-gradient-to-br from-neutral-800 via-neutral-900 to-neutral-800" />
+                </div>
+                
+                {/* Skeleton Info Column */}
+                <div className="flex-1 min-w-0 flex flex-col justify-center gap-2 relative z-10">
+                  {/* Skeleton Role Badge */}
+                  <div className="w-16 h-3.5 rounded-md bg-neutral-800/80 border border-white/5 animate-pulse" />
+                  
+                  {/* Skeleton Name */}
+                  <div className="w-28 md:w-36 h-5 rounded-md bg-neutral-800 animate-pulse" />
+                  
+                  {/* Skeleton Skill Badges */}
+                  <div className="flex items-center gap-1.5 mt-0.5">
+                    <div className="w-16 h-4 rounded-md bg-neutral-900 border border-white/10 animate-pulse" />
+                    <div className="w-12 h-4 rounded-md bg-neutral-900 border border-white/10 animate-pulse" />
+                  </div>
                 </div>
               </div>
             ))}
