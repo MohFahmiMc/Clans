@@ -136,9 +136,20 @@ export default function MainPage() {
         </header>
 
         {/* ======================================================== */}
-        {/* PREMIUM LEADER CARD */}
+        {/* PREMIUM LEADER CARD / SKELETON SCREEN LOADING */}
         {/* ======================================================== */}
-        {leaderMember && (
+        {loadingStats ? (
+          <section className="pb-16 w-full flex flex-col items-center animate-in fade-in duration-500">
+            <div className="relative w-full max-w-md bg-[#0a0a0b] border border-white/5 rounded-[24px] p-6 flex items-center gap-5 overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.7)] animate-pulse">
+              <div className="w-20 h-20 rounded-[20px] bg-white/10 flex-shrink-0" />
+              <div className="flex flex-col items-start gap-2 min-w-0 flex-1">
+                <div className="h-4 w-16 bg-red-500/20 rounded-md" />
+                <div className="h-7 w-36 bg-white/10 rounded-md" />
+                <div className="h-6 w-24 bg-white/10 rounded-lg mt-1" />
+              </div>
+            </div>
+          </section>
+        ) : leaderMember ? (
           <section className="pb-16 w-full flex flex-col items-center animate-in fade-in slide-in-from-bottom-8 duration-1000 delay-150">
             <div 
               onClick={() => setSelectedMember(leaderMember)}
@@ -182,7 +193,7 @@ export default function MainPage() {
               </div>
             </div>
           </section>
-        )}
+        ) : null}
 
         {/* ======================================================== */}
         {/* 2. BEDROCK ONLY SERVER INFO BOX */}
@@ -226,14 +237,38 @@ export default function MainPage() {
         <section className="mb-16 animate-in slide-in-from-bottom-4 duration-1000">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {[
-              { value: "95%", label: "Win Rate", icon: <svg className="w-5 h-5 mx-auto mb-2 text-orange-500" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg> },
-              { value: "S-Tier", label: "Clan Rank", icon: <svg className="w-5 h-5 mx-auto mb-2 text-yellow-500" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"></path></svg> },
-              { value: loadingStats ? "..." : `${members.length} Player`, label: "Active Members", icon: <svg className="w-5 h-5 mx-auto mb-2 text-slate-400" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 0 0-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path></svg> },
-              { value: "Full", label: "Kebebasan", icon: <svg className="w-5 h-5 mx-auto mb-2 text-orange-500" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path></svg> }
+              { 
+                value: "95%", 
+                label: "Win Rate", 
+                isSkeleton: false,
+                icon: <svg className="w-5 h-5 mx-auto mb-2 text-orange-500" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg> 
+              },
+              { 
+                value: "S-Tier", 
+                label: "Clan Rank", 
+                isSkeleton: false,
+                icon: <svg className="w-5 h-5 mx-auto mb-2 text-yellow-500" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"></path></svg> 
+              },
+              { 
+                value: `${members.length} Player`, 
+                label: "Active Members", 
+                isSkeleton: loadingStats,
+                icon: <svg className="w-5 h-5 mx-auto mb-2 text-slate-400" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 0 0-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path></svg> 
+              },
+              { 
+                value: "Full", 
+                label: "Kebebasan", 
+                isSkeleton: false,
+                icon: <svg className="w-5 h-5 mx-auto mb-2 text-orange-500" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path></svg> 
+              }
             ].map((stat, i) => (
               <div key={i} className="text-center p-6 bg-[#0f0f0f]/60 border border-white/5 rounded-xl hover:border-orange-500/20 transition-all duration-300 shadow-lg transform hover:-translate-y-0.5">
                 {stat.icon}
-                <h3 className="text-2xl md:text-3xl font-black text-white mb-1">{stat.value}</h3>
+                {stat.isSkeleton ? (
+                  <div className="h-8 w-24 bg-white/10 rounded-md animate-pulse mx-auto my-1" />
+                ) : (
+                  <h3 className="text-2xl md:text-3xl font-black text-white mb-1">{stat.value}</h3>
+                )}
                 <p className="text-slate-500 uppercase tracking-widest text-[9px] font-bold">{stat.label}</p>
               </div>
             ))}
