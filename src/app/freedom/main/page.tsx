@@ -35,6 +35,10 @@ export default function MainPage() {
   const [leaderMember, setLeaderMember] = useState<Member | null>(null);
   const [selectedMember, setSelectedMember] = useState<Member | null>(null);
 
+  // STATE SKELETON PRELOADER UNTUK ASSET GAMBAR LATAR BELAKANG
+  const [isBgLoaded, setIsBgLoaded] = useState(false);
+  const [isBg2Loaded, setIsBg2Loaded] = useState(false);
+
   const getSrc = (asset: any) => asset?.src || (typeof asset === 'string' ? asset : '');
   const logoPnSrc = getSrc(logoPnAsset);
   const mcProwSrc = getSrc(mcProwAsset);
@@ -78,6 +82,25 @@ export default function MainPage() {
 
   useEffect(() => {
     loadMembersData();
+
+    // PROCESS ASYNCHRONOUS PRELOADING LATAR BELAKANG
+    if (bgImgSrc) {
+      const img1 = new Image();
+      img1.src = bgImgSrc;
+      img1.onload = () => setIsBgLoaded(true);
+      img1.onerror = () => setIsBgLoaded(true);
+    } else {
+      setIsBgLoaded(true);
+    }
+
+    if (bg2ImgSrc) {
+      const img2 = new Image();
+      img2.src = bg2ImgSrc;
+      img2.onload = () => setIsBg2Loaded(true);
+      img2.onerror = () => setIsBg2Loaded(true);
+    } else {
+      setIsBg2Loaded(true);
+    }
   }, []);
 
   const leaderSkinUrl = leaderMember?.customSkinUrl ? leaderMember.customSkinUrl : getSrc(steveSkin);
@@ -85,10 +108,13 @@ export default function MainPage() {
   return (
     <div className="min-h-screen bg-[#050505] text-white font-sans relative overflow-x-hidden transition-all duration-500 animate-in fade-in">
       
-      {/* --- BACKGROUND WALLPAPER --- */}
+      {/* --- BACKGROUND WALLPAPER SKELETON & IMAGE --- */}
+      {!isBgLoaded && (
+        <div className="fixed inset-0 bg-gradient-to-r from-[#050505] via-[#121215] to-[#050505] opacity-80 z-0 pointer-events-none animate-pulse" />
+      )}
       {bgImgSrc && (
         <div 
-          className="fixed inset-0 bg-cover bg-center bg-no-repeat opacity-40 z-0 pointer-events-none transition-opacity duration-1000 animate-fade-in"
+          className={`fixed inset-0 bg-cover bg-center bg-no-repeat z-0 pointer-events-none transition-opacity duration-1000 ${isBgLoaded ? 'opacity-40' : 'opacity-0'}`}
           style={{ backgroundImage: `url(${bgImgSrc})` }}
         />
       )}
@@ -157,9 +183,13 @@ export default function MainPage() {
               title="Klik untuk membuka Detail 3D Roster Profil Leader"
             >
               <div className="absolute inset-0 bg-gradient-to-r from-[#0a0a0b] via-[#0a0a0b]/80 to-transparent z-10 pointer-events-none" />
+              
+              {!isBg2Loaded && (
+                <div className="absolute right-0 inset-y-0 w-2/3 bg-gradient-to-r from-transparent via-orange-500/10 to-orange-950/20 animate-pulse pointer-events-none z-0" />
+              )}
               {bg2ImgSrc && (
                 <div 
-                  className="absolute right-0 inset-y-0 w-2/3 opacity-45 bg-cover bg-center mix-blend-normal pointer-events-none z-0 transform group-hover:scale-105 transition-transform duration-700" 
+                  className={`absolute right-0 inset-y-0 w-2/3 bg-cover bg-center mix-blend-normal pointer-events-none z-0 transform group-hover:scale-105 transition-all duration-700 ${isBg2Loaded ? 'opacity-45' : 'opacity-0'}`} 
                   style={{ backgroundImage: `url(${bg2ImgSrc})` }} 
                 />
               )}
