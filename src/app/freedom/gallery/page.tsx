@@ -17,8 +17,8 @@ interface ToastState {
   type: 'success' | 'error' | 'info';
 }
 
-// Fungsi helper kompresi gambar otomatis menggunakan HTML Canvas
-const compressImage = (file: File, maxWidth = 1200, maxHeight = 1200, quality = 0.75): Promise<string> => {
+// Fungsi helper kompresi gambar otomatis menggunakan HTML Canvas (Dioptimalkan ke 800px & quality 0.6)
+const compressImage = (file: File, maxWidth = 800, maxHeight = 800, quality = 0.6): Promise<string> => {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.readAsDataURL(file);
@@ -122,7 +122,7 @@ export default function GalleryPage() {
     fetchGallery();
   }, []);
 
-  // Konversi & kompresi file gambar lokal dari input browser menjadi string Base64 ringan
+  // Konversi & kompresi file gambar lokal dari input browser menjadi string Base64 ringan (800px)
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -134,9 +134,9 @@ export default function GalleryPage() {
 
     try {
       triggerToast('Mengompresi gambar...', 'info');
-      const compressedDataUrl = await compressImage(file, 1200, 1200, 0.75);
+      const compressedDataUrl = await compressImage(file, 800, 800, 0.6);
       setImageFile(compressedDataUrl);
-      triggerToast('Gambar berhasil dimuat dan dikompresi', 'success');
+      triggerToast('Gambar berhasil dimuat dan dikompresi ringan', 'success');
     } catch (err) {
       console.error(err);
       triggerToast('Gagal memproses dan mengompresi gambar', 'error');
@@ -293,14 +293,14 @@ export default function GalleryPage() {
         </div>
       )}
 
-      {/* BACKGROUND IMAGE KUSTOM */}
+      {/* BACKGROUND IMAGE KUSTOM (JELAS DAN PERBAIKAN OVERLAY) */}
       {bgImgSrc && (
         <div 
-          className="fixed inset-0 bg-cover bg-center opacity-20 z-0 pointer-events-none mix-blend-lighten"
+          className="fixed inset-0 bg-cover bg-center bg-no-repeat opacity-35 z-0 pointer-events-none"
           style={{ backgroundImage: `url(${bgImgSrc})` }}
         />
       )}
-      <div className="fixed inset-0 bg-gradient-to-b from-[#050505]/70 via-[#050505]/95 to-[#050505] z-0 pointer-events-none" />
+      <div className="fixed inset-0 bg-gradient-to-b from-[#050505]/60 via-[#050505]/85 to-[#050505] z-0 pointer-events-none" />
 
       {/* SECTION FRAME UTAMA */}
       <section className="max-w-7xl mx-auto py-12 md:py-20 px-4 sm:px-6 w-full relative z-10">
@@ -331,11 +331,28 @@ export default function GalleryPage() {
         {/* AREA GRID DAFTAR FOTO GALERI */}
         <div className="p-4 sm:p-6 md:p-8 border border-white/10 bg-[#0a0a0e]/70 backdrop-blur-xl rounded-3xl shadow-[0_20px_50px_rgba(0,0,0,0.8)]">
           {loading ? (
-            <div className="flex flex-col items-center justify-center py-24 gap-4">
-              <div className="w-10 h-10 border-3 border-orange-500 border-t-transparent rounded-full animate-spin" />
-              <span className="text-slate-400 text-xs font-bold uppercase tracking-widest animate-pulse">
-                Memuat Koleksi Galeri Dokumentasi...
-              </span>
+            /* SKELETON SCREEN LOADING */
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              {[1, 2, 3, 4, 5, 6].map((n) => (
+                <div 
+                  key={n} 
+                  className="bg-[#0f0f14]/80 backdrop-blur-md rounded-2xl border border-white/10 overflow-hidden flex flex-col animate-pulse"
+                >
+                  <div className="w-full aspect-video bg-neutral-800/60 relative overflow-hidden">
+                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent animate-shimmer" />
+                  </div>
+                  <div className="p-5 flex-1 flex flex-col justify-between gap-4">
+                    <div className="space-y-2.5">
+                      <div className="h-4 bg-neutral-800/80 rounded-md w-3/4" />
+                      <div className="h-3 bg-neutral-800/50 rounded-md w-full" />
+                      <div className="h-3 bg-neutral-800/50 rounded-md w-2/3" />
+                    </div>
+                    <div className="pt-3 border-t border-white/5 flex items-center justify-between">
+                      <div className="h-3 bg-neutral-800/60 rounded-md w-24" />
+                    </div>
+                  </div>
+                </div>
+              ))}
             </div>
           ) : error ? (
             <div className="text-center py-20 bg-rose-950/20 border border-rose-500/30 rounded-2xl text-rose-400 text-xs font-bold tracking-wide p-6">
