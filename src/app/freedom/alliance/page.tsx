@@ -35,7 +35,7 @@ export default function AlliancePage() {
       }
     } catch (err) {
       // Quiet fail - log dihilangkan
-    } finally {
+    } fontally {
       setLoading(false);
     }
   };
