@@ -34,6 +34,175 @@ interface Member {
   order?: number;
 }
 
+// Sub-komponen ringan untuk menangani loading skin avatar dengan skeleton screen
+function SkinAvatarItem({ currentSkinUrl, memberName }: { currentSkinUrl: string; memberName: string }) {
+  const [isSkinLoaded, setIsSkinLoaded] = useState(false);
+
+  useEffect(() => {
+    const img = new Image();
+    img.src = currentSkinUrl;
+    if (img.complete) {
+      setIsSkinLoaded(true);
+    } else {
+      img.onload = () => setIsSkinLoaded(true);
+      img.onerror = () => setIsSkinLoaded(true);
+    }
+  }, [currentSkinUrl]);
+
+  return (
+    <div className="w-14 h-14 md:w-16 md:h-16 shrink-0 rounded-xl border-2 border-white/15 group-hover:border-orange-400 transition-colors shadow-lg overflow-hidden bg-neutral-900 relative">
+      {!isSkinLoaded && (
+        <div className="absolute inset-0 bg-neutral-900 animate-pulse z-10 flex items-center justify-center">
+          <div className="w-full h-full bg-gradient-to-br from-neutral-800 via-neutral-900 to-neutral-800" />
+        </div>
+      )}
+      <div 
+        className={`w-full h-full relative transition-opacity duration-300 ${isSkinLoaded ? 'opacity-100' : 'opacity-0'}`}
+        style={{ imageRendering: 'pixelated' }}
+      >
+        {/* Base Skin Layer */}
+        <img 
+          src={currentSkinUrl} 
+          alt={memberName} 
+          loading="lazy"
+          decoding="async"
+          className="absolute max-w-none"
+          style={{ 
+            width: '800%', 
+            height: 'auto', 
+            left: '-100%', 
+            top: '-100%' 
+          }} 
+        />
+        {/* Hat / Outer Skin Layer */}
+        <img 
+          src={currentSkinUrl} 
+          alt="" 
+          loading="lazy"
+          decoding="async"
+          className="absolute max-w-none"
+          style={{ 
+            width: '800%', 
+            height: 'auto', 
+            left: '-500%', 
+            top: '-100%' 
+          }} 
+        />
+      </div>
+    </div>
+  );
+}
+
+// Sub-komponen ringan untuk kartu member dengan skeleton banner
+function MemberCardItem({ 
+  member, 
+  index, 
+  setSelectedMember, 
+  getRoleColor, 
+  getBannerImage, 
+  getSrc, 
+  getSpecialIcon 
+}: {
+  member: Member;
+  index: number;
+  setSelectedMember: (member: Member) => void;
+  getRoleColor: (role: string) => string;
+  getBannerImage: (specialRole: string | undefined) => string;
+  getSrc: (asset: any) => string;
+  getSpecialIcon: (specialRole: string) => string;
+}) {
+  const [isBannerLoaded, setIsBannerLoaded] = useState(false);
+  const roleStyle = getRoleColor(member.role);
+  const bannerSrc = getBannerImage(member.specialRoles?.[0]);
+  const currentSkinUrl = member.customSkinUrl ? member.customSkinUrl : getSrc(steveSkin);
+
+  useEffect(() => {
+    if (bannerSrc) {
+      const img = new Image();
+      img.src = bannerSrc;
+      if (img.complete) {
+        setIsBannerLoaded(true);
+      } else {
+        img.onload = () => setIsBannerLoaded(true);
+        img.onerror = () => setIsBannerLoaded(true);
+      }
+    } else {
+      setIsBannerLoaded(true);
+    }
+  }, [bannerSrc]);
+
+  return (
+    <div 
+      key={member._id || index} 
+      onClick={() => setSelectedMember(member)} 
+      className="group relative overflow-hidden p-4 md:p-5 rounded-2xl border border-white/10 hover:border-orange-500/60 bg-neutral-950 transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_8px_30px_rgba(234,88,12,0.2)] cursor-pointer flex items-center gap-4"
+    >
+      {/* Skeleton Banner Background saat asset belum selesai terdownload */}
+      {!isBannerLoaded && (
+        <div className="absolute inset-0 bg-gradient-to-r from-neutral-900 via-neutral-800 to-neutral-900 animate-pulse opacity-40" />
+      )}
+
+      {/* Banner Image Background Overlay */}
+      <div 
+        className={`absolute inset-0 bg-cover bg-center transition-all duration-500 ease-out ${
+          isBannerLoaded ? 'opacity-25 group-hover:opacity-45 group-hover:scale-105' : 'opacity-0'
+        }`}
+        style={{ backgroundImage: `url(${bannerSrc})` }}
+      />
+      {/* Subtle Gradient Mask for readability */}
+      <div className="absolute inset-0 bg-gradient-to-r from-neutral-950 via-neutral-950/90 to-transparent" />
+
+      {/* Card Content */}
+      <div className="relative z-10 flex items-center gap-4 w-full min-w-0">
+        
+        {/* Minecraft Skin Avatar dengan skeleton handler */}
+        <SkinAvatarItem currentSkinUrl={currentSkinUrl} memberName={member.name} />
+        
+        {/* Details Column */}
+        <div className="flex-1 min-w-0 flex flex-col justify-center">
+          <div className="mb-1">
+            <span className={`text-[9px] md:text-[10px] font-black uppercase tracking-widest inline-block px-2 py-0.5 rounded-md border ${roleStyle}`}>
+              {member.role}
+            </span>
+          </div>
+          
+          <h3 className="text-base md:text-lg font-black tracking-tight text-white group-hover:text-orange-400 transition-colors truncate">
+            {member.name}
+          </h3>
+          
+          {/* Special Roles / Skills Icons */}
+          {member.specialRoles && member.specialRoles.length > 0 && (
+            <div className="flex flex-wrap items-center gap-1.5 mt-1.5">
+              {member.specialRoles.map((role, i) => {
+                const iconSrc = getSpecialIcon(role);
+                if (!iconSrc) return null;
+                return (
+                  <div 
+                    key={i} 
+                    className="flex items-center gap-1 bg-black/60 px-2 py-0.5 rounded-md border border-white/10 backdrop-blur-md"
+                    title={role}
+                  >
+                    <img 
+                      src={iconSrc} 
+                      alt={role} 
+                      loading="lazy"
+                      decoding="async"
+                      className="w-3.5 h-3.5 object-contain" 
+                    />
+                    <span className="text-[9px] text-slate-300 font-semibold uppercase tracking-wider leading-none">
+                      {role}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function MembersPage() {
   const [members, setMembers] = useState<Member[]>([]);
   const [loadingMembers, setLoadingMembers] = useState(true);
@@ -185,103 +354,18 @@ export default function MembersPage() {
         ) : (
           /* MEMBER GRID */
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-4 md:gap-6">
-            {members.map((member, index) => {
-              const roleStyle = getRoleColor(member.role);
-              const bannerSrc = getBannerImage(member.specialRoles?.[0]);
-              const currentSkinUrl = member.customSkinUrl ? member.customSkinUrl : getSrc(steveSkin);
-              
-              return (
-                <div 
-                  key={member._id || index} 
-                  onClick={() => setSelectedMember(member)} 
-                  className="group relative overflow-hidden p-4 md:p-5 rounded-2xl border border-white/10 hover:border-orange-500/60 bg-neutral-950 transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_8px_30px_rgba(234,88,12,0.2)] cursor-pointer flex items-center gap-4"
-                >
-                  {/* Banner Image Background Overlay */}
-                  <div 
-                    className="absolute inset-0 bg-cover bg-center opacity-25 group-hover:opacity-45 group-hover:scale-105 transition-all duration-500 ease-out"
-                    style={{ backgroundImage: `url(${bannerSrc})` }}
-                  />
-                  {/* Subtle Gradient Mask for readability */}
-                  <div className="absolute inset-0 bg-gradient-to-r from-neutral-950 via-neutral-950/90 to-transparent" />
-
-                  {/* Card Content */}
-                  <div className="relative z-10 flex items-center gap-4 w-full min-w-0">
-                    
-                    {/* Minecraft Skin Avatar */}
-                    <div className="w-14 h-14 md:w-16 md:h-16 shrink-0 rounded-xl border-2 border-white/15 group-hover:border-orange-400 transition-colors shadow-lg overflow-hidden bg-neutral-900 relative">
-                      <div 
-                        className="w-full h-full relative"
-                        style={{ imageRendering: 'pixelated' }}
-                      >
-                        {/* Base Skin Layer */}
-                        <img 
-                          src={currentSkinUrl} 
-                          alt={member.name} 
-                          className="absolute max-w-none"
-                          style={{ 
-                            width: '800%', 
-                            height: 'auto', 
-                            left: '-100%', 
-                            top: '-100%' 
-                          }} 
-                        />
-                        {/* Hat / Outer Skin Layer */}
-                        <img 
-                          src={currentSkinUrl} 
-                          alt="" 
-                          className="absolute max-w-none"
-                          style={{ 
-                            width: '800%', 
-                            height: 'auto', 
-                            left: '-500%', 
-                            top: '-100%' 
-                          }} 
-                        />
-                      </div>
-                    </div>
-                    
-                    {/* Details Column */}
-                    <div className="flex-1 min-w-0 flex flex-col justify-center">
-                      <div className="mb-1">
-                        <span className={`text-[9px] md:text-[10px] font-black uppercase tracking-widest inline-block px-2 py-0.5 rounded-md border ${roleStyle}`}>
-                          {member.role}
-                        </span>
-                      </div>
-                      
-                      <h3 className="text-base md:text-lg font-black tracking-tight text-white group-hover:text-orange-400 transition-colors truncate">
-                        {member.name}
-                      </h3>
-                      
-                      {/* Special Roles / Skills Icons */}
-                      {member.specialRoles && member.specialRoles.length > 0 && (
-                        <div className="flex flex-wrap items-center gap-1.5 mt-1.5">
-                          {member.specialRoles.map((role, i) => {
-                            const iconSrc = getSpecialIcon(role);
-                            if (!iconSrc) return null;
-                            return (
-                              <div 
-                                key={i} 
-                                className="flex items-center gap-1 bg-black/60 px-2 py-0.5 rounded-md border border-white/10 backdrop-blur-md"
-                                title={role}
-                              >
-                                <img 
-                                  src={iconSrc} 
-                                  alt={role} 
-                                  className="w-3.5 h-3.5 object-contain" 
-                                />
-                                <span className="text-[9px] text-slate-300 font-semibold uppercase tracking-wider leading-none">
-                                  {role}
-                                </span>
-                              </div>
-                            );
-                          })}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
+            {members.map((member, index) => (
+              <MemberCardItem
+                key={member._id || index}
+                member={member}
+                index={index}
+                setSelectedMember={setSelectedMember}
+                getRoleColor={getRoleColor}
+                getBannerImage={getBannerImage}
+                getSrc={getSrc}
+                getSpecialIcon={getSpecialIcon}
+              />
+            ))}
           </div>
         )}
       </section>
