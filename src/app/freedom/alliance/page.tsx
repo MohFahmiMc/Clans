@@ -35,7 +35,7 @@ export default function AlliancePage() {
       }
     } catch (err) {
       // Quiet fail - log dihilangkan
-    } fontally {
+    } finally {
       setLoading(false);
     }
   };
@@ -46,11 +46,113 @@ export default function AlliancePage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#050507] flex flex-col items-center justify-center relative overflow-hidden">
-        <div className="w-16 h-16 border-4 border-white/10 border-t-yellow-500 rounded-full animate-spin mb-6 shadow-[0_0_15px_rgba(234,179,8,0.5)]" />
-        <p className="text-yellow-500 font-sans uppercase tracking-[0.2em] text-xs font-bold animate-pulse">
-          Menghubungkan Jaringan Aliansi...
-        </p>
+      <div className="min-h-screen bg-[#050507] text-slate-200 font-sans pb-24 relative overflow-x-hidden selection:bg-yellow-500/30">
+        
+        {/* BACKGROUND EFFECTS */}
+        {bg2ImgSrc && (
+          <div 
+            className="fixed inset-0 bg-cover bg-center bg-no-repeat opacity-10 z-0 pointer-events-none mix-blend-luminosity"
+            style={{ backgroundImage: `url(${bg2ImgSrc})` }}
+          />
+        )}
+        <div className="fixed inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-yellow-900/10 via-[#050507]/80 to-[#050507] z-0 pointer-events-none" />
+
+        {/* TOP HERO BANNER SKELETON */}
+        <div className="w-full h-56 md:h-72 relative overflow-hidden bg-neutral-950 z-10 border-b border-white/5">
+          {bannerSrc && (
+            <img 
+              src={bannerSrc} 
+              alt="Freedom Alliance Banner" 
+              className="w-full h-full object-cover opacity-20 filter blur-sm" 
+            />
+          )}
+          <div className="absolute inset-0 bg-gradient-to-t from-[#050507] via-[#050507]/50 to-transparent" />
+        </div>
+
+        {/* MAIN CONTENT CONTAINER SKELETON */}
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 -mt-24 relative z-10 flex flex-col gap-8">
+          
+          {/* HEADER INFORMATION BOARD SKELETON */}
+          <div className="bg-[#0a0a0d]/90 backdrop-blur-xl border border-white/10 p-8 md:p-10 rounded-3xl shadow-[0_20px_50px_rgba(0,0,0,0.5)] flex flex-col gap-4 animate-pulse">
+            <div className="flex items-center gap-3">
+              <div className="h-3 w-3 rounded-full bg-yellow-500/40" />
+              <div className="h-3 w-44 bg-white/10 rounded-full" />
+            </div>
+            
+            <div className="h-9 md:h-12 w-3/4 bg-white/10 rounded-xl" />
+            
+            <div className="border-l-2 border-yellow-500/30 pl-4 mt-1 space-y-2">
+              <div className="h-3.5 w-full bg-white/5 rounded" />
+              <div className="h-3.5 w-4/5 bg-white/5 rounded" />
+            </div>
+          </div>
+
+          {/* ALLIANCE CARD SKELETON LIST */}
+          <div className="flex flex-col gap-6">
+            {[1, 2, 3].map((index) => (
+              <div 
+                key={index} 
+                className="relative w-full bg-gradient-to-br from-[#111216]/95 to-[#0a0a0d]/95 backdrop-blur-md border border-white/5 rounded-2xl shadow-xl overflow-hidden flex flex-col-reverse md:flex-row gap-6 p-6 md:p-8 animate-pulse"
+              >
+                {/* Accent Line Skeleton */}
+                <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-yellow-500/30" />
+
+                {/* Left Area Skeleton */}
+                <div className="flex-1 flex flex-col z-10 pl-2">
+                  
+                  {/* Header Skeleton */}
+                  <div className="flex items-center gap-3 mb-5">
+                    <div className="h-6 w-10 bg-white/10 rounded-lg" />
+                    <div className="h-7 w-48 bg-white/10 rounded-lg" />
+                  </div>
+
+                  {/* Info Grid Skeleton */}
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6 bg-black/40 p-4 rounded-xl border border-white/5">
+                    <div className="space-y-2">
+                      <div className="h-2.5 w-12 bg-white/10 rounded" />
+                      <div className="h-4 w-24 bg-white/10 rounded" />
+                    </div>
+                    <div className="space-y-2">
+                      <div className="h-2.5 w-14 bg-white/10 rounded" />
+                      <div className="h-4 w-20 bg-white/10 rounded" />
+                    </div>
+                    <div className="space-y-2">
+                      <div className="h-2.5 w-16 bg-white/10 rounded" />
+                      <div className="h-4 w-24 bg-white/10 rounded" />
+                    </div>
+                  </div>
+
+                  {/* Philosophy & Slogan Skeleton */}
+                  <div className="flex flex-col gap-4">
+                    <div className="border-l-2 border-slate-800 pl-4 space-y-2">
+                      <div className="h-2.5 w-20 bg-white/10 rounded" />
+                      <div className="h-3.5 w-full bg-white/5 rounded" />
+                      <div className="h-3.5 w-3/4 bg-white/5 rounded" />
+                    </div>
+                    <div className="border-l-2 border-slate-800 pl-4 space-y-2">
+                      <div className="h-2.5 w-20 bg-white/10 rounded" />
+                      <div className="h-3.5 w-2/3 bg-white/5 rounded" />
+                    </div>
+                  </div>
+
+                  {/* Footer Contact Skeleton */}
+                  <div className="mt-8 pt-4 border-t border-white/5 flex items-center justify-between">
+                    <div className="h-3 w-28 bg-white/10 rounded" />
+                    <div className="h-7 w-36 bg-white/5 rounded-md border border-white/5" />
+                  </div>
+                </div>
+
+                {/* Right Area Logo Skeleton */}
+                <div className="w-full md:w-40 flex-shrink-0 flex items-center justify-center md:items-start z-10 pt-2">
+                  <div className="w-32 h-32 md:w-36 md:h-36 bg-[#050507] border border-white/10 rounded-2xl p-3 flex items-center justify-center">
+                    <div className="w-20 h-20 bg-white/5 rounded-xl" />
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+
+        </div>
       </div>
     );
   }
