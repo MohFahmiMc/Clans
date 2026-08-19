@@ -7,6 +7,7 @@ import backgroundImage from '../../../assets/background.png';
 import background2Asset from '../../../assets/background2.png';
 import Profile from '../../../components/Profile';
 import RatingSection from '../../../components/RatingSection';
+import ViewCounter from '../../../components/ViewCounter'; // IMPORT VIEW COUNTER
 
 // IMPORT GAMBAR SKIN SEBAGAI FALLBACK DEFAULT JIKA BELUM SET SKIN
 import steveSkin from '../../../assets/steve.png';
@@ -74,7 +75,7 @@ export default function MainPage() {
         if (foundLeader) setLeaderMember(foundLeader);
       }
     } catch (err) {
-      console.error("Gagal melakukan sinkronisasi anggota:", err);
+      // Error handling diredam sesuai arahan sistem
     } finally {
       setLoadingStats(false);
     }
@@ -140,15 +141,23 @@ export default function MainPage() {
         {/* ======================================================== */}
         <header className="pt-20 pb-12 md:pt-32 md:pb-16 text-center flex flex-col items-center animate-in slide-in-from-top-12 duration-1000">
           <div className="max-w-4xl mx-auto w-full flex flex-col items-center">
-            <div className="flex items-center gap-2 mb-6 bg-black/60 px-4 py-2 rounded-full border border-orange-500/30 backdrop-blur-md shadow-lg shadow-orange-500/5 animate-bounce-slow">
-              <img src={logoPnSrc} alt="PN Logo" className="h-4 w-4 md:h-5 md:w-5 object-contain animate-pulse" />
-              <span className="text-[10px] md:text-xs font-bold uppercase tracking-widest text-orange-500">
-                ProwNetwork Official
-              </span>
-              <div className="w-px h-3 bg-white/20 mx-1" />
-              <span className="text-[9px] md:text-[10px] font-bold text-slate-400 uppercase tracking-widest">
-                Dibuat: 02-01-2023
-              </span>
+            
+            {/* CONTAINER FLEKSIBEL UNTUK BADGE DAN VIEW COUNTER */}
+            <div className="flex flex-wrap justify-center items-center gap-3 mb-6">
+              {/* BADGE ASLI */}
+              <div className="flex items-center gap-2 bg-black/60 px-4 py-2 rounded-full border border-orange-500/30 backdrop-blur-md shadow-lg shadow-orange-500/5 animate-bounce-slow">
+                <img src={logoPnSrc} alt="PN Logo" className="h-4 w-4 md:h-5 md:w-5 object-contain animate-pulse" />
+                <span className="text-[10px] md:text-xs font-bold uppercase tracking-widest text-orange-500">
+                  ProwNetwork Official
+                </span>
+                <div className="w-px h-3 bg-white/20 mx-1" />
+                <span className="text-[9px] md:text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                  Dibuat: 02-01-2023
+                </span>
+              </div>
+
+              {/* INTEGRASI VIEW COUNTER */}
+              <ViewCounter />
             </div>
             
             <h1 className="text-6xl md:text-9xl font-black tracking-tighter uppercase text-white mb-4 drop-shadow-[0_0_50px_rgba(234,88,12,0.5)] transition-transform hover:scale-[1.01] duration-500 select-none">
