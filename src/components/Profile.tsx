@@ -3,7 +3,7 @@
 import React, { useEffect } from 'react';
 import MinecraftSkin from './MinecraftSkin';
 
-// IMPORT BANNER CARD
+// IMPORT BANNER CARD DEFAULT
 import cardRedstoner from '../assets/cardRedstoner.png';
 import cardMiner from '../assets/cardMiner.png';
 import cardBuilder from '../assets/cardBuilder.png';
@@ -24,6 +24,7 @@ interface ProfileProps {
     specialRoles: string[];
     description?: string;
     customSkinUrl?: string | null;
+    customBannerUrl?: string | null; // Properti banner kustom
   };
   onClose: () => void;
   getRoleColor: (role: string) => string;
@@ -47,7 +48,12 @@ export default function Profile({ member, onClose, getRoleColor, getSpecialIcon 
     };
   }, [onClose]);
 
+  // LOGIKA BANNER: Gunakan customBannerUrl jika ada, jika tidak ada fallback ke role/default
   const getBannerImage = () => {
+    if (member.customBannerUrl && member.customBannerUrl.trim() !== '') {
+      return member.customBannerUrl;
+    }
+
     const primaryRole = member.specialRoles[0]?.toLowerCase(); 
     switch (primaryRole) {
       case 'redstoner': return getSrc(cardRedstoner);
