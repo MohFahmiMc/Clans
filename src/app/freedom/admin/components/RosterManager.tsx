@@ -9,6 +9,7 @@ interface Member {
   specialRoles: string[];
   description?: string;
   customSkinUrl?: string | null;
+  customBannerUrl?: string | null;
   order?: number;
 }
 
@@ -37,6 +38,7 @@ export default function RosterManager() {
   const [specialRoleInput, setSpecialRoleInput] = useState('');
   const [desc, setDesc] = useState('');
   const [skinUrl, setSkinUrl] = useState('');
+  const [bannerUrl, setBannerUrl] = useState('');
 
   const getAdminPassword = () => {
     if (typeof window !== 'undefined') {
@@ -82,6 +84,22 @@ export default function RosterManager() {
     reader.readAsDataURL(file);
   };
 
+  const handleBannerUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > 3 * 1024 * 1024) {
+      alert("Berkas banner terlalu besar! Maksimal ukuran adalah 3 MB.");
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setBannerUrl(reader.result as string);
+    };
+    reader.readAsDataURL(file);
+  };
+
   const handleSaveMember = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!gamertag.trim()) return;
@@ -104,6 +122,7 @@ export default function RosterManager() {
       specialRoles: specialRolesArray,
       description: desc.trim(),
       customSkinUrl: skinUrl.trim() || null,
+      customBannerUrl: bannerUrl.trim() || null,
       order: currentMemberOrder
     };
 
@@ -135,6 +154,7 @@ export default function RosterManager() {
     setSpecialRoleInput(m.specialRoles ? m.specialRoles.join(', ') : '');
     setDesc(m.description || '');
     setSkinUrl(m.customSkinUrl || '');
+    setBannerUrl(m.customBannerUrl || '');
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
@@ -186,6 +206,7 @@ export default function RosterManager() {
             specialRoles: m.specialRoles,
             description: m.description,
             customSkinUrl: m.customSkinUrl,
+            customBannerUrl: m.customBannerUrl,
             order: idx
           })
         })
@@ -207,6 +228,7 @@ export default function RosterManager() {
     setSpecialRoleInput('');
     setDesc('');
     setSkinUrl('');
+    setBannerUrl('');
   };
 
   return (
@@ -304,7 +326,7 @@ export default function RosterManager() {
 
           {/* Upload File Skin & Preview Box */}
           <div className="flex flex-col gap-1.5">
-            <label className="text-[10px] uppercase font-bold tracking-widest text-slate-400">Upload File Skin PNG</label>
+            <label className="text-[10px] uppercase font-bold tracking-widest text-slate-400">Upload File Skin PNG (Maks 2 MB)</label>
             <input 
               type="file" 
               accept="image/png" 
@@ -314,7 +336,7 @@ export default function RosterManager() {
             
             {/* Skin Preview Container */}
             {skinUrl && (
-              <div className="mt-2 p-3 bg-black/80 border border-white/10 rounded-xl flex items-center justify-between gap-3">
+              <div className="mt-1 p-3 bg-black/80 border border-white/10 rounded-xl flex items-center justify-between gap-3">
                 <div className="flex items-center gap-3">
                   <div className="w-12 h-12 rounded-lg bg-[#141419] border border-white/10 flex items-center justify-center p-1 overflow-hidden">
                     <img 
@@ -333,6 +355,48 @@ export default function RosterManager() {
                 >
                   Hapus
                 </button>
+              </div>
+            )}
+          </div>
+
+          {/* Input Link Banner Image */}
+          <div className="flex flex-col gap-1.5 pt-2 border-t border-white/5">
+            <label className="text-[10px] uppercase font-bold tracking-widest text-slate-400">URL Custom Banner (Imgur / Direct Link)</label>
+            <input 
+              type="text" 
+              value={bannerUrl} 
+              onChange={e => setBannerUrl(e.target.value)} 
+              placeholder="https://i.imgur.com/banner.png" 
+              className="bg-black/60 border border-white/10 p-3 rounded-xl text-xs text-white focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500 transition-all placeholder:text-slate-600" 
+            />
+          </div>
+
+          {/* Upload File Banner & Preview Box */}
+          <div className="flex flex-col gap-1.5">
+            <label className="text-[10px] uppercase font-bold tracking-widest text-slate-400">Upload File Banner (Maks 3 MB)</label>
+            <input 
+              type="file" 
+              accept="image/*" 
+              onChange={handleBannerUpload} 
+              className="text-xs text-slate-400 file:mr-3 file:py-2 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-bold file:bg-orange-500/10 file:text-orange-400 file:border file:border-orange-500/20 hover:file:bg-orange-500/20 file:cursor-pointer transition-all" 
+            />
+            
+            {/* Banner Preview Container */}
+            {bannerUrl && (
+              <div className="mt-1 p-2 bg-black/80 border border-white/10 rounded-xl flex flex-col gap-2">
+                <div className="w-full h-20 rounded-lg overflow-hidden border border-white/10 relative bg-cover bg-center" style={{ backgroundImage: `url(${bannerUrl})` }}>
+                  <div className="absolute inset-0 bg-black/30" />
+                  <div className="absolute top-2 right-2">
+                    <button 
+                      type="button" 
+                      onClick={() => setBannerUrl('')} 
+                      className="text-[10px] font-bold text-rose-400 hover:text-rose-300 bg-black/70 hover:bg-rose-500/20 px-2 py-1 rounded-lg border border-rose-500/20 transition-all uppercase"
+                    >
+                      Hapus
+                    </button>
+                  </div>
+                </div>
+                <span className="text-[10px] font-semibold text-slate-400 text-center">Custom Banner Profil Aktif</span>
               </div>
             )}
           </div>
@@ -379,7 +443,7 @@ export default function RosterManager() {
                 {members.length} Player
               </span>
             </h2>
-            <p className="text-[11px] text-slate-400 font-medium mt-0.5">Kelola posisi, pangkat, dan profil roster clan</p>
+            <p className="text-[11px] text-slate-400 font-medium mt-0.5">Kelola posisi, pangkat, banner, dan profil roster clan</p>
           </div>
 
           {orderChanged && (
@@ -423,9 +487,9 @@ export default function RosterManager() {
               return (
                 <div 
                   key={m._id || idx} 
-                  className="bg-black/50 border border-white/10 hover:border-white/20 rounded-xl p-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 transition-all group hover:bg-black/70"
+                  className="bg-black/50 border border-white/10 hover:border-white/20 rounded-xl p-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 transition-all group hover:bg-black/70 relative overflow-hidden"
                 >
-                  <div className="flex items-center gap-3.5 min-w-0 flex-1">
+                  <div className="flex items-center gap-3.5 min-w-0 flex-1 z-10">
                     
                     {/* Controls Urutan Posisi */}
                     <div className="flex flex-col gap-1 bg-white/5 p-1 rounded-lg border border-white/5 shrink-0">
@@ -461,7 +525,6 @@ export default function RosterManager() {
                         className="w-full h-full object-contain rounded" 
                         style={{ imageRendering: 'pixelated' }}
                         onError={(e) => {
-                          // Fallback jika avatar gagal dimuat
                           (e.target as HTMLElement).style.display = 'none';
                         }}
                       />
@@ -478,6 +541,13 @@ export default function RosterManager() {
                         <span className={`text-[9px] uppercase font-extrabold tracking-wider px-2 py-0.5 rounded border ${badgeStyle}`}>
                           {m.role}
                         </span>
+
+                        {/* Indikator Custom Banner */}
+                        {m.customBannerUrl && (
+                          <span className="text-[8px] uppercase font-bold tracking-wider px-1.5 py-0.5 rounded border border-amber-500/30 bg-amber-500/10 text-amber-400">
+                            Custom Banner
+                          </span>
+                        )}
 
                         {/* Special Role Tags */}
                         {m.specialRoles?.map((sRole, sIdx) => (
@@ -502,7 +572,7 @@ export default function RosterManager() {
                   </div>
                   
                   {/* Action Buttons (Edit & Delete) */}
-                  <div className="flex items-center justify-end gap-1.5 pt-2 sm:pt-0 border-t border-white/5 sm:border-t-0 shrink-0">
+                  <div className="flex items-center justify-end gap-1.5 pt-2 sm:pt-0 border-t border-white/5 sm:border-t-0 shrink-0 z-10">
                     <button 
                       type="button" 
                       onClick={() => handleEditClick(m)} 
