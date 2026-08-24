@@ -484,7 +484,7 @@ export default function RosterManager() {
             <p className="text-[11px] text-slate-600 mt-1">Gunakan formulir di samping untuk menambahkan player pertama.</p>
           </div>
         ) : (
-          <div className="flex flex-col gap-3 max-h-[680px] overflow-y-auto pr-1 custom-scrollbar">
+          <div className="flex flex-col gap-3 max-h-[600px] sm:max-h-[680px] overflow-y-auto pr-1 custom-scrollbar">
             {members.map((m, idx) => {
               const badgeStyle = ROLE_BADGES[m.role] || ROLE_BADGES['Member'];
               const avatarUrl = m.customSkinUrl || `https://mc-heads.net/avatar/${m.name}/48`;
@@ -492,7 +492,7 @@ export default function RosterManager() {
               return (
                 <div 
                   key={m._id || idx} 
-                  className="relative bg-black/50 border border-white/10 hover:border-white/20 rounded-xl p-3.5 sm:p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 transition-all group overflow-hidden"
+                  className="relative bg-black/50 border border-white/10 hover:border-white/20 rounded-xl p-3.5 sm:p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 transition-all group overflow-hidden shrink-0"
                 >
                   {/* Efek Background Banner */}
                   {m.bannerUrl && (
