@@ -10,6 +10,7 @@ interface Member {
   description?: string;
   customSkinUrl?: string | null;
   bannerUrl?: string | null;
+  customBannerUrl?: string | null;
   order?: number;
 }
 
@@ -88,8 +89,8 @@ export default function RosterManager() {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    if (file.size > 2 * 1024 * 1024) {
-      alert("Berkas banner terlalu besar! Maksimal ukuran adalah 2 MB.");
+    if (file.size > 1.5 * 1024 * 1024) {
+      alert("Berkas banner terlalu besar! Disarankan memasukkan URL Gambar atau menggunakan file < 1.5 MB.");
       return;
     }
 
@@ -114,6 +115,9 @@ export default function RosterManager() {
       ? (members.find(m => m._id === currentMemberId)?.order ?? members.length) 
       : members.length;
 
+    const bannerValue = bannerUrl.trim() || null;
+
+    // Mengirim bannerUrl dan customBannerUrl sekaligus agar sinkron dengan database & Profile
     const payload = {
       id: currentMemberId,
       password,
@@ -122,7 +126,8 @@ export default function RosterManager() {
       specialRoles: specialRolesArray,
       description: desc.trim(),
       customSkinUrl: skinUrl.trim() || null,
-      bannerUrl: bannerUrl.trim() || null,
+      bannerUrl: bannerValue,
+      customBannerUrl: bannerValue,
       order: currentMemberOrder
     };
 
@@ -137,7 +142,7 @@ export default function RosterManager() {
         resetMemberForm();
         fetchMembers();
       } else {
-        alert('Gagal menyimpan data clan roster.');
+        alert('Gagal menyimpan data clan roster. Ukuran gambar mungkin terlalu besar untuk database.');
       }
     } catch (err) {
       alert('Kesalahan jaringan terjadi.');
@@ -154,7 +159,8 @@ export default function RosterManager() {
     setSpecialRoleInput(m.specialRoles ? m.specialRoles.join(', ') : '');
     setDesc(m.description || '');
     setSkinUrl(m.customSkinUrl || '');
-    setBannerUrl(m.bannerUrl || '');
+    // Membaca baik bannerUrl maupun customBannerUrl dari database
+    setBannerUrl(m.bannerUrl || m.customBannerUrl || '');
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
@@ -194,8 +200,9 @@ export default function RosterManager() {
     setSavingOrder(true);
     const password = getAdminPassword();
     try {
-      await Promise.all(members.map((m, idx) => 
-        fetch('/api/members', {
+      await Promise.all(members.map((m, idx) => {
+        const bannerVal = m.bannerUrl || m.customBannerUrl || null;
+        return fetch('/api/members', {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -206,11 +213,12 @@ export default function RosterManager() {
             specialRoles: m.specialRoles,
             description: m.description,
             customSkinUrl: m.customSkinUrl,
-            bannerUrl: m.bannerUrl,
+            bannerUrl: bannerVal,
+            customBannerUrl: bannerVal,
             order: idx
           })
-        })
-      ));
+        });
+      }));
       setOrderChanged(false);
       fetchMembers();
     } catch (err) {
@@ -488,6 +496,7 @@ export default function RosterManager() {
             {members.map((m, idx) => {
               const badgeStyle = ROLE_BADGES[m.role] || ROLE_BADGES['Member'];
               const avatarUrl = m.customSkinUrl || `https://mc-heads.net/avatar/${m.name}/48`;
+              const memberBanner = m.bannerUrl || m.customBannerUrl;
 
               return (
                 <div 
@@ -495,11 +504,11 @@ export default function RosterManager() {
                   className="relative bg-black/50 border border-white/10 hover:border-white/20 rounded-xl p-3.5 sm:p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 transition-all group overflow-hidden shrink-0"
                 >
                   {/* Efek Background Banner */}
-                  {m.bannerUrl && (
+                  {memberBanner && (
                     <>
                       <div 
                         className="absolute inset-0 z-0 opacity-20 group-hover:opacity-30 transition-opacity duration-500 bg-cover bg-center"
-                        style={{ backgroundImage: `url(${m.bannerUrl})` }}
+                        style={{ backgroundImage: `url(${memberBanner})` }}
                       />
                       <div className="absolute inset-0 z-0 bg-gradient-to-r from-[#09090d] via-[#09090d]/80 to-transparent" />
                     </>
@@ -566,7 +575,7 @@ export default function RosterManager() {
                           {m.specialRoles.map((sRole, sIdx) => (
                             <span 
                               key={sIdx} 
-                              className="text-[8px] uppercase font-bold tracking-wider px-1.5 py-0.5 rounded border border-white/10 bg-white/10 text-slate-300 backdrop-blur-sm"
+                              className="text-[8px] uppercase font-bold tracking-wider px-1.5 py-0.5 rounded border border-white/10 bg-[#141416]/80 text-slate-300 backdrop-blur-sm"
                             >
                               {sRole}
                             </span>
