@@ -235,7 +235,7 @@ export default function RosterManager() {
     <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
       
       {/* SEKSI FORM INPUT */}
-      <div className="lg:col-span-5 bg-[#09090d]/90 backdrop-blur-xl p-6 rounded-2xl border border-white/10 shadow-2xl h-fit">
+      <div className="lg:col-span-5 bg-[#09090d]/90 backdrop-blur-xl p-5 sm:p-6 rounded-2xl border border-white/10 shadow-2xl h-fit">
         
         {/* Header Form */}
         <div className="flex items-center justify-between border-b border-white/5 pb-4 mb-5">
@@ -437,10 +437,10 @@ export default function RosterManager() {
       </div>
 
       {/* SEKSI DAFTAR ROSTER */}
-      <div className="lg:col-span-7 bg-[#09090d]/90 backdrop-blur-xl p-6 rounded-2xl border border-white/10 shadow-2xl h-fit">
+      <div className="lg:col-span-7 bg-[#09090d]/90 backdrop-blur-xl p-5 sm:p-6 rounded-2xl border border-white/10 shadow-2xl h-fit">
         
         {/* Header List Roster */}
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 border-b border-white/10 pb-4 gap-3">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-5 border-b border-white/10 pb-4 gap-3">
           <div>
             <h2 className="text-base font-black text-white uppercase tracking-wider flex items-center gap-2">
               <span>Roster Clan</span>
@@ -492,7 +492,7 @@ export default function RosterManager() {
               return (
                 <div 
                   key={m._id || idx} 
-                  className="relative bg-black/50 border border-white/10 hover:border-white/20 rounded-xl p-4 flex flex-col sm:flex-row justify-between gap-4 transition-all group overflow-hidden"
+                  className="relative bg-black/50 border border-white/10 hover:border-white/20 rounded-xl p-3.5 sm:p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 transition-all group overflow-hidden"
                 >
                   {/* Efek Background Banner */}
                   {m.bannerUrl && (
@@ -505,11 +505,11 @@ export default function RosterManager() {
                     </>
                   )}
 
-                  {/* Bagian Kiri / Atas: Info & Avatar */}
-                  <div className="relative z-10 flex items-start sm:items-center gap-3 min-w-0 w-full sm:w-auto flex-1">
+                  {/* Bagian Utama: Controls, Avatar & Detail Info */}
+                  <div className="relative z-10 flex items-start sm:items-center gap-3 min-w-0 flex-1">
                     
-                    {/* Controls Urutan Posisi */}
-                    <div className="flex flex-col gap-1 bg-white/5 p-1 rounded-lg border border-white/5 shrink-0 mt-1 sm:mt-0 backdrop-blur-sm">
+                    {/* Controls Urutan Posisi (Up/Down) */}
+                    <div className="flex flex-col gap-0.5 bg-white/5 p-1 rounded-lg border border-white/5 shrink-0 backdrop-blur-sm mt-0.5 sm:mt-0">
                       <button 
                         type="button" 
                         onClick={() => moveRoster(idx, 'up')} 
@@ -535,7 +535,7 @@ export default function RosterManager() {
                     </div>
 
                     {/* Avatar Head Preview Minecraft */}
-                    <div className="w-11 h-11 rounded-lg bg-[#141419] border border-white/10 p-1 shrink-0 flex items-center justify-center relative shadow-md mt-1 sm:mt-0">
+                    <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-lg bg-[#141419] border border-white/10 p-1 shrink-0 flex items-center justify-center relative shadow-md">
                       <img 
                         src={avatarUrl} 
                         alt={m.name} 
@@ -549,30 +549,34 @@ export default function RosterManager() {
                     
                     {/* Detail Information Member */}
                     <div className="min-w-0 flex-1">
-                      <div className="flex flex-wrap items-center gap-2 mb-1.5">
+                      {/* Name & Rank Badge */}
+                      <div className="flex flex-wrap items-center gap-1.5 mb-1">
                         <h4 className="text-sm font-black text-white truncate max-w-full drop-shadow-md">
                           {m.name}
                         </h4>
                         
-                        {/* Badge Rank */}
                         <span className={`text-[9px] uppercase font-extrabold tracking-wider px-2 py-0.5 rounded border whitespace-nowrap backdrop-blur-sm ${badgeStyle}`}>
                           {m.role}
                         </span>
-
-                        {/* Special Role Tags */}
-                        {m.specialRoles?.map((sRole, sIdx) => (
-                          <span 
-                            key={sIdx} 
-                            className="text-[8px] uppercase font-bold tracking-wider px-1.5 py-0.5 rounded border border-white/10 bg-white/10 text-slate-200 whitespace-nowrap backdrop-blur-sm"
-                          >
-                            {sRole}
-                          </span>
-                        ))}
                       </div>
 
-                      {/* Bio Description - Dibatasi max 2 baris agar rapi */}
+                      {/* Special Role Tags */}
+                      {m.specialRoles && m.specialRoles.length > 0 && (
+                        <div className="flex flex-wrap items-center gap-1 mb-1">
+                          {m.specialRoles.map((sRole, sIdx) => (
+                            <span 
+                              key={sIdx} 
+                              className="text-[8px] uppercase font-bold tracking-wider px-1.5 py-0.5 rounded border border-white/10 bg-white/10 text-slate-300 backdrop-blur-sm"
+                            >
+                              {sRole}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+
+                      {/* Bio Description */}
                       {m.description ? (
-                        <p className="text-[11px] text-slate-300 line-clamp-2 italic leading-relaxed drop-shadow">
+                        <p className="text-[11px] text-slate-300 line-clamp-2 italic leading-tight drop-shadow">
                           "{m.description}"
                         </p>
                       ) : (
@@ -581,29 +585,29 @@ export default function RosterManager() {
                     </div>
                   </div>
                   
-                  {/* Bagian Kanan / Bawah (Mobile): Action Buttons */}
-                  <div className="relative z-10 flex items-center justify-end gap-2 pt-3 sm:pt-0 border-t border-white/5 sm:border-t-0 shrink-0 mt-2 sm:mt-0 w-full sm:w-auto">
+                  {/* Action Buttons (Edit & Hapus) */}
+                  <div className="relative z-10 flex items-center justify-end gap-2 pt-2.5 sm:pt-0 border-t border-white/5 sm:border-t-0 shrink-0 w-full sm:w-auto">
                     <button 
                       type="button" 
                       onClick={() => handleEditClick(m)} 
-                      className="flex-1 sm:flex-none flex items-center justify-center gap-2 p-2.5 sm:p-2 sm:px-3 text-slate-300 hover:text-amber-400 bg-black/40 hover:bg-amber-500/20 rounded-lg border border-white/10 hover:border-amber-500/30 transition-all text-[11px] font-bold uppercase tracking-wider backdrop-blur-md"
+                      className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-3 py-1.5 text-slate-300 hover:text-amber-400 bg-white/5 hover:bg-amber-500/20 rounded-lg border border-white/10 hover:border-amber-500/30 transition-all text-[11px] font-bold uppercase tracking-wider backdrop-blur-md"
                       title="Edit Member"
                     >
-                      <svg className="w-4 h-4 sm:mr-0" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
                       </svg>
-                      <span className="sm:hidden">Edit</span>
+                      <span>Edit</span>
                     </button>
                     <button 
                       type="button" 
                       onClick={() => handleDeleteMember(m._id!, m.name)} 
-                      className="flex-1 sm:flex-none flex items-center justify-center gap-2 p-2.5 sm:p-2 sm:px-3 text-slate-300 hover:text-rose-400 bg-black/40 hover:bg-rose-500/20 rounded-lg border border-white/10 hover:border-rose-500/30 transition-all text-[11px] font-bold uppercase tracking-wider backdrop-blur-md"
+                      className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-3 py-1.5 text-slate-300 hover:text-rose-400 bg-white/5 hover:bg-rose-500/20 rounded-lg border border-white/10 hover:border-rose-500/30 transition-all text-[11px] font-bold uppercase tracking-wider backdrop-blur-md"
                       title="Hapus Member"
                     >
-                      <svg className="w-4 h-4 sm:mr-0" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-4v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                       </svg>
-                      <span className="sm:hidden">Hapus</span>
+                      <span>Hapus</span>
                     </button>
                   </div>
                 </div>
