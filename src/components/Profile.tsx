@@ -24,7 +24,8 @@ interface ProfileProps {
     specialRoles: string[];
     description?: string;
     customSkinUrl?: string | null;
-    customBannerUrl?: string | null; // Properti banner kustom
+    customBannerUrl?: string | null;
+    bannerUrl?: string | null;
   };
   onClose: () => void;
   getRoleColor: (role: string) => string;
@@ -48,13 +49,15 @@ export default function Profile({ member, onClose, getRoleColor, getSpecialIcon 
     };
   }, [onClose]);
 
-  // LOGIKA BANNER: Gunakan customBannerUrl jika ada, jika tidak ada fallback ke role/default
+  // LOGIKA BANNER: Cek banner kustom terlebih dahulu (bannerUrl / customBannerUrl)
+  // Jika tidak ada / kosong, fallback ke gambar berdasarkan role pertama
   const getBannerImage = () => {
-    if (member.customBannerUrl && member.customBannerUrl.trim() !== '') {
-      return member.customBannerUrl;
+    const customBanner = member.bannerUrl || member.customBannerUrl;
+    if (customBanner && customBanner.trim() !== '') {
+      return customBanner;
     }
 
-    const primaryRole = member.specialRoles[0]?.toLowerCase(); 
+    const primaryRole = member.specialRoles?.[0]?.toLowerCase(); 
     switch (primaryRole) {
       case 'redstoner': return getSrc(cardRedstoner);
       case 'miner': return getSrc(cardMiner);
@@ -68,13 +71,13 @@ export default function Profile({ member, onClose, getRoleColor, getSpecialIcon 
 
   const roleStyle = getRoleColor(member.role);
   
-  // LOGIKA AMBIL SKIN: Gunakan customSkinUrl jika ada di MongoDB, jika tidak ada pakai steve.png bawaan
+  // LOGIKA AMBIL SKIN: Gunakan customSkinUrl jika ada, jika tidak pakai steve.png
   const skinUrl = member.customSkinUrl ? member.customSkinUrl : getSrc(steveSkin);
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-4 md:p-6 bg-black/80 backdrop-blur-md transition-all duration-300">
       
-      {/* Backdrop Hitam Transparan dengan Click Listener */}
+      {/* Backdrop Hitam Transparan */}
       <div 
         className="fixed inset-0 cursor-pointer"
         onClick={onClose}
@@ -86,7 +89,7 @@ export default function Profile({ member, onClose, getRoleColor, getSpecialIcon 
         className="relative w-full max-w-sm sm:max-w-xl md:max-w-2xl lg:max-w-3xl bg-[#0d0d0e] rounded-2xl border border-white/10 overflow-hidden shadow-[0_0_60px_rgba(0,0,0,0.9)] my-auto animate-in fade-in zoom-in-95 duration-200 flex flex-col max-h-[90vh] sm:max-h-[85vh] z-10"
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Scrollable Container untuk Layar Kecil/HP */}
+        {/* Scrollable Container */}
         <div className="overflow-y-auto scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent">
           
           {/* Banner Bagian Atas */}
@@ -112,7 +115,7 @@ export default function Profile({ member, onClose, getRoleColor, getSpecialIcon 
             {/* Header Avatar 2D Head & Skin 3D */}
             <div className="flex items-end justify-between -mt-12 sm:-mt-16 md:-mt-20 relative z-10 mb-4 sm:mb-6">
               
-              {/* Avatar Kepala 2D (Texture Crop Skin) */}
+              {/* Avatar Kepala 2D */}
               <div className="group relative">
                 <div className="w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24 lg:w-28 lg:h-28 rounded-2xl bg-[#141416] border-2 sm:border-4 border-[#0d0d0e] overflow-hidden shadow-2xl group-hover:border-amber-500 transition-all duration-300 flex-shrink-0 relative">
                   <div 
@@ -147,7 +150,7 @@ export default function Profile({ member, onClose, getRoleColor, getSpecialIcon 
                 </div>
               </div>
 
-              {/* Model Karakter 3D Animasi Berjalan */}
+              {/* Model Karakter 3D */}
               <div className="w-24 h-32 sm:w-28 sm:h-36 md:w-36 md:h-44 lg:w-40 lg:h-48 flex items-end justify-center drop-shadow-[0_10px_20px_rgba(0,0,0,0.8)] filter">
                 <MinecraftSkin 
                   skinUrl={skinUrl} 
@@ -169,7 +172,7 @@ export default function Profile({ member, onClose, getRoleColor, getSpecialIcon 
                 </span>
               </div>
 
-              {/* List Icon Role Khusus (Special Roles) */}
+              {/* List Icon Role Khusus */}
               {member.specialRoles && member.specialRoles.length > 0 && (
                 <div className="flex flex-wrap gap-2 p-2.5 sm:p-3 bg-[#141416]/90 rounded-xl border border-white/10 backdrop-blur-md">
                   {member.specialRoles.map((role, i) => {
@@ -194,7 +197,7 @@ export default function Profile({ member, onClose, getRoleColor, getSpecialIcon 
               )}
             </div>
             
-            {/* Deskripsi Profil (Bio MongoDB) */}
+            {/* Deskripsi Profil */}
             <div className="mt-6 sm:mt-8 pt-4 sm:pt-6 border-t border-white/10">
               <h3 className="text-[11px] sm:text-xs font-bold uppercase tracking-widest text-slate-400 mb-2">
                 Tentang Player
