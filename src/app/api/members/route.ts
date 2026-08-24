@@ -56,8 +56,23 @@ export async function GET() {
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    // PERBAIKAN: Ambil properti bannerUrl & customBannerUrl dari request body
-    const { name, role, specialRoles, description, customSkinUrl, bannerUrl, customBannerUrl, order } = body;
+    
+    // Destructuring atribut utama + kumpulkan properti tambahan (fleksibel)
+    const { 
+      name, 
+      role, 
+      specialRoles, 
+      description, 
+      customSkinUrl, 
+      bannerUrl, 
+      customBannerUrl, 
+      customTheme, 
+      themeColor, 
+      accentColor, 
+      order,
+      password, // Diabaikan dari penyimpan dokumen
+      ...extraFields 
+    } = body;
 
     if (!name || name.trim() === "") {
       return NextResponse.json({ success: false, error: 'VALIDASI ERROR: Gamertag player tidak boleh kosong.' }, { status: 400 });
@@ -74,8 +89,10 @@ export async function POST(request: Request) {
     }
 
     const bannerValue = bannerUrl || customBannerUrl || null;
+    const themeValue = customTheme || themeColor || null;
 
     const newMember = {
+      ...extraFields,
       name: name.trim(),
       role: role || 'Member',
       specialRoles: specialRoles || [],
@@ -83,6 +100,9 @@ export async function POST(request: Request) {
       customSkinUrl: customSkinUrl || null,
       bannerUrl: bannerValue,
       customBannerUrl: bannerValue,
+      customTheme: themeValue,
+      themeColor: themeValue,
+      accentColor: accentColor || null,
       order: order !== undefined ? Number(order) : 0,
       createdAt: new Date()
     };
@@ -97,7 +117,7 @@ export async function POST(request: Request) {
   } catch (err: any) {
     return NextResponse.json({ 
       success: false, 
-      error: 'SYSTEM ERROR: Gagal mengamankan data ke MongoDB Atlas Cluster0.',
+      error: 'SYSTEM ERROR: Gagal mengamankan data ke MongoDB Atlas.',
       details: err.message 
     }, { status: 500 });
   }
@@ -109,8 +129,23 @@ export async function POST(request: Request) {
 export async function PUT(request: Request) {
   try {
     const body = await request.json();
-    // PERBAIKAN: Ambil properti bannerUrl & customBannerUrl dari request body
-    const { id, name, role, specialRoles, description, customSkinUrl, bannerUrl, customBannerUrl, order } = body;
+    
+    const { 
+      id, 
+      name, 
+      role, 
+      specialRoles, 
+      description, 
+      customSkinUrl, 
+      bannerUrl, 
+      customBannerUrl, 
+      customTheme, 
+      themeColor, 
+      accentColor, 
+      order,
+      password, // Diabaikan dari penyimpan dokumen
+      ...extraFields 
+    } = body;
 
     if (!id) {
       return NextResponse.json({ success: false, error: 'VALIDASI ERROR: ID Dokumen diperlukan untuk pembaruan data.' }, { status: 400 });
@@ -118,15 +153,20 @@ export async function PUT(request: Request) {
 
     const collection = await getCollection();
     const bannerValue = bannerUrl || customBannerUrl || null;
+    const themeValue = customTheme || themeColor || null;
 
     const updatedData: any = {
-      name: name.trim(),
+      ...extraFields,
+      name: name ? name.trim() : undefined,
       role: role,
       specialRoles: specialRoles || [],
       description: description,
       customSkinUrl: customSkinUrl || null,
       bannerUrl: bannerValue,
       customBannerUrl: bannerValue,
+      customTheme: themeValue,
+      themeColor: themeValue,
+      accentColor: accentColor || null,
       updatedAt: new Date()
     };
 
@@ -145,7 +185,7 @@ export async function PUT(request: Request) {
 
     return NextResponse.json({ 
       success: true, 
-      message: `NOTIFIKASI: Sinkronisasi berhasil. Profil dan susunan posisi urutan ${name} telah diperbarui.` 
+      message: `NOTIFIKASI: Sinkronisasi berhasil. Profil dan susunan posisi urutan ${name || 'Player'} telah diperbarui.` 
     }, { status: 200 });
 
   } catch (err: any) {
