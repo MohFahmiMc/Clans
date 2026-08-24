@@ -12,7 +12,7 @@ import farmerAsset from '../../../assets/farmer.png';
 import adventureAsset from '../../../assets/adventure.png';
 import minecraftAsset from '../../../assets/Minecraft.png';
 
-// IMPORT BACKGROUND BANNER CARD 
+// IMPORT BACKGROUND BANNER CARD DEFAULT / ROLE
 import cardRedstoner from '../../../assets/cardRedstoner.png';
 import cardMiner from '../../../assets/cardMiner.png';
 import cardBuilder from '../../../assets/cardBuilder.png';
@@ -31,6 +31,8 @@ interface Member {
   specialRoles: string[]; 
   description?: string; 
   customSkinUrl?: string | null;
+  bannerUrl?: string | null;
+  customBannerUrl?: string | null;
   order?: number;
 }
 
@@ -113,7 +115,9 @@ function MemberCardItem({
 }) {
   const [isBannerLoaded, setIsBannerLoaded] = useState(false);
   const roleStyle = getRoleColor(member.role);
-  const bannerSrc = getBannerImage(member.specialRoles?.[0]);
+
+  // PERBAIKAN: Prioritaskan banner custom player jika ada, jika tidak ada baru gunakan banner bawaan role
+  const bannerSrc = member.bannerUrl || member.customBannerUrl || getBannerImage(member.specialRoles?.[0]);
   const currentSkinUrl = member.customSkinUrl ? member.customSkinUrl : getSrc(steveSkin);
 
   useEffect(() => {
@@ -266,7 +270,7 @@ export default function MembersPage() {
     }
   };
 
-  // Latar belakang banner card
+  // Latar belakang banner card fallback
   const getBannerImage = (specialRole: string | undefined) => {
     switch (specialRole?.toLowerCase()) {
       case 'redstoner': return getSrc(cardRedstoner);
@@ -301,7 +305,7 @@ export default function MembersPage() {
           </div>
         </div>
 
-        {/* LOADING STATE - ENHANCED CRISP SKELETON */}
+        {/* LOADING STATE */}
         {loadingMembers ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-4 md:gap-6">
             {[...Array(8)].map((_, i) => (
@@ -309,23 +313,13 @@ export default function MembersPage() {
                 key={i} 
                 className="relative overflow-hidden p-4 md:p-5 rounded-2xl border border-white/10 bg-neutral-950/90 shadow-xl flex items-center gap-4"
               >
-                {/* Visual Skeleton Glow Background */}
                 <div className="absolute inset-0 bg-gradient-to-r from-transparent via-orange-500/5 to-transparent animate-pulse" />
-                
-                {/* Skeleton Avatar Skin Box */}
                 <div className="w-14 h-14 md:w-16 md:h-16 shrink-0 rounded-xl border border-white/15 bg-neutral-900 relative overflow-hidden animate-pulse">
                   <div className="w-full h-full bg-gradient-to-br from-neutral-800 via-neutral-900 to-neutral-800" />
                 </div>
-                
-                {/* Skeleton Info Column */}
                 <div className="flex-1 min-w-0 flex flex-col justify-center gap-2 relative z-10">
-                  {/* Skeleton Role Badge */}
                   <div className="w-16 h-3.5 rounded-md bg-neutral-800/80 border border-white/5 animate-pulse" />
-                  
-                  {/* Skeleton Name */}
                   <div className="w-28 md:w-36 h-5 rounded-md bg-neutral-800 animate-pulse" />
-                  
-                  {/* Skeleton Skill Badges */}
                   <div className="flex items-center gap-1.5 mt-0.5">
                     <div className="w-16 h-4 rounded-md bg-neutral-900 border border-white/10 animate-pulse" />
                     <div className="w-12 h-4 rounded-md bg-neutral-900 border border-white/10 animate-pulse" />
@@ -337,7 +331,7 @@ export default function MembersPage() {
         ) : errorMembers ? (
           /* ERROR STATE */
           <div className="text-center py-12 px-4 bg-red-950/30 border border-red-500/30 rounded-2xl backdrop-blur-sm max-w-2xl mx-auto">
-            <div className="w-12 h-12 bg-red-500/10 border border-red-500/20 rounded-full flex items-center gap-0 justify-center mx-auto mb-3 text-red-500 font-bold text-xl">
+            <div className="w-12 h-12 bg-red-500/10 border border-red-500/20 rounded-full flex items-center justify-center mx-auto mb-3 text-red-500 font-bold text-xl">
               !
             </div>
             <h3 className="text-red-400 font-bold text-base uppercase tracking-wider mb-2">Gagal Sinkronisasi Database</h3>
