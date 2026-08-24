@@ -11,7 +11,7 @@ if (!uri) {
   throw new Error("Sistem Error: MONGODB_URI belum dikonfigurasi di Environment Variables Vercel!");
 }
 
-// MANAGEMENT KONEKSI SINGLETON: Mencegah kebocoran pool koneksi pada serverless Vercel
+// MANAGEMENT KONEKSI SINGLETON
 if (process.env.NODE_ENV === 'development') {
   let globalWithMongo = global as typeof globalThis & {
     _mongoClientPromise?: Promise<MongoClient>;
@@ -39,7 +39,6 @@ async function getCollection() {
 export async function GET() {
   try {
     const collection = await getCollection();
-    // PERBAIKAN: Ambil semua data dan langsung urutkan berdasarkan properti 'order' dari database
     const data = await collection.find({}).sort({ order: 1 }).toArray();
     return NextResponse.json(data, { status: 200 });
   } catch (err: any) {
@@ -57,17 +56,15 @@ export async function GET() {
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    // PERBAIKAN: Ikut sertakan properti 'order' dari request body
-    const { name, role, specialRoles, description, customSkinUrl, order } = body;
+    // PERBAIKAN: Ambil properti bannerUrl & customBannerUrl dari request body
+    const { name, role, specialRoles, description, customSkinUrl, bannerUrl, customBannerUrl, order } = body;
 
-    // Validasi input wajib
     if (!name || name.trim() === "") {
       return NextResponse.json({ success: false, error: 'VALIDASI ERROR: Gamertag player tidak boleh kosong.' }, { status: 400 });
     }
 
     const collection = await getCollection();
     
-    // Sistem Proteksi: Cek apakah gamertag sudah ada (Anti-Duplikat, tidak sensitif huruf besar/kecil)
     const isDuplicate = await collection.findOne({ name: { $regex: new RegExp(`^${name.trim()}$`, 'i') } });
     if (isDuplicate) {
       return NextResponse.json({ 
@@ -76,13 +73,17 @@ export async function POST(request: Request) {
       }, { status: 400 });
     }
 
+    const bannerValue = bannerUrl || customBannerUrl || null;
+
     const newMember = {
       name: name.trim(),
       role: role || 'Member',
       specialRoles: specialRoles || [],
       description: description || 'Player ini adalah petarung garis depan dari clan Freedom.',
       customSkinUrl: customSkinUrl || null,
-      order: order !== undefined ? Number(order) : 0, // PERBAIKAN: Menyimpan data nomor urutan
+      bannerUrl: bannerValue,
+      customBannerUrl: bannerValue,
+      order: order !== undefined ? Number(order) : 0,
       createdAt: new Date()
     };
 
@@ -108,14 +109,15 @@ export async function POST(request: Request) {
 export async function PUT(request: Request) {
   try {
     const body = await request.json();
-    // PERBAIKAN: Ikut sertakan properti 'order' dari request body agar fungsi pemindahan posisi bekerja
-    const { id, name, role, specialRoles, description, customSkinUrl, order } = body;
+    // PERBAIKAN: Ambil properti bannerUrl & customBannerUrl dari request body
+    const { id, name, role, specialRoles, description, customSkinUrl, bannerUrl, customBannerUrl, order } = body;
 
     if (!id) {
       return NextResponse.json({ success: false, error: 'VALIDASI ERROR: ID Dokumen diperlukan untuk pembaruan data.' }, { status: 400 });
     }
 
     const collection = await getCollection();
+    const bannerValue = bannerUrl || customBannerUrl || null;
 
     const updatedData: any = {
       name: name.trim(),
@@ -123,10 +125,11 @@ export async function PUT(request: Request) {
       specialRoles: specialRoles || [],
       description: description,
       customSkinUrl: customSkinUrl || null,
+      bannerUrl: bannerValue,
+      customBannerUrl: bannerValue,
       updatedAt: new Date()
     };
 
-    // PERBAIKAN: Jika properti order dikirimkan, masukkan ke dalam payload update database
     if (order !== undefined) {
       updatedData.order = Number(order);
     }
