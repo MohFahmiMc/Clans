@@ -1,6 +1,16 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
+import Profile from '../../../../components/Profile';
+
+// IMPORT ASSET ICON UNTUK PREVIEW MODAL
+import redstonerAsset from '../../../../assets/redstoner.png';
+import minerAsset from '../../../../assets/miner.png';
+import builderAsset from '../../../../assets/builder.png';
+import pvpAsset from '../../../../assets/pvp.png';
+import farmerAsset from '../../../../assets/farmer.png';
+import adventureAsset from '../../../../assets/adventure.png';
+import minecraftAsset from '../../../../assets/Minecraft.png';
 
 interface Member {
   _id?: string;
@@ -11,6 +21,9 @@ interface Member {
   customSkinUrl?: string | null;
   bannerUrl?: string | null;
   customBannerUrl?: string | null;
+  customTheme?: string | null;
+  themeColor?: string | null;
+  accentColor?: string | null;
   order?: number;
 }
 
@@ -40,6 +53,13 @@ export default function RosterManager() {
   const [desc, setDesc] = useState('');
   const [skinUrl, setSkinUrl] = useState('');
   const [bannerUrl, setBannerUrl] = useState('');
+  const [customTheme, setCustomTheme] = useState('');
+
+  // Preview Modal State
+  const [showPreview, setShowPreview] = useState(false);
+
+  // Helper asset image resolution
+  const getSrc = (asset: any) => asset?.src || (typeof asset === 'string' ? asset : '');
 
   const getAdminPassword = () => {
     if (typeof window !== 'undefined') {
@@ -68,6 +88,30 @@ export default function RosterManager() {
   useEffect(() => {
     fetchMembers();
   }, []);
+
+  // Helper fungsi untuk modal Profile
+  const getRoleColor = (roleName: string) => {
+    const r = roleName.toLowerCase();
+    if (r === 'leader' || r === 'owner') {
+      return 'text-red-400 border-red-500/40 bg-red-500/10 shadow-[0_0_10px_rgba(239,68,68,0.2)]';
+    }
+    if (r === 'admin' || r === 'co-leader') {
+      return 'text-orange-400 border-orange-500/40 bg-orange-500/10 shadow-[0_0_10px_rgba(249,115,22,0.2)]';
+    }
+    return 'text-yellow-400 border-yellow-500/40 bg-yellow-500/10 shadow-[0_0_10px_rgba(234,179,8,0.15)]';
+  };
+
+  const getSpecialIcon = (specialRole: string) => {
+    switch (specialRole?.toLowerCase()) {
+      case 'redstoner': return getSrc(redstonerAsset);
+      case 'miner': return getSrc(minerAsset);
+      case 'builder': return getSrc(builderAsset);
+      case 'pvp': return getSrc(pvpAsset);
+      case 'farmer': return getSrc(farmerAsset);
+      case 'adventure': return getSrc(adventureAsset);
+      default: return getSrc(minecraftAsset);
+    }
+  };
 
   const handleSkinUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -116,8 +160,9 @@ export default function RosterManager() {
       : members.length;
 
     const bannerValue = bannerUrl.trim() || null;
+    const themeValue = customTheme.trim() || null;
 
-    // Mengirim bannerUrl dan customBannerUrl sekaligus agar sinkron dengan database & Profile
+    // Mengirim data member beserta customTheme
     const payload = {
       id: currentMemberId,
       password,
@@ -128,6 +173,8 @@ export default function RosterManager() {
       customSkinUrl: skinUrl.trim() || null,
       bannerUrl: bannerValue,
       customBannerUrl: bannerValue,
+      customTheme: themeValue,
+      themeColor: themeValue,
       order: currentMemberOrder
     };
 
@@ -159,8 +206,8 @@ export default function RosterManager() {
     setSpecialRoleInput(m.specialRoles ? m.specialRoles.join(', ') : '');
     setDesc(m.description || '');
     setSkinUrl(m.customSkinUrl || '');
-    // Membaca baik bannerUrl maupun customBannerUrl dari database
     setBannerUrl(m.bannerUrl || m.customBannerUrl || '');
+    setCustomTheme(m.customTheme || m.themeColor || '');
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
@@ -202,6 +249,7 @@ export default function RosterManager() {
     try {
       await Promise.all(members.map((m, idx) => {
         const bannerVal = m.bannerUrl || m.customBannerUrl || null;
+        const themeVal = m.customTheme || m.themeColor || null;
         return fetch('/api/members', {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
@@ -215,6 +263,8 @@ export default function RosterManager() {
             customSkinUrl: m.customSkinUrl,
             bannerUrl: bannerVal,
             customBannerUrl: bannerVal,
+            customTheme: themeVal,
+            themeColor: themeVal,
             order: idx
           })
         });
@@ -237,6 +287,20 @@ export default function RosterManager() {
     setDesc('');
     setSkinUrl('');
     setBannerUrl('');
+    setCustomTheme('');
+  };
+
+  // Draft Data untuk Pratinjau Profil
+  const draftMemberData: Member = {
+    name: gamertag.trim() || 'Player Name',
+    role: role,
+    specialRoles: specialRoleInput ? specialRoleInput.split(',').map(r => r.trim().toLowerCase()).filter(Boolean) : [],
+    description: desc.trim(),
+    customSkinUrl: skinUrl.trim() || null,
+    bannerUrl: bannerUrl.trim() || null,
+    customBannerUrl: bannerUrl.trim() || null,
+    customTheme: customTheme.trim() || null,
+    themeColor: customTheme.trim() || null,
   };
 
   return (
@@ -318,6 +382,64 @@ export default function RosterManager() {
               placeholder="Info kontribusi atau kata mutiara..." 
               className="bg-black/60 border border-white/10 p-3 rounded-xl h-20 text-xs text-slate-300 leading-relaxed focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500 transition-all resize-none placeholder:text-slate-600" 
             />
+          </div>
+
+          {/* TEMA TAMPILAN PROFIL (DISCORD NITRO STYLE) */}
+          <div className="flex flex-col gap-1.5">
+            <label className="text-[10px] uppercase font-bold tracking-widest text-slate-400 flex items-center justify-between">
+              <span>Tema Latar Profil (Nitro Style)</span>
+              <span className="text-[9px] text-slate-500">HEX / Gradient</span>
+            </label>
+            <input 
+              type="text" 
+              value={customTheme} 
+              onChange={e => setCustomTheme(e.target.value)} 
+              placeholder="#8b0000 atau linear-gradient(135deg, #ff0055, #000)" 
+              className="bg-black/60 border border-white/10 p-3 rounded-xl text-xs text-white focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500 transition-all placeholder:text-slate-600 font-mono" 
+            />
+            {/* Quick Presets Warna Nitro */}
+            <div className="flex items-center gap-1.5 mt-1">
+              <span className="text-[9px] text-slate-500 uppercase font-bold">Preset:</span>
+              <button 
+                type="button" 
+                onClick={() => setCustomTheme('#991b1b')}
+                className="w-5 h-5 rounded-md bg-red-800 border border-white/20 hover:scale-110 transition-transform" 
+                title="Merah Gelap"
+              />
+              <button 
+                type="button" 
+                onClick={() => setCustomTheme('#5865F2')}
+                className="w-5 h-5 rounded-md bg-[#5865F2] border border-white/20 hover:scale-110 transition-transform" 
+                title="Discord Blurple"
+              />
+              <button 
+                type="button" 
+                onClick={() => setCustomTheme('#065f46')}
+                className="w-5 h-5 rounded-md bg-emerald-800 border border-white/20 hover:scale-110 transition-transform" 
+                title="Emerald Gelap"
+              />
+              <button 
+                type="button" 
+                onClick={() => setCustomTheme('linear-gradient(135deg, #ec4899 0%, #8b5cf6 50%, #000000 100%)')}
+                className="w-5 h-5 rounded-md bg-gradient-to-r from-pink-500 via-purple-500 to-black border border-white/20 hover:scale-110 transition-transform" 
+                title="Nitro Sunset Gradient"
+              />
+              <button 
+                type="button" 
+                onClick={() => setCustomTheme('linear-gradient(135deg, #f97316 0%, #dc2626 50%, #09090d 100%)')}
+                className="w-5 h-5 rounded-md bg-gradient-to-r from-orange-500 via-red-600 to-black border border-white/20 hover:scale-110 transition-transform" 
+                title="Freedom Fire Gradient"
+              />
+              {customTheme && (
+                <button 
+                  type="button" 
+                  onClick={() => setCustomTheme('')}
+                  className="text-[9px] font-bold text-slate-400 hover:text-white uppercase ml-auto"
+                >
+                  Reset
+                </button>
+              )}
+            </div>
           </div>
           
           {/* Input Link Skin PNG */}
@@ -414,8 +536,23 @@ export default function RosterManager() {
             )}
           </div>
 
+          {/* TOMBOL PREVIEW PROFILE */}
+          <div className="mt-2">
+            <button
+              type="button"
+              onClick={() => setShowPreview(true)}
+              className="w-full bg-neutral-800 hover:bg-neutral-700 active:scale-[0.99] border border-white/15 text-slate-200 font-extrabold py-2.5 rounded-xl text-xs uppercase tracking-widest transition-all flex items-center justify-center gap-2 shadow-md group"
+            >
+              <svg className="w-4 h-4 text-orange-400 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" />
+                <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+              </svg>
+              <span>Pratinjau / Preview Profile</span>
+            </button>
+          </div>
+
           {/* Action Buttons */}
-          <div className="flex gap-2.5 mt-2 pt-2 border-t border-white/5">
+          <div className="flex gap-2.5 mt-1 pt-2 border-t border-white/5">
             <button 
               type="submit" 
               disabled={loading} 
@@ -625,6 +762,16 @@ export default function RosterManager() {
           </div>
         )}
       </div>
+
+      {/* MODAL PRATINJAU / PREVIEW PROFIL */}
+      {showPreview && (
+        <Profile 
+          member={draftMemberData} 
+          onClose={() => setShowPreview(false)} 
+          getRoleColor={getRoleColor}
+          getSpecialIcon={getSpecialIcon}
+        />
+      )}
 
     </div>
   );
