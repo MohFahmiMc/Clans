@@ -157,6 +157,22 @@ export default function Profile({ member, onClose, getRoleColor, getSpecialIcon 
     };
   };
 
+  // OVERLAY BANNER DINAMIS: Menyesuaikan bayangan banner dengan tema kustom luar
+  const getBannerOverlayStyle = () => {
+    if (!userTheme || userTheme.trim() === '') {
+      return { background: 'linear-gradient(to top, rgba(10, 10, 15, 0.95) 0%, rgba(10, 10, 15, 0.3) 60%, transparent 100%)' };
+    }
+    
+    const theme = userTheme.trim();
+    if (theme.includes('gradient')) {
+      return { background: 'linear-gradient(to top, rgba(10, 10, 15, 0.9) 0%, transparent 100%)' };
+    }
+
+    return {
+      background: `linear-gradient(to top, ${theme} 0%, rgba(10, 10, 15, 0.3) 60%, transparent 100%)`
+    };
+  };
+
   // EKSTRAKSI WARNA GLOW DINAMIS UNTUK AVATAR (Mengikuti Tema Member)
   const getGlowColor = () => {
     const themeCandidates = [member.accentColor, member.themeColor, member.customTheme];
@@ -165,19 +181,17 @@ export default function Profile({ member, onClose, getRoleColor, getSpecialIcon 
       if (!c) continue;
       const str = c.trim();
       
-      // Jika warna berupa hex (#fff), rgb, atau hsl murni
       if ((str.startsWith('#') || str.startsWith('rgb') || str.startsWith('hsl')) && !str.includes('gradient')) {
         return str;
       }
       
-      // Jika berupa string linear-gradient, ambil kode warna pertama yang ditemukan
       const colorMatch = str.match(/#(?:[0-9a-fA-F]{3,8})|rgba?\([^)]+\)|hsla?\([^)]+\)/);
       if (colorMatch) {
         return colorMatch[0];
       }
     }
     
-    return '#eab308'; // Default fallback warna kuning jika tema tidak diatur
+    return '#eab308';
   };
 
   const themeGlow = getGlowColor();
@@ -220,7 +234,7 @@ export default function Profile({ member, onClose, getRoleColor, getSpecialIcon 
 
       {/* Kontainer Profile Utama dengan Animasi Smooth Pop-Up */}
       <div 
-        className="animate-profile-modal relative w-full max-w-sm sm:max-w-xl md:max-w-2xl rounded-3xl border border-white/15 overflow-hidden shadow-2xl my-auto flex flex-col max-h-[90vh] sm:max-h-[85vh] z-10 font-sans"
+        className="animate-profile-modal relative w-full max-w-sm sm:max-w-xl md:max-w-2xl rounded-3xl border border-white/20 overflow-hidden shadow-2xl my-auto flex flex-col max-h-[90vh] sm:max-h-[85vh] z-10 font-sans"
         style={getCustomBackgroundStyle()}
         onClick={(e) => e.stopPropagation()}
       >
@@ -228,13 +242,16 @@ export default function Profile({ member, onClose, getRoleColor, getSpecialIcon 
         {/* Scrollable Container */}
         <div className="overflow-y-auto relative z-10 [scrollbar-width:thin] [scrollbar-color:rgba(255,255,255,0.2)_transparent]">
           
-          {/* Banner Bagian Atas */}
+          {/* Banner Bagian Atas DENGAN BORDER PEMISAH DI BAWAHNYA */}
           <div 
-            className="w-full h-36 sm:h-48 md:h-56 bg-cover bg-center relative flex-shrink-0"
+            className="w-full h-36 sm:h-48 md:h-56 bg-cover bg-center relative flex-shrink-0 border-b border-white/20 shadow-md"
             style={{ backgroundImage: `url(${getBannerImage()})` }}
           >
-            {/* Subtle Gradient Shadow Hanya di Bagian Bawah Banner */}
-            <div className="absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-[#0a0a0f] to-transparent" />
+            {/* Gradient Overlay Banner Menyesuaikan Tema Kustom */}
+            <div 
+              className="absolute inset-x-0 bottom-0 h-24 transition-all duration-300"
+              style={getBannerOverlayStyle()}
+            />
 
             {/* Tombol Close (X) */}
             <button 
@@ -246,15 +263,18 @@ export default function Profile({ member, onClose, getRoleColor, getSpecialIcon 
             </button>
           </div>
 
+          {/* Garis Accent Aksen Pemisah Antara Banner & Profil Body */}
+          <div className="w-full h-[1px] bg-gradient-to-r from-transparent via-white/30 to-transparent relative z-20" />
+
           {/* Konten Detail Profil */}
           <div className="px-4 sm:px-6 md:px-8 pb-6 sm:pb-8 relative">
             
             {/* Header Avatar 2D Head & Skin 3D */}
             <div className="flex items-end justify-between -mt-12 sm:-mt-16 relative z-20 mb-4">
               
-              {/* Avatar Kepala 2D DENGAN EFEK GLOW MENGIKUTI TEMA MEMBER */}
+              {/* Avatar Kepala 2D dengan Efek Glow Warna Tema */}
               <div 
-                className="w-20 h-20 sm:w-24 sm:h-24 md:w-28 md:h-28 rounded-2xl bg-[#0a0a0e] border-4 border-[#0a0a0e] overflow-hidden relative transition-all duration-300"
+                className="w-20 h-20 sm:w-24 sm:h-24 md:w-28 md:h-28 rounded-2xl bg-[#0a0a0e] border-4 border-[#0a0a0e] overflow-hidden relative transition-all duration-300 shadow-xl"
                 style={{
                   boxShadow: `0 0 24px ${themeGlow}, 0 0 8px ${themeGlow}`
                 }}
@@ -303,7 +323,7 @@ export default function Profile({ member, onClose, getRoleColor, getSpecialIcon 
               </div>
             </div>
 
-            {/* Nama Player, Clan Role & Badges (Typography Gaya Minecraft) */}
+            {/* Nama Player, Clan Role & Badges */}
             <div className="flex flex-col md:flex-row md:justify-between md:items-end gap-4 bg-black/40 p-4 sm:p-5 rounded-2xl border border-white/10 backdrop-blur-md shadow-lg">
               <div className="space-y-2">
                 <h2 className="text-2xl sm:text-3xl md:text-4xl font-black text-white tracking-wider font-mono drop-shadow-md">
@@ -343,7 +363,7 @@ export default function Profile({ member, onClose, getRoleColor, getSpecialIcon 
               )}
             </div>
             
-            {/* Deskripsi Profil (Tentang Player & Auto Link Parser) */}
+            {/* Deskripsi Profil */}
             <div className="mt-4">
               <div className="flex items-center gap-2 mb-2 px-1">
                 <svg className="w-4 h-4 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
