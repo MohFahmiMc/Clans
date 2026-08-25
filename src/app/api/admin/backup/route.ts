@@ -1,16 +1,8 @@
 import { NextResponse } from 'next/server';
-import mongoose from 'mongoose';
+import { MongoClient } from 'mongodb';
 
-// Ganti dengan mekanisme koneksi DB Anda jika menggunakan helper tersendiri (misal: dbConnect())
-async function connectToDatabase() {
-  if (mongoose.connection.readyState >= 1) return;
-  if (!process.env.MONGODB_URI) {
-    throw new Error('MONGODB_URI tidak ditemukan di environment variable.');
-  }
-  await mongoose.connect(process.env.MONGODB_URI);
-}
+const uri = process.env.MONGODB_URI || '';
 
-// Verifikasi password admin dari header atau query
 function verifyPassword(req: Request) {
   const url = new URL(req.url);
   const password = url.searchParams.get('password') || req.headers.get('x-admin-password');
@@ -22,30 +14,32 @@ function verifyPassword(req: Request) {
   return true;
 }
 
-// GET: Backup Seluruh Database
 export async function GET(req: Request) {
   try {
     if (!verifyPassword(req)) {
       return NextResponse.json({ error: 'Akses ditolak: Password admin salah' }, { status: 401 });
     }
 
-    await connectToDatabase();
-    const db = mongoose.connection.db;
-    if (!db) {
-      return NextResponse.json({ error: 'Koneksi database gagal' }, { status: 500 });
+    if (!uri) {
+      return NextResponse.json({ error: 'MONGODB_URI tidak ditemukan' }, { status: 500 });
     }
+
+    const client = new MongoClient(uri);
+    await client.connect();
+    const db = client.db();
 
     const collections = await db.listCollections().toArray();
     const backupData: Record<string, any[]> = {};
 
     for (const collectionInfo of collections) {
       const colName = collectionInfo.name;
-      // Melewati sistem internal system.indexes jika ada
       if (colName.startsWith('system.')) continue;
 
       const docs = await db.collection(colName).find({}).toArray();
       backupData[colName] = docs;
     }
+
+    await client.close();
 
     const payload = {
       version: '1.0',
@@ -65,7 +59,6 @@ export async function GET(req: Request) {
   }
 }
 
-// POST: Restore Seluruh Database dari File JSON
 export async function POST(req: Request) {
   try {
     const body = await req.json();
@@ -80,11 +73,13 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Format file backup tidak valid!' }, { status: 400 });
     }
 
-    await connectToDatabase();
-    const db = mongoose.connection.db;
-    if (!db) {
-      return NextResponse.json({ error: 'Koneksi database gagal' }, { status: 500 });
+    if (!uri) {
+      return NextResponse.json({ error: 'MONGODB_URI tidak ditemukan' }, { status: 500 });
     }
+
+    const client = new MongoClient(uri);
+    await client.connect();
+    const db = client.db();
 
     const collectionsData = data.collections;
 
@@ -92,15 +87,14 @@ export async function POST(req: Request) {
       if (!Array.isArray(docs)) continue;
 
       const collection = db.collection(colName);
-      
-      // Kosongkan koleksi lama sebelum me-restore
       await collection.deleteMany({});
 
-      // Masukkan dokumen jika data tidak kosong
       if (docs.length > 0) {
         await collection.insertMany(docs);
       }
     }
+
+    await client.close();
 
     return NextResponse.json({ 
       success: true, 
