@@ -55,8 +55,29 @@ export default function RosterManager() {
   const [bannerUrl, setBannerUrl] = useState('');
   const [customTheme, setCustomTheme] = useState('');
 
+  // VISUAL THEME BUILDER STATES
+  const [themeMode, setThemeMode] = useState<'gradient' | 'solid' | 'manual'>('gradient');
+  const [gradientAngle, setGradientAngle] = useState(180);
+  const [color1, setColor1] = useState('#f472b6');
+  const [stop1, setStop1] = useState(0);
+  const [color2, setColor2] = useState('#1e1b4b');
+  const [stop2, setStop2] = useState(50);
+  const [color3, setColor3] = useState('#09090d');
+  const [stop3, setStop3] = useState(100);
+  const [solidColor, setSolidColor] = useState('#991b1b');
+
   // Preview Modal State
   const [showPreview, setShowPreview] = useState(false);
+
+  // Sync Visual Builder -> customTheme CSS string
+  useEffect(() => {
+    if (themeMode === 'gradient') {
+      const css = `linear-gradient(${gradientAngle}deg, ${color1} ${stop1}%, ${color2} ${stop2}%, ${color3} ${stop3}%)`;
+      setCustomTheme(css);
+    } else if (themeMode === 'solid') {
+      setCustomTheme(solidColor);
+    }
+  }, [themeMode, gradientAngle, color1, stop1, color2, stop2, color3, stop3, solidColor]);
 
   // Helper asset image resolution
   const getSrc = (asset: any) => asset?.src || (typeof asset === 'string' ? asset : '');
@@ -162,7 +183,6 @@ export default function RosterManager() {
     const bannerValue = bannerUrl.trim() || null;
     const themeValue = customTheme.trim() || null;
 
-    // Mengirim data member beserta customTheme
     const payload = {
       id: currentMemberId,
       password,
@@ -207,7 +227,19 @@ export default function RosterManager() {
     setDesc(m.description || '');
     setSkinUrl(m.customSkinUrl || '');
     setBannerUrl(m.bannerUrl || m.customBannerUrl || '');
-    setCustomTheme(m.customTheme || m.themeColor || '');
+    
+    const themeVal = m.customTheme || m.themeColor || '';
+    setCustomTheme(themeVal);
+
+    if (themeVal.includes('gradient')) {
+      setThemeMode('manual');
+    } else if (themeVal.startsWith('#')) {
+      setThemeMode('solid');
+      setSolidColor(themeVal);
+    } else {
+      setThemeMode('gradient');
+    }
+
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
@@ -288,6 +320,24 @@ export default function RosterManager() {
     setSkinUrl('');
     setBannerUrl('');
     setCustomTheme('');
+    setThemeMode('gradient');
+    setGradientAngle(180);
+    setColor1('#f472b6');
+    setStop1(0);
+    setColor2('#1e1b4b');
+    setStop2(50);
+    setColor3('#09090d');
+    setStop3(100);
+    setSolidColor('#991b1b');
+  };
+
+  // Preset Gradient Cepat
+  const applyPreset = (c1: string, s1: number, c2: string, s2: number, c3: string, s3: number, angle: number = 180) => {
+    setThemeMode('gradient');
+    setColor1(c1); setStop1(s1);
+    setColor2(c2); setStop2(s2);
+    setColor3(c3); setStop3(s3);
+    setGradientAngle(angle);
   };
 
   // Draft Data untuk Pratinjau Profil
@@ -384,63 +434,222 @@ export default function RosterManager() {
             />
           </div>
 
-          {/* TEMA TAMPILAN PROFIL (DISCORD NITRO STYLE) */}
-          <div className="flex flex-col gap-1.5">
-            <label className="text-[10px] uppercase font-bold tracking-widest text-slate-400 flex items-center justify-between">
-              <span>Tema Latar Profil (Nitro Style)</span>
-              <span className="text-[9px] text-slate-500">HEX / Gradient</span>
-            </label>
-            <input 
-              type="text" 
-              value={customTheme} 
-              onChange={e => setCustomTheme(e.target.value)} 
-              placeholder="#8b0000 atau linear-gradient(135deg, #ff0055, #000)" 
-              className="bg-black/60 border border-white/10 p-3 rounded-xl text-xs text-white focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500 transition-all placeholder:text-slate-600 font-mono" 
-            />
-            {/* Quick Presets Warna Nitro */}
-            <div className="flex items-center gap-1.5 mt-1">
-              <span className="text-[9px] text-slate-500 uppercase font-bold">Preset:</span>
-              <button 
-                type="button" 
-                onClick={() => setCustomTheme('#991b1b')}
-                className="w-5 h-5 rounded-md bg-red-800 border border-white/20 hover:scale-110 transition-transform" 
-                title="Merah Gelap"
-              />
-              <button 
-                type="button" 
-                onClick={() => setCustomTheme('#5865F2')}
-                className="w-5 h-5 rounded-md bg-[#5865F2] border border-white/20 hover:scale-110 transition-transform" 
-                title="Discord Blurple"
-              />
-              <button 
-                type="button" 
-                onClick={() => setCustomTheme('#065f46')}
-                className="w-5 h-5 rounded-md bg-emerald-800 border border-white/20 hover:scale-110 transition-transform" 
-                title="Emerald Gelap"
-              />
-              <button 
-                type="button" 
-                onClick={() => setCustomTheme('linear-gradient(135deg, #ec4899 0%, #8b5cf6 50%, #000000 100%)')}
-                className="w-5 h-5 rounded-md bg-gradient-to-r from-pink-500 via-purple-500 to-black border border-white/20 hover:scale-110 transition-transform" 
-                title="Nitro Sunset Gradient"
-              />
-              <button 
-                type="button" 
-                onClick={() => setCustomTheme('linear-gradient(135deg, #f97316 0%, #dc2626 50%, #09090d 100%)')}
-                className="w-5 h-5 rounded-md bg-gradient-to-r from-orange-500 via-red-600 to-black border border-white/20 hover:scale-110 transition-transform" 
-                title="Freedom Fire Gradient"
-              />
-              {customTheme && (
-                <button 
-                  type="button" 
-                  onClick={() => setCustomTheme('')}
-                  className="text-[9px] font-bold text-slate-400 hover:text-white uppercase ml-auto"
+          {/* ================= VISUAL GRADIENT & THEME BUILDER ================= */}
+          <div className="flex flex-col gap-2.5 bg-black/40 border border-white/10 p-3.5 rounded-2xl">
+            <div className="flex items-center justify-between">
+              <label className="text-[10px] uppercase font-bold tracking-widest text-amber-400 flex items-center gap-1.5">
+                <span>🎨 Visual Theme Builder (Nitro Style)</span>
+              </label>
+              
+              {/* Mode Switcher */}
+              <div className="flex items-center bg-black/80 p-0.5 rounded-lg border border-white/10 text-[9px] font-bold uppercase">
+                <button
+                  type="button"
+                  onClick={() => setThemeMode('gradient')}
+                  className={`px-2 py-1 rounded-md transition-all ${themeMode === 'gradient' ? 'bg-orange-500 text-white shadow' : 'text-slate-400 hover:text-white'}`}
                 >
-                  Reset
+                  Gradient
                 </button>
-              )}
+                <button
+                  type="button"
+                  onClick={() => setThemeMode('solid')}
+                  className={`px-2 py-1 rounded-md transition-all ${themeMode === 'solid' ? 'bg-orange-500 text-white shadow' : 'text-slate-400 hover:text-white'}`}
+                >
+                  Solid
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setThemeMode('manual')}
+                  className={`px-2 py-1 rounded-md transition-all ${themeMode === 'manual' ? 'bg-orange-500 text-white shadow' : 'text-slate-400 hover:text-white'}`}
+                >
+                  Ketik CSS
+                </button>
+              </div>
             </div>
+
+            {/* CONTROLS UNTUK GRADIENT */}
+            {themeMode === 'gradient' && (
+              <div className="flex flex-col gap-3 mt-1">
+                {/* Arah / Sudut Gradient */}
+                <div className="flex items-center justify-between gap-2">
+                  <span className="text-[10px] text-slate-400 font-bold uppercase">Arah Gradient:</span>
+                  <div className="flex items-center gap-1">
+                    {[0, 45, 90, 135, 180].map((deg) => (
+                      <button
+                        key={deg}
+                        type="button"
+                        onClick={() => setGradientAngle(deg)}
+                        className={`text-[9px] font-mono font-bold px-2 py-0.5 rounded border ${
+                          gradientAngle === deg 
+                            ? 'bg-amber-500/20 text-amber-400 border-amber-500/50' 
+                            : 'bg-black/60 text-slate-400 border-white/10 hover:text-white'
+                        }`}
+                      >
+                        {deg}°
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Warna 1 & Stop % */}
+                <div className="flex items-center gap-2 bg-black/60 p-2 rounded-xl border border-white/5">
+                  <input
+                    type="color"
+                    value={color1}
+                    onChange={e => setColor1(e.target.value)}
+                    className="w-7 h-7 rounded cursor-pointer bg-transparent border-0"
+                  />
+                  <div className="flex-1 flex flex-col gap-0.5">
+                    <div className="flex justify-between text-[9px] font-bold text-slate-300">
+                      <span>Warna Atas / Awal</span>
+                      <span className="font-mono text-amber-400">{color1} ({stop1}%)</span>
+                    </div>
+                    <input
+                      type="range"
+                      min="0"
+                      max="100"
+                      value={stop1}
+                      onChange={e => setStop1(Number(e.target.value))}
+                      className="w-full accent-orange-500 h-1 bg-neutral-800 rounded-lg cursor-pointer"
+                    />
+                  </div>
+                </div>
+
+                {/* Warna 2 & Stop % */}
+                <div className="flex items-center gap-2 bg-black/60 p-2 rounded-xl border border-white/5">
+                  <input
+                    type="color"
+                    value={color2}
+                    onChange={e => setColor2(e.target.value)}
+                    className="w-7 h-7 rounded cursor-pointer bg-transparent border-0"
+                  />
+                  <div className="flex-1 flex flex-col gap-0.5">
+                    <div className="flex justify-between text-[9px] font-bold text-slate-300">
+                      <span>Warna Tengah</span>
+                      <span className="font-mono text-amber-400">{color2} ({stop2}%)</span>
+                    </div>
+                    <input
+                      type="range"
+                      min="0"
+                      max="100"
+                      value={stop2}
+                      onChange={e => setStop2(Number(e.target.value))}
+                      className="w-full accent-orange-500 h-1 bg-neutral-800 rounded-lg cursor-pointer"
+                    />
+                  </div>
+                </div>
+
+                {/* Warna 3 & Stop % */}
+                <div className="flex items-center gap-2 bg-black/60 p-2 rounded-xl border border-white/5">
+                  <input
+                    type="color"
+                    value={color3}
+                    onChange={e => setColor3(e.target.value)}
+                    className="w-7 h-7 rounded cursor-pointer bg-transparent border-0"
+                  />
+                  <div className="flex-1 flex flex-col gap-0.5">
+                    <div className="flex justify-between text-[9px] font-bold text-slate-300">
+                      <span>Warna Dasar / Bawah</span>
+                      <span className="font-mono text-amber-400">{color3} ({stop3}%)</span>
+                    </div>
+                    <input
+                      type="range"
+                      min="0"
+                      max="100"
+                      value={stop3}
+                      onChange={e => setStop3(Number(e.target.value))}
+                      className="w-full accent-orange-500 h-1 bg-neutral-800 rounded-lg cursor-pointer"
+                    />
+                  </div>
+                </div>
+
+                {/* Preset Cepat Nitro */}
+                <div className="flex flex-col gap-1">
+                  <span className="text-[9px] text-slate-400 font-bold uppercase">Preset Cepat:</span>
+                  <div className="flex flex-wrap items-center gap-1.5">
+                    <button
+                      type="button"
+                      onClick={() => applyPreset('#f472b6', 0, '#1e1b4b', 50, '#09090d', 100)}
+                      className="px-2 py-1 rounded bg-gradient-to-r from-pink-400 via-indigo-900 to-black text-[9px] font-bold text-white border border-white/20 hover:scale-105 transition-transform"
+                    >
+                      Pink Indigo
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => applyPreset('#f97316', 0, '#dc2626', 50, '#09090d', 100)}
+                      className="px-2 py-1 rounded bg-gradient-to-r from-orange-500 via-red-600 to-black text-[9px] font-bold text-white border border-white/20 hover:scale-105 transition-transform"
+                    >
+                      Fire Red
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => applyPreset('#10b981', 0, '#064e3b', 50, '#09090d', 100)}
+                      className="px-2 py-1 rounded bg-gradient-to-r from-emerald-500 via-emerald-900 to-black text-[9px] font-bold text-white border border-white/20 hover:scale-105 transition-transform"
+                    >
+                      Emerald
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => applyPreset('#3b82f6', 0, '#1e1b4b', 50, '#09090d', 100)}
+                      className="px-2 py-1 rounded bg-gradient-to-r from-blue-500 via-indigo-950 to-black text-[9px] font-bold text-white border border-white/20 hover:scale-105 transition-transform"
+                    >
+                      Cyber Blue
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* CONTROLS UNTUK SOLID COLOR */}
+            {themeMode === 'solid' && (
+              <div className="flex items-center gap-3 bg-black/60 p-2.5 rounded-xl border border-white/5 mt-1">
+                <input
+                  type="color"
+                  value={solidColor}
+                  onChange={e => setSolidColor(e.target.value)}
+                  className="w-8 h-8 rounded cursor-pointer bg-transparent border-0"
+                />
+                <div className="flex-1">
+                  <span className="text-[10px] text-slate-400 font-bold uppercase block">Pilih Warna Solid (HEX):</span>
+                  <input
+                    type="text"
+                    value={solidColor}
+                    onChange={e => setSolidColor(e.target.value)}
+                    className="bg-black border border-white/10 px-2 py-1 rounded text-xs text-white font-mono w-28 focus:outline-none focus:border-orange-500"
+                  />
+                </div>
+              </div>
+            )}
+
+            {/* CONTROLS MANUAL INPUT */}
+            {themeMode === 'manual' && (
+              <div className="mt-1">
+                <input 
+                  type="text" 
+                  value={customTheme} 
+                  onChange={e => setCustomTheme(e.target.value)} 
+                  placeholder="linear-gradient(180deg, #f472b6 0%, #1e1b4b 50%, #09090d 100%)" 
+                  className="w-full bg-black/60 border border-white/10 p-2.5 rounded-xl text-xs text-white focus:outline-none focus:border-orange-500 font-mono" 
+                />
+              </div>
+            )}
+
+            {/* Kotak Preview Output CSS String */}
+            <div className="mt-1 p-2 bg-black/90 rounded-lg border border-white/10 flex flex-col gap-1">
+              <span className="text-[8px] uppercase tracking-widest text-slate-500 font-bold">Hasil String CSS Terbaca:</span>
+              <div className="flex items-center gap-2">
+                <div 
+                  className="w-4 h-4 rounded-full border border-white/20 shrink-0" 
+                  style={{ background: customTheme || '#0d0d0e' }} 
+                />
+                <code className="text-[10px] text-amber-300 font-mono truncate flex-1">
+                  {customTheme || 'Belum diatur'}
+                </code>
+              </div>
+            </div>
+
           </div>
+          {/* ================= AKHIR VISUAL THEME BUILDER ================= */}
           
           {/* Input Link Skin PNG */}
           <div className="flex flex-col gap-1.5">
