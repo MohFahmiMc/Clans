@@ -51,6 +51,13 @@ const TAB_REGISTRY: Record<
       loading: () => <ComponentLoader name="Alliance Manager" />,
     }),
   },
+  backup: {
+    label: 'Backup Database',
+    slug: 'backup',
+    component: dynamic(() => import('../components/DatabaseBackupManager'), {
+      loading: () => <ComponentLoader name="Backup Database" />,
+    }),
+  },
 };
 
 export default function AdminPortal() {
@@ -134,7 +141,7 @@ export default function AdminPortal() {
       }
     } catch (err) {
       setErrorMsg('Gagal terhubung dengan server otentikasi.');
-    } finally {
+    } fontally {
       setLoading(false);
     }
   };
