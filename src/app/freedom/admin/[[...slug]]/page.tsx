@@ -141,7 +141,7 @@ export default function AdminPortal() {
       }
     } catch (err) {
       setErrorMsg('Gagal terhubung dengan server otentikasi.');
-    } fontally {
+    } finally {
       setLoading(false);
     }
   };
