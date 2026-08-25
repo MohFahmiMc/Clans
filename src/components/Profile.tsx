@@ -157,25 +157,70 @@ export default function Profile({ member, onClose, getRoleColor, getSpecialIcon 
     };
   };
 
-  // Warna Glow Bingkai Avatar Mengikuti Tema Kustom atau Default
-  const glowColor = userTheme && !userTheme.includes('gradient') ? userTheme : '#eab308';
+  // EKSTRAKSI WARNA GLOW DINAMIS UNTUK AVATAR (Mengikuti Tema Member)
+  const getGlowColor = () => {
+    const themeCandidates = [member.accentColor, member.themeColor, member.customTheme];
+    
+    for (const c of themeCandidates) {
+      if (!c) continue;
+      const str = c.trim();
+      
+      // Jika warna berupa hex (#fff), rgb, atau hsl murni
+      if ((str.startsWith('#') || str.startsWith('rgb') || str.startsWith('hsl')) && !str.includes('gradient')) {
+        return str;
+      }
+      
+      // Jika berupa string linear-gradient, ambil kode warna pertama yang ditemukan
+      const colorMatch = str.match(/#(?:[0-9a-fA-F]{3,8})|rgba?\([^)]+\)|hsla?\([^)]+\)/);
+      if (colorMatch) {
+        return colorMatch[0];
+      }
+    }
+    
+    return '#eab308'; // Default fallback warna kuning jika tema tidak diatur
+  };
 
+  const themeGlow = getGlowColor();
   const roleStyle = getRoleColor(member.role);
   const skinUrl = member.customSkinUrl ? member.customSkinUrl : getSrc(steveSkin);
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-4 md:p-6 bg-black/80 backdrop-blur-md transition-all duration-300">
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-4 md:p-6 transition-all duration-300">
       
-      {/* Backdrop Hitam Transparan */}
+      {/* KEYFRAMES ANIMASI SMOOTH BUKA MODAL */}
+      <style jsx global>{`
+        @keyframes profileModalIn {
+          0% {
+            opacity: 0;
+            transform: scale(0.85) translateY(24px);
+          }
+          100% {
+            opacity: 1;
+            transform: scale(1) translateY(0);
+          }
+        }
+        @keyframes profileBackdropIn {
+          0% { opacity: 0; }
+          100% { opacity: 1; }
+        }
+        .animate-profile-modal {
+          animation: profileModalIn 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+        .animate-profile-backdrop {
+          animation: profileBackdropIn 0.25s ease-out forwards;
+        }
+      `}</style>
+      
+      {/* Backdrop Hitam Transparan dengan Animasi Smooth Fade-In */}
       <div 
-        className="fixed inset-0 cursor-pointer"
+        className="fixed inset-0 bg-black/80 backdrop-blur-md cursor-pointer animate-profile-backdrop"
         onClick={onClose}
         aria-hidden="true"
       />
 
-      {/* Kontainer Profile Utama */}
+      {/* Kontainer Profile Utama dengan Animasi Smooth Pop-Up */}
       <div 
-        className="relative w-full max-w-sm sm:max-w-xl md:max-w-2xl rounded-3xl border border-white/15 overflow-hidden shadow-2xl my-auto animate-in fade-in zoom-in-95 duration-200 flex flex-col max-h-[90vh] sm:max-h-[85vh] z-10 font-sans"
+        className="animate-profile-modal relative w-full max-w-sm sm:max-w-xl md:max-w-2xl rounded-3xl border border-white/15 overflow-hidden shadow-2xl my-auto flex flex-col max-h-[90vh] sm:max-h-[85vh] z-10 font-sans"
         style={getCustomBackgroundStyle()}
         onClick={(e) => e.stopPropagation()}
       >
@@ -183,7 +228,7 @@ export default function Profile({ member, onClose, getRoleColor, getSpecialIcon 
         {/* Scrollable Container */}
         <div className="overflow-y-auto relative z-10 [scrollbar-width:thin] [scrollbar-color:rgba(255,255,255,0.2)_transparent]">
           
-          {/* Banner Bagian Atas (Overlay Hitam Dipersempit Agar Banner Jelas) */}
+          {/* Banner Bagian Atas */}
           <div 
             className="w-full h-36 sm:h-48 md:h-56 bg-cover bg-center relative flex-shrink-0"
             style={{ backgroundImage: `url(${getBannerImage()})` }}
@@ -207,11 +252,11 @@ export default function Profile({ member, onClose, getRoleColor, getSpecialIcon 
             {/* Header Avatar 2D Head & Skin 3D */}
             <div className="flex items-end justify-between -mt-12 sm:-mt-16 relative z-20 mb-4">
               
-              {/* Avatar Kepala 2D dengan GLOW MENGIKUTI WARNA TEMA */}
+              {/* Avatar Kepala 2D DENGAN EFEK GLOW MENGIKUTI TEMA MEMBER */}
               <div 
-                className="w-20 h-20 sm:w-24 sm:h-24 md:w-28 md:h-28 rounded-2xl bg-[#0a0a0e] border-4 border-[#0a0a0e] overflow-hidden relative shadow-2xl transition-all duration-300"
+                className="w-20 h-20 sm:w-24 sm:h-24 md:w-28 md:h-28 rounded-2xl bg-[#0a0a0e] border-4 border-[#0a0a0e] overflow-hidden relative transition-all duration-300"
                 style={{
-                  boxShadow: `0 0 20px ${glowColor}88, 0 0 5px ${glowColor}`
+                  boxShadow: `0 0 24px ${themeGlow}, 0 0 8px ${themeGlow}`
                 }}
               >
                 <div 
