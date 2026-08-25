@@ -33,6 +33,9 @@ interface Member {
   customSkinUrl?: string | null;
   bannerUrl?: string | null;
   customBannerUrl?: string | null;
+  customTheme?: string | null;
+  themeColor?: string | null;
+  accentColor?: string | null;
   order?: number;
 }
 
@@ -95,7 +98,7 @@ function SkinAvatarItem({ currentSkinUrl, memberName }: { currentSkinUrl: string
   );
 }
 
-// Sub-komponen ringan untuk kartu member dengan skeleton banner
+// Sub-komponen ringan untuk kartu member dengan skeleton banner & tema kustom
 function MemberCardItem({ 
   member, 
   index, 
@@ -116,7 +119,25 @@ function MemberCardItem({
   const [isBannerLoaded, setIsBannerLoaded] = useState(false);
   const roleStyle = getRoleColor(member.role);
 
-  // PERBAIKAN: Prioritaskan banner custom player jika ada, jika tidak ada baru gunakan banner bawaan role
+  // LOGIKA TEMA KUSTOM SAMA SEPERTI DI PROFILE.TSX
+  const userTheme = member.customTheme || member.themeColor || member.accentColor;
+  
+  const getCustomBackgroundStyle = () => {
+    if (!userTheme || userTheme.trim() === '') {
+      return { background: '#0a0a0c' };
+    }
+    
+    const theme = userTheme.trim();
+    if (theme.includes('gradient')) {
+      return { background: theme };
+    }
+    
+    return {
+      background: `linear-gradient(135deg, ${theme} 0%, #0a0a0c 85%)`
+    };
+  };
+
+  // Prioritaskan banner custom player jika ada, jika tidak ada baru gunakan banner bawaan role
   const bannerSrc = member.bannerUrl || member.customBannerUrl || getBannerImage(member.specialRoles?.[0]);
   const currentSkinUrl = member.customSkinUrl ? member.customSkinUrl : getSrc(steveSkin);
 
@@ -139,7 +160,8 @@ function MemberCardItem({
     <div 
       key={member._id || index} 
       onClick={() => setSelectedMember(member)} 
-      className="group relative overflow-hidden p-4 md:p-5 rounded-2xl border border-white/10 hover:border-orange-500/60 bg-neutral-950 transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_8px_30px_rgba(234,88,12,0.2)] cursor-pointer flex items-center gap-4"
+      className="group relative overflow-hidden p-4 md:p-5 rounded-2xl border border-white/10 hover:border-orange-500/60 transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_8px_30px_rgba(234,88,12,0.2)] cursor-pointer flex items-center gap-4"
+      style={getCustomBackgroundStyle()}
     >
       {/* Skeleton Banner Background saat asset belum selesai terdownload */}
       {!isBannerLoaded && (
@@ -153,8 +175,9 @@ function MemberCardItem({
         }`}
         style={{ backgroundImage: `url(${bannerSrc})` }}
       />
-      {/* Subtle Gradient Mask for readability */}
-      <div className="absolute inset-0 bg-gradient-to-r from-neutral-950 via-neutral-950/90 to-transparent" />
+      
+      {/* Dynamic Gradient Mask agar teks tetap terbaca dengan jelas di atas tema kustom */}
+      <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/40 to-transparent" />
 
       {/* Card Content */}
       <div className="relative z-10 flex items-center gap-4 w-full min-w-0">
