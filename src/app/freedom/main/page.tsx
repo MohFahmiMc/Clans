@@ -30,6 +30,8 @@ interface Member {
   customSkinUrl?: string | null;
 }
 
+const MEMBERS_CACHE_KEY = 'freedom_members_cache_v1';
+
 // ============================================================================
 // HOISTED STATIC ASSETS (Di-load 1x di memori browser, anti-lag/re-render)
 // ============================================================================
@@ -65,10 +67,56 @@ const getRoleColor = (role: string) => {
 };
 
 export default function MainPage() {
-  const [members, setMembers] = useState<Member[]>([]);
-  const [loadingStats, setLoadingStats] = useState(true);
-  const [leaderMember, setLeaderMember] = useState<Member | null>(null);
+  // Inisialisasi Instant dari LocalStorage (Mencegah Layar Skeleton saat Refresh)
+  const [members, setMembers] = useState<Member[]>(() => {
+    if (typeof window !== 'undefined') {
+      const cached = localStorage.getItem(MEMBERS_CACHE_KEY);
+      if (cached) {
+        try {
+          return JSON.parse(cached);
+        } catch {
+          return [];
+        }
+      }
+    }
+    return [];
+  });
+
+  const [leaderMember, setLeaderMember] = useState<Member | null>(() => {
+    if (typeof window !== 'undefined') {
+      const cached = localStorage.getItem(MEMBERS_CACHE_KEY);
+      if (cached) {
+        try {
+          const parsed: Member[] = JSON.parse(cached);
+          return parsed.find(m => m.role.toLowerCase() === 'leader') || null;
+        } catch {
+          return null;
+        }
+      }
+    }
+    return null;
+  });
+
+  const [loadingStats, setLoadingStats] = useState<boolean>(() => {
+    if (typeof window !== 'undefined') {
+      return !localStorage.getItem(MEMBERS_CACHE_KEY);
+    }
+    return true;
+  });
+
   const [selectedMember, setSelectedMember] = useState<Member | null>(null);
+
+  // Pre-cache aset latar belakang ke memori browser
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      [bgImgSrc, bg2ImgSrc, logoPnSrc, mcProwSrc, steveSkinSrc].forEach((src) => {
+        if (src) {
+          const img = new Image();
+          img.src = src;
+        }
+      });
+    }
+  }, []);
 
   useEffect(() => {
     let isMounted = true;
@@ -79,6 +127,7 @@ export default function MainPage() {
         if (resMembers.ok && isMounted) {
           const dataMembers: Member[] = await resMembers.json();
           setMembers(dataMembers);
+          localStorage.setItem(MEMBERS_CACHE_KEY, JSON.stringify(dataMembers));
           const foundLeader = dataMembers.find(m => m.role.toLowerCase() === 'leader');
           if (foundLeader) setLeaderMember(foundLeader);
         }
@@ -99,9 +148,9 @@ export default function MainPage() {
   const leaderSkinUrl = leaderMember?.customSkinUrl ? leaderMember.customSkinUrl : steveSkinSrc;
 
   return (
-    <div className="min-h-screen bg-[#050505] text-white font-sans relative overflow-x-hidden transition-all duration-500">
+    <div className="min-h-screen bg-[#050505] text-white font-sans relative overflow-x-hidden scroll-smooth transition-all duration-500">
       
-      {/* --- BACKGROUND WALLPAPER & AMBIENT GLOW (LANGSUNG TAMPIL TANKPA LAYAR HITAM) --- */}
+      {/* --- BACKGROUND WALLPAPER & AMBIENT GLOW --- */}
       <div className="fixed inset-0 z-0 pointer-events-none overflow-hidden">
         {/* Glow ambient orange awal */}
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-orange-950/30 via-[#050505]/80 to-[#050505]" />
@@ -109,7 +158,7 @@ export default function MainPage() {
         {/* Wallpaper Utama */}
         {bgImgSrc && (
           <div 
-            className="absolute inset-0 bg-cover bg-center bg-no-repeat opacity-40"
+            className="absolute inset-0 bg-cover bg-center bg-no-repeat opacity-40 transition-opacity duration-1000"
             style={{ backgroundImage: `url(${bgImgSrc})` }}
           />
         )}
@@ -123,12 +172,12 @@ export default function MainPage() {
         {/* ======================================================== */}
         {/* 1. HERO SECTION */}
         {/* ======================================================== */}
-        <header className="pt-20 pb-12 md:pt-32 md:pb-16 text-center flex flex-col items-center animate-in slide-in-from-top-6 duration-700">
+        <header className="pt-20 pb-12 md:pt-32 md:pb-16 text-center flex flex-col items-center animate-in fade-in slide-in-from-top-8 duration-1000 fill-mode-forwards">
           <div className="max-w-4xl mx-auto w-full flex flex-col items-center">
             
             {/* BADGE PURIFIED */}
             <div className="mb-6">
-              <div className="inline-flex items-center gap-2 bg-black/60 px-4 py-2 rounded-full border border-orange-500/30 backdrop-blur-md shadow-lg shadow-orange-500/5 animate-bounce-slow">
+              <div className="inline-flex items-center gap-2 bg-black/60 px-4 py-2 rounded-full border border-orange-500/30 backdrop-blur-md shadow-lg shadow-orange-500/5 animate-bounce-slow hover:border-orange-500/60 transition-colors">
                 <img 
                   src={logoPnSrc} 
                   alt="PN Logo" 
@@ -159,7 +208,7 @@ export default function MainPage() {
                 href="https://discord.gg/2veK4TDWtF" 
                 target="_blank" 
                 rel="noreferrer" 
-                className="flex items-center justify-center gap-3 w-full sm:w-auto px-8 py-4 bg-orange-600 hover:bg-orange-500 text-white font-bold rounded-xl shadow-[0_0_20px_rgba(234,88,12,0.4)] hover:shadow-[0_0_35px_rgba(234,88,12,0.7)] hover:-translate-y-0.5 active:translate-y-0 transition-all duration-300 uppercase tracking-widest text-xs md:text-sm transform"
+                className="flex items-center justify-center gap-3 w-full sm:w-auto px-8 py-4 bg-orange-600 hover:bg-orange-500 text-white font-bold rounded-xl shadow-[0_0_20px_rgba(234,88,12,0.4)] hover:shadow-[0_0_35px_rgba(234,88,12,0.7)] hover:-translate-y-1 active:translate-y-0 transition-all duration-300 uppercase tracking-widest text-xs md:text-sm transform"
               >
                 <svg className="w-5 h-5 fill-current" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                   <path d="M20.317 4.3698a19.7913 19.7913 0 00-4.8851-1.5152.0741.0741 0 00-.0785.0371c-.211.3753-.4447.8648-.6083 1.2495-1.8447-.2762-3.68-.2762-5.4868 0-.1636-.3933-.4058-.8742-.6177-1.2495a.077.077 0 00-.0785-.037 19.7363 19.7363 0 00-4.8852 1.515.0699.0699 0 00-.0321.0277C.5334 9.0458-.319 13.5799.0992 18.0578a.0824.0824 0 00.0312.0561c2.0528 1.5076 4.0413 2.4228 5.9929 3.0294a.0777.0777 0 00.0842-.0276c.4616-.6304.8731-1.2952 1.226-1.9942a.076.076 0 00-.0416-.1057c-.6528-.2476-1.2743-.5495-1.8722-.8923a.077.077 0 01-.0076-.1277c.1258-.0943.2517-.1923.3718-.2914a.0743.0743 0 01.0776-.0105c3.9278 1.7933 8.18 1.7933 12.0614 0a.0739.0739 0 01.0785.0095c.1202.099.246.1981.3728.2924a.077.077 0 01-.0066.1276 12.2986 12.2986 0 01-1.873.8914.0766.0766 0 00-.0407.1067c.3604.698.7719 1.3628 1.225 1.9932a.076.076 0 00.0842.0286c1.961-.6067 3.9495-1.5219 6.0023-3.0294a.077.077 0 00.0313-.0552c.5004-5.177-.8382-9.6739-3.5485-13.6604a.061.061 0 00-.0312-.0286zM8.02 15.3312c-1.1825 0-2.1569-1.0857-2.1569-2.419 0-1.3332.9555-2.4189 2.157-2.4189 1.2108 0 2.1757 1.0952 2.1568 2.419 0 1.3332-.9555 2.4189-2.1569 2.4189zm7.9748 0c-1.1825 0-2.1569-1.0857-2.1569-2.419 0-1.3332.9554-2.4189 2.1569-2.4189 1.2108 0 2.1757 1.0952 2.1568 2.419 0 h-.946 2.4189-2.1568 2.4189z"/>
@@ -175,7 +224,7 @@ export default function MainPage() {
         {/* ======================================================== */}
         {/* PREMIUM LEADER CARD / SKELETON SCREEN LOADING */}
         {/* ======================================================== */}
-        {loadingStats ? (
+        {loadingStats && !leaderMember ? (
           <section className="pb-16 w-full flex flex-col items-center animate-in fade-in duration-300">
             <div className="relative w-full max-w-md bg-[#0a0a0b] border border-white/5 rounded-[24px] p-6 flex items-center gap-5 overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.7)] animate-pulse">
               <div className="w-20 h-20 rounded-[20px] bg-white/10 flex-shrink-0" />
@@ -187,17 +236,17 @@ export default function MainPage() {
             </div>
           </section>
         ) : leaderMember ? (
-          <section className="pb-16 w-full flex flex-col items-center animate-in fade-in slide-in-from-bottom-4 duration-700">
+          <section className="pb-16 w-full flex flex-col items-center animate-in fade-in slide-in-from-bottom-6 duration-700">
             <div 
               onClick={() => setSelectedMember(leaderMember)}
-              className="relative w-full max-w-md bg-[#0a0a0b] border border-white/5 rounded-[24px] p-6 flex items-center gap-5 overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.7)] group hover:scale-[1.03] hover:border-red-500/30 hover:shadow-[0_25px_60px_rgba(239,68,68,0.12)] transition-all duration-300 cursor-pointer"
+              className="relative w-full max-w-md bg-[#0a0a0b] border border-white/5 rounded-[24px] p-6 flex items-center gap-5 overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.7)] group hover:scale-[1.03] hover:border-red-500/30 hover:shadow-[0_25px_60px_rgba(239,68,68,0.15)] transition-all duration-300 cursor-pointer"
               title="Klik untuk membuka Detail 3D Roster Profil Leader"
             >
               <div className="absolute inset-0 bg-gradient-to-r from-[#0a0a0b] via-[#0a0a0b]/80 to-transparent z-10 pointer-events-none" />
               
               {bg2ImgSrc && (
                 <div 
-                  className="absolute right-0 inset-y-0 w-2/3 bg-cover bg-center mix-blend-normal pointer-events-none z-0 transform group-hover:scale-105 transition-all duration-500 opacity-45"
+                  className="absolute right-0 inset-y-0 w-2/3 bg-cover bg-center mix-blend-normal pointer-events-none z-0 transform group-hover:scale-105 transition-transform duration-500 opacity-45"
                   style={{ backgroundImage: `url(${bg2ImgSrc})` }} 
                 />
               )}
@@ -249,17 +298,17 @@ export default function MainPage() {
         {/* ======================================================== */}
         {/* 2. BEDROCK ONLY SERVER INFO BOX */}
         {/* ======================================================== */}
-        <section id="server" className="py-12 border-y border-white/5 bg-black/40 backdrop-blur-md rounded-2xl mb-16 animate-in fade-in duration-700">
+        <section id="server" className="py-12 border-y border-white/5 bg-black/40 backdrop-blur-md rounded-2xl mb-16 animate-in fade-in slide-in-from-bottom-8 duration-700">
           <div className="max-w-4xl mx-auto px-4 text-center">
             <img 
               src={mcProwSrc} 
               alt="Minecraft ProwNetwork" 
               decoding="async"
-              className="w-full max-w-[240px] md:max-w-[320px] mx-auto object-contain mb-8 drop-shadow-[0_10px_20px_rgba(0,0,0,0.8)] transform hover:scale-[1.02] transition-transform duration-300" 
+              className="w-full max-w-[240px] md:max-w-[320px] mx-auto object-contain mb-8 drop-shadow-[0_10px_20px_rgba(0,0,0,0.8)] transform hover:scale-[1.03] transition-transform duration-300" 
             />
             
             <div className="max-w-xl mx-auto">
-              <div className="bg-[#0f0f0f] border border-white/10 p-8 rounded-2xl flex flex-col items-center justify-center group hover:border-orange-500/40 hover:bg-orange-500/[0.01] transition-all duration-300 shadow-xl transform hover:-translate-y-0.5">
+              <div className="bg-[#0f0f0f] border border-white/10 p-8 rounded-2xl flex flex-col items-center justify-center group hover:border-orange-500/40 hover:bg-orange-500/[0.01] transition-all duration-300 shadow-xl transform hover:-translate-y-1">
                 <svg className="w-8 h-8 text-orange-500 mb-4 animate-pulse" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9"></path>
                 </svg>
@@ -290,7 +339,7 @@ export default function MainPage() {
         {/* ======================================================== */}
         {/* CLAN STATS GRID */}
         {/* ======================================================== */}
-        <section className="mb-16 animate-in slide-in-from-bottom-4 duration-700">
+        <section className="mb-16 animate-in fade-in slide-in-from-bottom-8 duration-700">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {[
               { 
@@ -308,7 +357,7 @@ export default function MainPage() {
               { 
                 value: `${members.length} Player`, 
                 label: "Active Members", 
-                isSkeleton: loadingStats,
+                isSkeleton: loadingStats && members.length === 0,
                 icon: <svg className="w-5 h-5 mx-auto mb-2 text-slate-400" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 0 0-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path></svg> 
               },
               { 
@@ -318,7 +367,7 @@ export default function MainPage() {
                 icon: <svg className="w-5 h-5 mx-auto mb-2 text-orange-500" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path></svg> 
               }
             ].map((stat, i) => (
-              <div key={i} className="text-center p-6 bg-[#0f0f0f]/60 border border-white/5 rounded-xl hover:border-orange-500/20 transition-all duration-300 shadow-lg transform hover:-translate-y-0.5">
+              <div key={i} className="text-center p-6 bg-[#0f0f0f]/60 border border-white/5 rounded-xl hover:border-orange-500/30 hover:bg-orange-500/[0.02] transition-all duration-300 shadow-lg transform hover:-translate-y-1">
                 {stat.icon}
                 {stat.isSkeleton ? (
                   <div className="h-8 w-24 bg-white/10 rounded-md animate-pulse mx-auto my-1" />
@@ -334,7 +383,9 @@ export default function MainPage() {
         {/* ======================================================== */}
         {/* EVALUASI KEPUASAN & RATING SYSTEM */}
         {/* ======================================================== */}
-        <RatingSection />
+        <div className="animate-in fade-in slide-in-from-bottom-8 duration-700">
+          <RatingSection />
+        </div>
 
       </div>
 
