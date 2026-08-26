@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, memo } from 'react';
+import React, { useState, useEffect } from 'react';
 import logoPnAsset from '../../../assets/logo_pn.png';
 import mcProwAsset from '../../../assets/mc_prow.png';
 import backgroundImage from '../../../assets/background.png';
@@ -31,7 +31,7 @@ interface Member {
 }
 
 // ============================================================================
-// HOISTED STATIC HELPER & ASSETS (Dieksekusi 1x untuk Performa Maksimal)
+// HOISTED STATIC ASSETS (Di-load 1x di memori browser, anti-lag/re-render)
 // ============================================================================
 const getSrc = (asset: any): string => asset?.src || (typeof asset === 'string' ? asset : '');
 
@@ -70,10 +70,6 @@ export default function MainPage() {
   const [leaderMember, setLeaderMember] = useState<Member | null>(null);
   const [selectedMember, setSelectedMember] = useState<Member | null>(null);
 
-  // DETEKSI LOAD BACKGROUND SECARA INSTAN / ASYNCHRONOUS
-  const [isBgLoaded, setIsBgLoaded] = useState(false);
-  const [isBg2Loaded, setIsBg2Loaded] = useState(false);
-
   useEffect(() => {
     let isMounted = true;
 
@@ -105,48 +101,21 @@ export default function MainPage() {
   return (
     <div className="min-h-screen bg-[#050505] text-white font-sans relative overflow-x-hidden transition-all duration-500">
       
-      {/* --- NATIVE FAST PRELOADER (Akselerasi Download Gambar via Engine Browser) --- */}
-      {bgImgSrc && (
-        <img
-          src={bgImgSrc}
-          alt=""
-          aria-hidden="true"
-          className="hidden"
-          // @ts-ignore
-          fetchpriority="high"
-          decoding="async"
-          onLoad={() => setIsBgLoaded(true)}
-        />
-      )}
-      {bg2ImgSrc && (
-        <img
-          src={bg2ImgSrc}
-          alt=""
-          aria-hidden="true"
-          className="hidden"
-          loading="lazy"
-          decoding="async"
-          onLoad={() => setIsBg2Loaded(true)}
-        />
-      )}
-
-      {/* --- BACKGROUND WALLPAPER SKELETON & OPTIMIZED OVERLAY --- */}
+      {/* --- BACKGROUND WALLPAPER & AMBIENT GLOW (LANGSUNG TAMPIL TANKPA LAYAR HITAM) --- */}
       <div className="fixed inset-0 z-0 pointer-events-none overflow-hidden">
-        {/* Instant CSS Backdrop Fallback (Muncul Instan <10ms Tanpa Beban Download) */}
-        <div className="absolute inset-0 bg-[#050505]">
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_var(--tw-gradient-stops))] from-orange-950/20 via-[#050505] to-[#050505]" />
-        </div>
+        {/* Glow ambient orange awal */}
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-orange-950/30 via-[#050505]/80 to-[#050505]" />
 
-        {/* High-Res Background Image Fade-In saat Download Selesai */}
+        {/* Wallpaper Utama */}
         {bgImgSrc && (
           <div 
-            className={`absolute inset-0 bg-cover bg-center bg-no-repeat transition-opacity duration-500 ease-out ${
-              isBgLoaded ? 'opacity-40' : 'opacity-0'
-            }`}
+            className="absolute inset-0 bg-cover bg-center bg-no-repeat opacity-40"
             style={{ backgroundImage: `url(${bgImgSrc})` }}
           />
         )}
-        <div className="absolute inset-0 bg-gradient-to-b from-[#050505]/20 via-[#050505]/60 to-[#050505]" />
+        
+        {/* Overlay gradient kegelapan agar teks tetap jelas */}
+        <div className="absolute inset-0 bg-gradient-to-b from-[#050505]/20 via-[#050505]/50 to-[#050505]" />
       </div>
 
       <div className="relative z-10 max-w-5xl mx-auto px-4 pb-20">
@@ -154,7 +123,7 @@ export default function MainPage() {
         {/* ======================================================== */}
         {/* 1. HERO SECTION */}
         {/* ======================================================== */}
-        <header className="pt-20 pb-12 md:pt-32 md:pb-16 text-center flex flex-col items-center animate-in fade-in slide-in-from-top-6 duration-700">
+        <header className="pt-20 pb-12 md:pt-32 md:pb-16 text-center flex flex-col items-center animate-in slide-in-from-top-6 duration-700">
           <div className="max-w-4xl mx-auto w-full flex flex-col items-center">
             
             {/* BADGE PURIFIED */}
@@ -163,10 +132,8 @@ export default function MainPage() {
                 <img 
                   src={logoPnSrc} 
                   alt="PN Logo" 
-                  className="h-4 w-4 md:h-5 md:w-5 object-contain"
-                  // @ts-ignore
-                  fetchpriority="high"
                   decoding="async"
+                  className="h-4 w-4 md:h-5 md:w-5 object-contain animate-pulse" 
                 />
                 <span className="text-[10px] md:text-xs font-bold uppercase tracking-widest text-orange-500">
                   ProwNetwork Official
@@ -230,9 +197,7 @@ export default function MainPage() {
               
               {bg2ImgSrc && (
                 <div 
-                  className={`absolute right-0 inset-y-0 w-2/3 bg-cover bg-center mix-blend-normal pointer-events-none z-0 transform group-hover:scale-105 transition-all duration-500 ${
-                    isBg2Loaded ? 'opacity-45' : 'opacity-0'
-                  }`} 
+                  className="absolute right-0 inset-y-0 w-2/3 bg-cover bg-center mix-blend-normal pointer-events-none z-0 transform group-hover:scale-105 transition-all duration-500 opacity-45"
                   style={{ backgroundImage: `url(${bg2ImgSrc})` }} 
                 />
               )}
@@ -242,7 +207,6 @@ export default function MainPage() {
                   <img 
                     src={leaderSkinUrl} 
                     alt="" 
-                    loading="eager"
                     decoding="async"
                     className="absolute max-w-none" 
                     style={{ width: '800%', height: 'auto', left: '-100%', top: '-100%' }} 
@@ -250,7 +214,6 @@ export default function MainPage() {
                   <img 
                     src={leaderSkinUrl} 
                     alt="" 
-                    loading="eager"
                     decoding="async"
                     className="absolute max-w-none" 
                     style={{ width: '800%', height: 'auto', left: '-500%', top: '-100%' }} 
@@ -271,7 +234,6 @@ export default function MainPage() {
                   <img 
                     src={getSpecialIcon(leaderMember.specialRoles[0] || 'pvp')} 
                     alt="" 
-                    loading="lazy"
                     decoding="async"
                     className="w-4 h-4 object-contain" 
                   />
@@ -292,7 +254,6 @@ export default function MainPage() {
             <img 
               src={mcProwSrc} 
               alt="Minecraft ProwNetwork" 
-              loading="lazy"
               decoding="async"
               className="w-full max-w-[240px] md:max-w-[320px] mx-auto object-contain mb-8 drop-shadow-[0_10px_20px_rgba(0,0,0,0.8)] transform hover:scale-[1.02] transition-transform duration-300" 
             />
