@@ -30,7 +30,7 @@ interface Member {
   customSkinUrl?: string | null;
 }
 
-const MEMBERS_CACHE_KEY = 'freedom_members_cache_v2';
+const MEMBERS_CACHE_KEY = 'freedom_members_cache_v3';
 
 // ============================================================================
 // HOISTED STATIC ASSETS (Di-load 1x di memori browser, anti-lag/re-render)
@@ -60,10 +60,26 @@ const getSpecialIcon = (specialRole: string) => {
 };
 
 const getRoleColor = (role: string) => {
-  const r = role.toLowerCase();
+  const r = (role || '').toLowerCase().trim();
   if (r === 'leader' || r === 'owner') return 'text-red-500 border-red-500/30 bg-red-500/10';
   if (r === 'admin' || r === 'co-leader') return 'text-orange-500 border-orange-500/30 bg-orange-500/10';
   return 'text-yellow-500 border-yellow-500/30 bg-yellow-500/10';
+};
+
+// HELPER: Cari Leader dengan Pencarian Toleran & Fallback
+const findLeaderMember = (data: Member[]): Member | null => {
+  if (!Array.isArray(data) || data.length === 0) return null;
+  
+  // 1. Prioritas cari role 'leader' atau 'owner'
+  const matchedLeader = data.find(m => {
+    const r = (m.role || '').toLowerCase().trim();
+    return r === 'leader' || r === 'owner';
+  });
+
+  if (matchedLeader) return matchedLeader;
+
+  // 2. Fallback jika tidak ada string role yang tepat, ambil member pertama
+  return data[0] || null;
 };
 
 export default function MainPage() {
@@ -75,23 +91,25 @@ export default function MainPage() {
   useEffect(() => {
     let isMounted = true;
 
-    // 1. Ambil dari LocalStorage untuk instant render (tanpa skeleton delay)
+    // 1. Ambil dari LocalStorage untuk instant render
     try {
       const cachedData = localStorage.getItem(MEMBERS_CACHE_KEY);
       if (cachedData) {
         const parsedMembers: Member[] = JSON.parse(cachedData);
         if (parsedMembers && parsedMembers.length > 0) {
           setMembers(parsedMembers);
-          const foundLeader = parsedMembers.find(m => m.role.toLowerCase() === 'leader');
-          if (foundLeader) setLeaderMember(foundLeader);
-          setLoadingStats(false); // Hilangkan loading seketika jika ada cache
+          const foundLeader = findLeaderMember(parsedMembers);
+          if (foundLeader) {
+            setLeaderMember(foundLeader);
+            setLoadingStats(false);
+          }
         }
       }
     } catch (e) {
-      // Abaikan error cache
+      // Ignore cache parse error
     }
 
-    // 2. Pre-cache gambar latar belakang & aset ke memori browser
+    // 2. Pre-cache gambar latar belakang
     [bgImgSrc, bg2ImgSrc, logoPnSrc, mcProwSrc, steveSkinSrc].forEach((src) => {
       if (src) {
         const img = new Image();
@@ -105,13 +123,16 @@ export default function MainPage() {
         const resMembers = await fetch('/api/members', { cache: 'no-store' });
         if (resMembers.ok && isMounted) {
           const dataMembers: Member[] = await resMembers.json();
-          setMembers(dataMembers);
-          localStorage.setItem(MEMBERS_CACHE_KEY, JSON.stringify(dataMembers));
-          const foundLeader = dataMembers.find(m => m.role.toLowerCase() === 'leader');
-          if (foundLeader) setLeaderMember(foundLeader);
+          if (Array.isArray(dataMembers) && dataMembers.length > 0) {
+            setMembers(dataMembers);
+            localStorage.setItem(MEMBERS_CACHE_KEY, JSON.stringify(dataMembers));
+            
+            const foundLeader = findLeaderMember(dataMembers);
+            if (foundLeader) setLeaderMember(foundLeader);
+          }
         }
       } catch (err) {
-        // Error handling diredam
+        // Silent error
       } finally {
         if (isMounted) setLoadingStats(false);
       }
@@ -251,7 +272,7 @@ export default function MainPage() {
 
               <div className="flex flex-col items-start gap-0.5 min-w-0 relative z-20">
                 <span className="text-[10px] font-extrabold text-[#ff4d4d] bg-[#ff4d4d]/10 border border-[#ff4d4d]/20 px-3 py-0.5 rounded-md tracking-wider uppercase shadow-sm">
-                  LEADER
+                  {leaderMember.role || 'LEADER'}
                 </span>
                 
                 <h3 className="text-2xl font-bold text-white tracking-wide truncate max-w-full drop-shadow">
