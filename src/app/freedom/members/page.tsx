@@ -234,6 +234,7 @@ export default function MembersPage() {
   const [members, setMembers] = useState<Member[]>([]);
   const [loadingMembers, setLoadingMembers] = useState(true);
   const [errorMembers, setErrorMembers] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
   
   const [selectedMember, setSelectedMember] = useState<Member | null>(null);
 
@@ -267,6 +268,16 @@ export default function MembersPage() {
         setLoadingMembers(false);
       });
   }, []);
+
+  // Filter player berdasarkan kata kunci pencarian
+  const filteredMembers = members.filter((member) => {
+    const q = searchQuery.toLowerCase().trim();
+    if (!q) return true;
+    const matchName = member.name.toLowerCase().includes(q);
+    const matchRole = member.role.toLowerCase().includes(q);
+    const matchSpecial = member.specialRoles?.some((r) => r.toLowerCase().includes(q));
+    return matchName || matchRole || matchSpecial;
+  });
 
   // Warna pangkat badge
   const getRoleColor = (role: string) => {
@@ -308,23 +319,61 @@ export default function MembersPage() {
 
   return (
     <>
-      <section className="max-w-7xl mx-auto py-12 md:py-20 px-4 sm:px-6 lg:px-8 w-full mb-12">
+      <section className="max-w-7xl mx-auto py-12 md:py-20 px-4 sm:px-6 lg:px-8 w-full mb-12 animate-in fade-in slide-in-from-bottom-6 duration-700">
+        
         {/* HEADER SECTION */}
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end mb-8 md:mb-12 gap-4 pb-6 border-b border-white/10">
+        <div className="flex flex-col md:flex-row md:items-end justify-between mb-8 md:mb-12 gap-6 pb-6 border-b border-white/10">
           <div>
-            <span className="text-orange-500 text-xs md:text-sm font-black tracking-widest uppercase flex items-center gap-2 mb-1">
-              <span className="w-1.5 h-1.5 rounded-full bg-orange-500 inline-block animate-ping" />
-              The Faces of Freedom
-            </span>
+            <div className="inline-flex items-center gap-2 bg-black/60 px-3.5 py-1.5 rounded-full border border-orange-500/30 backdrop-blur-md mb-3">
+              <span className="w-2 h-2 rounded-full bg-orange-500 animate-pulse" />
+              <span className="text-[10px] md:text-xs font-bold uppercase tracking-widest text-orange-400">
+                The Faces of Freedom
+              </span>
+            </div>
+            
             <h2 className="text-3xl sm:text-5xl md:text-6xl font-black uppercase tracking-tight text-white drop-shadow-md">
               CLAN <span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-500 to-amber-400">ROSTER</span>
             </h2>
           </div>
           
-          {/* Status Indicator */}
-          <div className="text-green-400 font-bold uppercase tracking-widest text-[10px] md:text-xs bg-neutral-900/80 backdrop-blur-md px-3.5 py-2 rounded-full border border-white/10 flex items-center gap-2.5 shadow-inner">
-            <span className={`w-2.5 h-2.5 rounded-full ${loadingMembers ? 'bg-orange-500 animate-pulse' : errorMembers ? 'bg-red-500' : 'bg-emerald-500 shadow-[0_0_10px_#10b981]'}`} />
-            <span className="font-mono">{loadingMembers ? "CONNECTING..." : errorMembers ? "DB ERROR" : "MONGODB ONLINE"}</span>
+          {/* SEARCH BAR & PLAYER COUNT BADGE */}
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full md:w-auto">
+            
+            {/* Input Cari Player */}
+            <div className="relative w-full sm:w-64">
+              <input
+                type="text"
+                placeholder="Cari nama / role..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full bg-[#0a0a0c] border border-white/10 rounded-xl px-4 py-2.5 pl-10 text-xs md:text-sm text-white placeholder-slate-500 focus:outline-none focus:border-orange-500/60 focus:ring-1 focus:ring-orange-500/60 transition-all duration-300 shadow-inner"
+              />
+              <svg 
+                className="w-4 h-4 text-slate-500 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" 
+                fill="none" 
+                stroke="currentColor" 
+                strokeWidth="2" 
+                viewBox="0 0 24 24"
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+              {searchQuery && (
+                <button 
+                  onClick={() => setSearchQuery('')}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-white text-xs font-bold transition-colors"
+                >
+                  ✕
+                </button>
+              )}
+            </div>
+
+            {/* Total Member Badge */}
+            <div className="bg-[#0a0a0c] border border-white/10 px-4 py-2.5 rounded-xl backdrop-blur-md flex items-center justify-center gap-2 shrink-0">
+              <span className="text-xs font-bold uppercase tracking-widest text-slate-400">
+                Total: <span className="text-orange-400 font-mono text-sm">{filteredMembers.length}</span> Player
+              </span>
+            </div>
+
           </div>
         </div>
 
@@ -353,25 +402,31 @@ export default function MembersPage() {
           </div>
         ) : errorMembers ? (
           /* ERROR STATE */
-          <div className="text-center py-12 px-4 bg-red-950/30 border border-red-500/30 rounded-2xl backdrop-blur-sm max-w-2xl mx-auto">
+          <div className="text-center py-12 px-4 bg-red-950/30 border border-red-500/30 rounded-2xl backdrop-blur-sm max-w-2xl mx-auto animate-in fade-in duration-300">
             <div className="w-12 h-12 bg-red-500/10 border border-red-500/20 rounded-full flex items-center justify-center mx-auto mb-3 text-red-500 font-bold text-xl">
               !
             </div>
-            <h3 className="text-red-400 font-bold text-base uppercase tracking-wider mb-2">Gagal Sinkronisasi Database</h3>
+            <h3 className="text-red-400 font-bold text-base uppercase tracking-wider mb-2">Gagal Memuat Roster</h3>
             <p className="text-slate-400 text-xs md:text-sm leading-relaxed max-w-md mx-auto">
-              Periksa kembali string koneksi <code className="text-orange-400 bg-black/50 px-1.5 py-0.5 rounded font-mono">MONGODB_URI</code> di environment variables project kamu.
+              Tidak dapat terhubung ke peladen data. Silakan coba muat ulang halaman beberapa saat lagi.
             </p>
           </div>
-        ) : members.length === 0 ? (
-          /* EMPTY STATE */
-          <div className="text-center py-16 px-4 bg-neutral-900/40 border border-white/5 rounded-2xl backdrop-blur-sm">
-            <h3 className="text-orange-500 font-bold text-sm uppercase tracking-widest mb-1">Roster Kosong</h3>
-            <p className="text-slate-400 text-xs">Belum ada data member yang terdaftar di database.</p>
+        ) : filteredMembers.length === 0 ? (
+          /* EMPTY SEARCH / EMPTY ROSTER STATE */
+          <div className="text-center py-16 px-4 bg-neutral-900/40 border border-white/5 rounded-2xl backdrop-blur-sm animate-in fade-in duration-300">
+            <h3 className="text-orange-500 font-bold text-sm uppercase tracking-widest mb-1">
+              {searchQuery ? "Player Tidak Ditemukan" : "Roster Kosong"}
+            </h3>
+            <p className="text-slate-400 text-xs">
+              {searchQuery 
+                ? `Tidak ada member yang cocok dengan kata kunci "${searchQuery}".` 
+                : "Belum ada data member yang terdaftar."}
+            </p>
           </div>
         ) : (
           /* MEMBER GRID */
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-4 md:gap-6">
-            {members.map((member, index) => (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-4 md:gap-6 animate-in fade-in duration-500">
+            {filteredMembers.map((member, index) => (
               <MemberCardItem
                 key={member._id || index}
                 member={member}
