@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, memo } from 'react';
 import logoPnAsset from '../../../assets/logo_pn.png';
 import mcProwAsset from '../../../assets/mc_prow.png';
 import backgroundImage from '../../../assets/background.png';
@@ -30,108 +30,123 @@ interface Member {
   customSkinUrl?: string | null;
 }
 
+// ============================================================================
+// HOISTED STATIC HELPER & ASSETS (Dieksekusi 1x untuk Performa Maksimal)
+// ============================================================================
+const getSrc = (asset: any): string => asset?.src || (typeof asset === 'string' ? asset : '');
+
+const logoPnSrc = getSrc(logoPnAsset);
+const mcProwSrc = getSrc(mcProwAsset);
+const bgImgSrc = getSrc(backgroundImage);
+const bg2ImgSrc = getSrc(background2Asset);
+const steveSkinSrc = getSrc(steveSkin);
+
+const specialIconsMap: Record<string, string> = {
+  redstoner: getSrc(redstonerAsset),
+  miner: getSrc(minerAsset),
+  builder: getSrc(builderAsset),
+  pvp: getSrc(pvpAsset),
+  farmer: getSrc(farmerAsset),
+  adventure: getSrc(adventureAsset),
+};
+const defaultIconSrc = getSrc(minecraftAsset);
+
+const getSpecialIcon = (specialRole: string) => {
+  if (!specialRole) return defaultIconSrc;
+  const key = specialRole.toLowerCase().trim();
+  return specialIconsMap[key] || defaultIconSrc;
+};
+
+const getRoleColor = (role: string) => {
+  const r = role.toLowerCase();
+  if (r === 'leader' || r === 'owner') return 'text-red-500 border-red-500/30 bg-red-500/10';
+  if (r === 'admin' || r === 'co-leader') return 'text-orange-500 border-orange-500/30 bg-orange-500/10';
+  return 'text-yellow-500 border-yellow-500/30 bg-yellow-500/10';
+};
+
 export default function MainPage() {
   const [members, setMembers] = useState<Member[]>([]);
   const [loadingStats, setLoadingStats] = useState(true);
   const [leaderMember, setLeaderMember] = useState<Member | null>(null);
   const [selectedMember, setSelectedMember] = useState<Member | null>(null);
 
-  // STATE SKELETON PRELOADER UNTUK ASSET GAMBAR LATAR BELAKANG
+  // DETEKSI LOAD BACKGROUND SECARA INSTAN / ASYNCHRONOUS
   const [isBgLoaded, setIsBgLoaded] = useState(false);
   const [isBg2Loaded, setIsBg2Loaded] = useState(false);
 
-  const getSrc = (asset: any) => asset?.src || (typeof asset === 'string' ? asset : '');
-  const logoPnSrc = getSrc(logoPnAsset);
-  const mcProwSrc = getSrc(mcProwAsset);
-  const bgImgSrc = getSrc(backgroundImage);
-  const bg2ImgSrc = getSrc(background2Asset);
-
-  const getRoleColor = (role: string) => {
-    const r = role.toLowerCase();
-    if (r === 'leader' || r === 'owner') return 'text-red-500 border-red-500/30 bg-red-500/10';
-    if (r === 'admin' || r === 'co-leader') return 'text-orange-500 border-orange-500/30 bg-orange-500/10';
-    return 'text-yellow-500 border-yellow-500/30 bg-yellow-500/10';
-  };
-
-  const getSpecialIcon = (specialRole: string) => {
-    switch (specialRole.toLowerCase().trim()) {
-      case 'redstoner': return getSrc(redstonerAsset);
-      case 'miner': return getSrc(minerAsset);
-      case 'builder': return getSrc(builderAsset);
-      case 'pvp': return getSrc(pvpAsset);
-      case 'farmer': return getSrc(farmerAsset);
-      case 'adventure': return getSrc(adventureAsset);
-      default: return getSrc(minecraftAsset);
-    }
-  };
-
-  const loadMembersData = async () => {
-    try {
-      const resMembers = await fetch('/api/members?t=' + new Date().getTime(), { cache: 'no-store' });
-      if (resMembers.ok) {
-        const dataMembers: Member[] = await resMembers.json();
-        setMembers(dataMembers);
-        const foundLeader = dataMembers.find(m => m.role.toLowerCase() === 'leader');
-        if (foundLeader) setLeaderMember(foundLeader);
-      }
-    } catch (err) {
-      // Error handling diredam
-    } finally {
-      setLoadingStats(false);
-    }
-  };
-
   useEffect(() => {
+    let isMounted = true;
+
+    const loadMembersData = async () => {
+      try {
+        const resMembers = await fetch('/api/members', { cache: 'no-store' });
+        if (resMembers.ok && isMounted) {
+          const dataMembers: Member[] = await resMembers.json();
+          setMembers(dataMembers);
+          const foundLeader = dataMembers.find(m => m.role.toLowerCase() === 'leader');
+          if (foundLeader) setLeaderMember(foundLeader);
+        }
+      } catch (err) {
+        // Error handling diredam
+      } finally {
+        if (isMounted) setLoadingStats(false);
+      }
+    };
+
     loadMembersData();
 
-    // PROCESS ASYNCHRONOUS PRELOADING LATAR BELAKANG DENGAN DETEKSI CACHE
-    if (bgImgSrc) {
-      const img1 = new Image();
-      img1.src = bgImgSrc;
-      if (img1.complete) {
-        setIsBgLoaded(true);
-      } else {
-        img1.onload = () => setIsBgLoaded(true);
-        img1.onerror = () => setIsBgLoaded(true);
-      }
-    } else {
-      setIsBgLoaded(true);
-    }
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
-    if (bg2ImgSrc) {
-      const img2 = new Image();
-      img2.src = bg2ImgSrc;
-      if (img2.complete) {
-        setIsBg2Loaded(true);
-      } else {
-        img2.onload = () => setIsBg2Loaded(true);
-        img2.onerror = () => setIsBg2Loaded(true);
-      }
-    } else {
-      setIsBg2Loaded(true);
-    }
-  }, [bgImgSrc, bg2ImgSrc]);
-
-  const leaderSkinUrl = leaderMember?.customSkinUrl ? leaderMember.customSkinUrl : getSrc(steveSkin);
+  const leaderSkinUrl = leaderMember?.customSkinUrl ? leaderMember.customSkinUrl : steveSkinSrc;
 
   return (
-    <div className="min-h-screen bg-[#050505] text-white font-sans relative overflow-x-hidden transition-all duration-500 animate-in fade-in">
+    <div className="min-h-screen bg-[#050505] text-white font-sans relative overflow-x-hidden transition-all duration-500">
       
-      {/* --- BACKGROUND WALLPAPER SKELETON & IMAGE INTEGRATION --- */}
+      {/* --- NATIVE FAST PRELOADER (Akselerasi Download Gambar via Engine Browser) --- */}
+      {bgImgSrc && (
+        <img
+          src={bgImgSrc}
+          alt=""
+          aria-hidden="true"
+          className="hidden"
+          // @ts-ignore
+          fetchpriority="high"
+          decoding="async"
+          onLoad={() => setIsBgLoaded(true)}
+        />
+      )}
+      {bg2ImgSrc && (
+        <img
+          src={bg2ImgSrc}
+          alt=""
+          aria-hidden="true"
+          className="hidden"
+          loading="lazy"
+          decoding="async"
+          onLoad={() => setIsBg2Loaded(true)}
+        />
+      )}
+
+      {/* --- BACKGROUND WALLPAPER SKELETON & OPTIMIZED OVERLAY --- */}
       <div className="fixed inset-0 z-0 pointer-events-none overflow-hidden">
-        {!isBgLoaded && (
-          <div className="absolute inset-0 bg-[#050505]">
-            <div className="absolute inset-0 bg-gradient-to-r from-[#050505] via-[#121215] to-[#050505] animate-pulse" />
-            <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-orange-950/20 via-transparent to-transparent opacity-60 animate-pulse" />
-          </div>
-        )}
+        {/* Instant CSS Backdrop Fallback (Muncul Instan <10ms Tanpa Beban Download) */}
+        <div className="absolute inset-0 bg-[#050505]">
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_var(--tw-gradient-stops))] from-orange-950/20 via-[#050505] to-[#050505]" />
+        </div>
+
+        {/* High-Res Background Image Fade-In saat Download Selesai */}
         {bgImgSrc && (
           <div 
-            className={`absolute inset-0 bg-cover bg-center bg-no-repeat transition-opacity duration-700 ease-in-out ${isBgLoaded ? 'opacity-40' : 'opacity-0'}`}
+            className={`absolute inset-0 bg-cover bg-center bg-no-repeat transition-opacity duration-500 ease-out ${
+              isBgLoaded ? 'opacity-40' : 'opacity-0'
+            }`}
             style={{ backgroundImage: `url(${bgImgSrc})` }}
           />
         )}
-        <div className="absolute inset-0 bg-gradient-to-b from-[#050505]/20 via-[#050505]/50 to-[#050505]" />
+        <div className="absolute inset-0 bg-gradient-to-b from-[#050505]/20 via-[#050505]/60 to-[#050505]" />
       </div>
 
       <div className="relative z-10 max-w-5xl mx-auto px-4 pb-20">
@@ -139,13 +154,20 @@ export default function MainPage() {
         {/* ======================================================== */}
         {/* 1. HERO SECTION */}
         {/* ======================================================== */}
-        <header className="pt-20 pb-12 md:pt-32 md:pb-16 text-center flex flex-col items-center animate-in slide-in-from-top-12 duration-1000">
+        <header className="pt-20 pb-12 md:pt-32 md:pb-16 text-center flex flex-col items-center animate-in fade-in slide-in-from-top-6 duration-700">
           <div className="max-w-4xl mx-auto w-full flex flex-col items-center">
             
             {/* BADGE PURIFIED */}
             <div className="mb-6">
               <div className="inline-flex items-center gap-2 bg-black/60 px-4 py-2 rounded-full border border-orange-500/30 backdrop-blur-md shadow-lg shadow-orange-500/5 animate-bounce-slow">
-                <img src={logoPnSrc} alt="PN Logo" className="h-4 w-4 md:h-5 md:w-5 object-contain animate-pulse" />
+                <img 
+                  src={logoPnSrc} 
+                  alt="PN Logo" 
+                  className="h-4 w-4 md:h-5 md:w-5 object-contain"
+                  // @ts-ignore
+                  fetchpriority="high"
+                  decoding="async"
+                />
                 <span className="text-[10px] md:text-xs font-bold uppercase tracking-widest text-orange-500">
                   ProwNetwork Official
                 </span>
@@ -178,7 +200,6 @@ export default function MainPage() {
                 Join Server Discord
               </a>
 
-              {/* VIEW COUNTER DIPINDAH KESINI AGAR HEADLINE ATAS TERLIHAT RAPI & SIMETRIS */}
               <ViewCounter />
             </div>
           </div>
@@ -188,7 +209,7 @@ export default function MainPage() {
         {/* PREMIUM LEADER CARD / SKELETON SCREEN LOADING */}
         {/* ======================================================== */}
         {loadingStats ? (
-          <section className="pb-16 w-full flex flex-col items-center animate-in fade-in duration-500">
+          <section className="pb-16 w-full flex flex-col items-center animate-in fade-in duration-300">
             <div className="relative w-full max-w-md bg-[#0a0a0b] border border-white/5 rounded-[24px] p-6 flex items-center gap-5 overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.7)] animate-pulse">
               <div className="w-20 h-20 rounded-[20px] bg-white/10 flex-shrink-0" />
               <div className="flex flex-col items-start gap-2 min-w-0 flex-1">
@@ -199,7 +220,7 @@ export default function MainPage() {
             </div>
           </section>
         ) : leaderMember ? (
-          <section className="pb-16 w-full flex flex-col items-center animate-in fade-in slide-in-from-bottom-8 duration-1000 delay-150">
+          <section className="pb-16 w-full flex flex-col items-center animate-in fade-in slide-in-from-bottom-4 duration-700">
             <div 
               onClick={() => setSelectedMember(leaderMember)}
               className="relative w-full max-w-md bg-[#0a0a0b] border border-white/5 rounded-[24px] p-6 flex items-center gap-5 overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.7)] group hover:scale-[1.03] hover:border-red-500/30 hover:shadow-[0_25px_60px_rgba(239,68,68,0.12)] transition-all duration-300 cursor-pointer"
@@ -207,20 +228,33 @@ export default function MainPage() {
             >
               <div className="absolute inset-0 bg-gradient-to-r from-[#0a0a0b] via-[#0a0a0b]/80 to-transparent z-10 pointer-events-none" />
               
-              {!isBg2Loaded && (
-                <div className="absolute right-0 inset-y-0 w-2/3 bg-gradient-to-r from-transparent via-orange-500/10 to-orange-950/20 animate-pulse pointer-events-none z-0" />
-              )}
               {bg2ImgSrc && (
                 <div 
-                  className={`absolute right-0 inset-y-0 w-2/3 bg-cover bg-center mix-blend-normal pointer-events-none z-0 transform group-hover:scale-105 transition-all duration-700 ${isBg2Loaded ? 'opacity-45' : 'opacity-0'}`} 
+                  className={`absolute right-0 inset-y-0 w-2/3 bg-cover bg-center mix-blend-normal pointer-events-none z-0 transform group-hover:scale-105 transition-all duration-500 ${
+                    isBg2Loaded ? 'opacity-45' : 'opacity-0'
+                  }`} 
                   style={{ backgroundImage: `url(${bg2ImgSrc})` }} 
                 />
               )}
 
               <div className="w-20 h-20 rounded-[20px] bg-[#2b2d31] border-4 border-[#3f4248] overflow-hidden flex-shrink-0 relative z-20 transition-transform duration-300 group-hover:scale-105 shadow-xl">
                 <div className="w-full h-full relative" style={{ imageRendering: 'pixelated' }}>
-                  <img src={leaderSkinUrl} alt="" className="absolute max-w-none" style={{ width: '800%', height: 'auto', left: '-100%', top: '-100%' }} />
-                  <img src={leaderSkinUrl} alt="" className="absolute max-w-none" style={{ width: '800%', height: 'auto', left: '-500%', top: '-100%' }} />
+                  <img 
+                    src={leaderSkinUrl} 
+                    alt="" 
+                    loading="eager"
+                    decoding="async"
+                    className="absolute max-w-none" 
+                    style={{ width: '800%', height: 'auto', left: '-100%', top: '-100%' }} 
+                  />
+                  <img 
+                    src={leaderSkinUrl} 
+                    alt="" 
+                    loading="eager"
+                    decoding="async"
+                    className="absolute max-w-none" 
+                    style={{ width: '800%', height: 'auto', left: '-500%', top: '-100%' }} 
+                  />
                 </div>
               </div>
 
@@ -237,6 +271,8 @@ export default function MainPage() {
                   <img 
                     src={getSpecialIcon(leaderMember.specialRoles[0] || 'pvp')} 
                     alt="" 
+                    loading="lazy"
+                    decoding="async"
                     className="w-4 h-4 object-contain" 
                   />
                   <span className="text-[11px] font-black uppercase tracking-wider text-slate-300">
@@ -251,9 +287,15 @@ export default function MainPage() {
         {/* ======================================================== */}
         {/* 2. BEDROCK ONLY SERVER INFO BOX */}
         {/* ======================================================== */}
-        <section id="server" className="py-12 border-y border-white/5 bg-black/40 backdrop-blur-md rounded-2xl mb-16 animate-in fade-in duration-1000">
+        <section id="server" className="py-12 border-y border-white/5 bg-black/40 backdrop-blur-md rounded-2xl mb-16 animate-in fade-in duration-700">
           <div className="max-w-4xl mx-auto px-4 text-center">
-            <img src={mcProwSrc} alt="Minecraft ProwNetwork" className="w-full max-w-[240px] md:max-w-[320px] mx-auto object-contain mb-8 drop-shadow-[0_10px_20px_rgba(0,0,0,0.8)] transform hover:scale-[1.02] transition-transform duration-300" />
+            <img 
+              src={mcProwSrc} 
+              alt="Minecraft ProwNetwork" 
+              loading="lazy"
+              decoding="async"
+              className="w-full max-w-[240px] md:max-w-[320px] mx-auto object-contain mb-8 drop-shadow-[0_10px_20px_rgba(0,0,0,0.8)] transform hover:scale-[1.02] transition-transform duration-300" 
+            />
             
             <div className="max-w-xl mx-auto">
               <div className="bg-[#0f0f0f] border border-white/10 p-8 rounded-2xl flex flex-col items-center justify-center group hover:border-orange-500/40 hover:bg-orange-500/[0.01] transition-all duration-300 shadow-xl transform hover:-translate-y-0.5">
@@ -287,7 +329,7 @@ export default function MainPage() {
         {/* ======================================================== */}
         {/* CLAN STATS GRID */}
         {/* ======================================================== */}
-        <section className="mb-16 animate-in slide-in-from-bottom-4 duration-1000">
+        <section className="mb-16 animate-in slide-in-from-bottom-4 duration-700">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {[
               { 
