@@ -60,8 +60,21 @@ const compressImage = (file: File, maxWidth = 800, maxHeight = 800, quality = 0.
   });
 };
 
+// Helper otomatis konversi URL Imgur biasa/album ke Direct CDN Image
+const parseImgurUrl = (url: string): string => {
+  const trimmed = url.trim();
+  if (!trimmed) return '';
+  
+  // Jika URL berupa Imgur biasa / album (contoh: https://imgur.com/a/XXXXX atau https://imgur.com/XXXXX)
+  const imgurMatch = trimmed.match(/https?:\/\/(?:www\.)?imgur\.com\/(?:a\/|gallery\/)?([a-zA-Z0-9]+)/);
+  if (imgurMatch && !trimmed.includes('i.imgur.com')) {
+    const id = imgurMatch[1];
+    return `https://i.imgur.com/${id}.png`;
+  }
+  return trimmed;
+};
+
 export default function GalleryPage() {
-  // Inisialisasi Instant dari LocalStorage (Zero Waiting Time)
   const [items, setItems] = useState<GalleryItem[]>(() => {
     if (typeof window !== 'undefined') {
       const cached = localStorage.getItem(CACHE_KEY);
@@ -95,12 +108,14 @@ export default function GalleryPage() {
     type: 'info'
   });
 
-  // Form states
+  // Form & Upload Source states
+  const [uploadSource, setUploadSource] = useState<'file' | 'url'>('file');
   const [isEditing, setIsEditing] = useState(false);
   const [editingItemId, setEditingItemId] = useState<string | null>(null);
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [imageFile, setImageFile] = useState<string | null>(null);
+  const [imageUrlInput, setImageUrlInput] = useState<string>('');
 
   // Lightbox View State
   const [lightboxItem, setLightboxItem] = useState<GalleryItem | null>(null);
@@ -127,9 +142,13 @@ export default function GalleryPage() {
       const res = await fetch('/api/gallery?t=' + new Date().getTime(), { cache: 'no-store' });
       if (res.ok) {
         const data = await res.json();
-        setItems(data);
-        localStorage.setItem(CACHE_KEY, JSON.stringify(data));
-        setError(false);
+        if (Array.isArray(data)) {
+          setItems(data);
+          localStorage.setItem(CACHE_KEY, JSON.stringify(data));
+          setError(false);
+        } else {
+          if (items.length === 0) setError(true);
+        }
       } else {
         if (items.length === 0) setError(true);
       }
@@ -187,12 +206,22 @@ export default function GalleryPage() {
 
   const handleFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!isEditing && !imageFile) {
-      return triggerToast('Pilih gambar terlebih dahulu!', 'info');
+
+    let finalImageUrl = uploadSource === 'file' ? imageFile : parseImgurUrl(imageUrlInput);
+
+    if (!isEditing && !finalImageUrl) {
+      return triggerToast('Pilih file gambar atau masukkan URL gambar/Imgur!', 'info');
     }
 
     setUploading(true);
-    const payload = { password, id: editingItemId, title, description, imageData: imageFile };
+    const payload = { 
+      password, 
+      id: editingItemId, 
+      title, 
+      description, 
+      imageData: finalImageUrl,
+      imageUrl: finalImageUrl
+    };
     const endpoint = '/api/gallery';
     const method = isEditing ? 'PUT' : 'POST';
 
@@ -246,7 +275,9 @@ export default function GalleryPage() {
     setEditingItemId(item._id || null);
     setTitle(item.title);
     setDescription(item.description || '');
+    setImageUrlInput(item.imageUrl);
     setImageFile(item.imageUrl);
+    setUploadSource('url');
     setShowUploadModal(true);
   };
 
@@ -257,6 +288,7 @@ export default function GalleryPage() {
     setTitle('');
     setDescription('');
     setImageFile(null);
+    setImageUrlInput('');
   };
 
   const handleMinusClick = () => {
@@ -272,7 +304,7 @@ export default function GalleryPage() {
   return (
     <div className="min-h-screen bg-[#030305] text-slate-100 font-sans relative overflow-x-hidden selection:bg-orange-500 selection:text-white">
 
-      {/* TOAST NOTIFICATION MODERN GLASS */}
+      {/* TOAST NOTIFICATION */}
       {toast.show && (
         <div className="fixed top-6 right-6 z-[300] flex items-center gap-3 px-5 py-3.5 rounded-2xl border border-white/10 bg-[#0c0c12]/90 backdrop-blur-2xl shadow-[0_20px_40px_rgba(0,0,0,0.8)] animate-in slide-in-from-top-4 duration-300 max-w-sm">
           <span className={`w-2.5 h-2.5 rounded-full ${toast.type === 'success' ? 'bg-emerald-400 shadow-[0_0_10px_#34d399]' : toast.type === 'error' ? 'bg-rose-500 shadow-[0_0_10px_#f43f5e]' : 'bg-orange-400 shadow-[0_0_10px_#fb923c]'}`} />
@@ -280,7 +312,7 @@ export default function GalleryPage() {
         </div>
       )}
 
-      {/* BACKGROUND AMBIENT GLOW & GRID PATTERN */}
+      {/* BACKGROUND AMBIENT */}
       <div className="fixed inset-0 bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(234,88,12,0.15),rgba(255,255,255,0))] pointer-events-none z-0" />
       <div className="fixed inset-0 bg-[linear-gradient(to_right,#1f1f2e15_1px,transparent_1px),linear-gradient(to_bottom,#1f1f2e15_1px,transparent_1px)] bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_50%,#000_70%,transparent_100%)] pointer-events-none z-0" />
       
@@ -291,10 +323,10 @@ export default function GalleryPage() {
         />
       )}
 
-      {/* CONTAINER UTAMA */}
+      {/* MAIN CONTAINER */}
       <section className="max-w-7xl mx-auto py-10 md:py-16 px-4 sm:px-6 relative z-10">
         
-        {/* HEADER SECTION MODERN */}
+        {/* HEADER SECTION */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-12 gap-6 pb-8 border-b border-white/10 relative">
           <div>
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-orange-500/10 border border-orange-500/20 text-orange-400 text-[11px] font-bold tracking-widest uppercase mb-3">
@@ -329,7 +361,7 @@ export default function GalleryPage() {
           </div>
         </div>
 
-        {/* GRID GALERI / SKELETON */}
+        {/* GALLERY GRID / SKELETON / ERROR DISPLAY */}
         {loading ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {[1, 2, 3, 4, 5, 6].map((n) => (
@@ -340,8 +372,14 @@ export default function GalleryPage() {
             ))}
           </div>
         ) : error ? (
-          <div className="text-center py-20 bg-rose-950/20 border border-rose-500/20 rounded-3xl text-rose-400 text-xs font-semibold p-6">
-            Gagal menyinkronkan server. Memuat arsip dari penyimpanan internal.
+          <div className="text-center py-16 bg-rose-950/20 border border-rose-500/20 rounded-3xl text-rose-400 text-xs font-semibold p-6 max-w-xl mx-auto flex flex-col items-center gap-3">
+            <span>Gagal menyinkronkan server. Memuat arsip dari penyimpanan internal.</span>
+            <button 
+              onClick={fetchGallery}
+              className="px-4 py-2 rounded-xl bg-rose-500/20 hover:bg-rose-500/30 border border-rose-500/30 text-rose-200 text-xs font-bold transition-all"
+            >
+              ↻ Coba Muat Ulang
+            </button>
           </div>
         ) : items.length === 0 ? (
           <div className="text-center py-28 border border-dashed border-white/10 rounded-3xl text-slate-500 text-xs uppercase tracking-widest font-bold">
@@ -354,7 +392,6 @@ export default function GalleryPage() {
                 key={item._id || index}
                 className="group relative rounded-3xl bg-[#0c0c12]/80 border border-white/10 hover:border-orange-500/40 overflow-hidden transition-all duration-500 hover:shadow-[0_15px_35px_rgba(234,88,12,0.15)] flex flex-col"
               >
-                {/* PREVIEW GAMBAR & HOVER ACTION */}
                 <div 
                   onClick={() => setLightboxItem(item)}
                   className="w-full aspect-[16/10] bg-neutral-900 relative overflow-hidden cursor-zoom-in"
@@ -368,20 +405,17 @@ export default function GalleryPage() {
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-[#0c0c12] via-transparent to-black/30 opacity-60 group-hover:opacity-40 transition-opacity" />
 
-                  {/* OVERLAY BUTTON PREVIEW */}
                   <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 bg-black/40 backdrop-blur-[2px]">
                     <span className="px-4 py-2 rounded-2xl bg-orange-500 text-white text-xs font-bold shadow-lg transform translate-y-2 group-hover:translate-y-0 transition-all">
                       Lihat Foto
                     </span>
                   </div>
 
-                  {/* TANGGAL BADGE FLOATING */}
                   <div className="absolute top-3 left-3 px-3 py-1 rounded-full bg-black/60 border border-white/10 text-[10px] font-bold text-slate-300 backdrop-blur-md">
                     {new Date(item.createdAt).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}
                   </div>
                 </div>
 
-                {/* DESKRIPSI & INFO */}
                 <div className="p-5 flex-1 flex flex-col justify-between">
                   <div>
                     <h3 className="text-base font-bold text-white tracking-tight group-hover:text-orange-400 transition-colors line-clamp-1">
@@ -393,7 +427,6 @@ export default function GalleryPage() {
                   </div>
                 </div>
 
-                {/* ACTION ADMIN MODULAR */}
                 {isAdmin && (
                   <div className="absolute top-3 right-3 flex items-center gap-1 bg-black/80 p-1.5 rounded-2xl border border-white/10 backdrop-blur-md opacity-0 group-hover:opacity-100 transition-opacity z-10">
                     <button 
@@ -443,7 +476,7 @@ export default function GalleryPage() {
         )}
       </div>
 
-      {/* MODAL UPLOAD / EDIT */}
+      {/* MODAL UPLOAD / EDIT (DENGAN SUPPORT DUA OPSIONAL: FILE & LINK / IMGUR) */}
       {showUploadModal && isAdmin && (
         <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-black/80 backdrop-blur-md" onClick={closeUploadModal} />
@@ -478,16 +511,48 @@ export default function GalleryPage() {
                 />
               </div>
 
+              {/* TABS METODE GAMBAR */}
               <div>
-                <label className="text-[10px] uppercase tracking-widest text-slate-400 font-bold block mb-1">
-                  {isEditing ? "Ganti Berkas (Opsional)" : "Pilih Berkas Gambar"}
-                </label>
-                <div className="border border-dashed border-white/20 p-4 rounded-xl text-center relative hover:border-orange-500/50 transition-colors">
-                  <input type="file" accept="image/*" onChange={handleFileChange} className="absolute inset-0 opacity-0 cursor-pointer" />
-                  <span className="text-xs text-slate-300 font-semibold block">
-                    {imageFile ? "✓ Gambar Terkompresi Siap" : "Klik untuk Pilih Gambar"}
-                  </span>
+                <label className="text-[10px] uppercase tracking-widest text-slate-400 font-bold block mb-2">Metode Gambar</label>
+                <div className="grid grid-cols-2 gap-2 mb-3 bg-white/5 p-1 rounded-xl border border-white/10">
+                  <button
+                    type="button"
+                    onClick={() => setUploadSource('file')}
+                    className={`py-2 rounded-lg text-xs font-bold transition-all ${uploadSource === 'file' ? 'bg-orange-500 text-white shadow' : 'text-slate-400 hover:text-white'}`}
+                  >
+                    Unggah File
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setUploadSource('url')}
+                    className={`py-2 rounded-lg text-xs font-bold transition-all ${uploadSource === 'url' ? 'bg-orange-500 text-white shadow' : 'text-slate-400 hover:text-white'}`}
+                  >
+                    URL / Imgur
+                  </button>
                 </div>
+
+                {uploadSource === 'file' ? (
+                  <div className="border border-dashed border-white/20 p-4 rounded-xl text-center relative hover:border-orange-500/50 transition-colors">
+                    <input type="file" accept="image/*" onChange={handleFileChange} className="absolute inset-0 opacity-0 cursor-pointer" />
+                    <span className="text-xs text-slate-300 font-semibold block">
+                      {imageFile ? "✓ Gambar Terkompresi Siap" : "Klik untuk Pilih Gambar"}
+                    </span>
+                  </div>
+                ) : (
+                  <div>
+                    <input 
+                      type="url" 
+                      value={imageUrlInput} 
+                      onChange={e => setImageUrlInput(e.target.value)}
+                      placeholder="Tempelkan link gambar (Imgur, Imgur Album, CDN)..."
+                      className="w-full bg-white/5 border border-white/10 p-3 rounded-xl text-xs text-white focus:outline-none focus:border-orange-500"
+                      required={uploadSource === 'url'}
+                    />
+                    <p className="text-[10px] text-slate-500 mt-1">
+                      *Mendukung link Imgur album/single (`https://imgur.com/a/...` atau direct `.jpg/.png`).
+                    </p>
+                  </div>
+                )}
               </div>
 
               <button 
@@ -544,7 +609,7 @@ export default function GalleryPage() {
         </div>
       )}
 
-      {/* LIGHTBOX POPUP MODERN */}
+      {/* LIGHTBOX POPUP */}
       {lightboxItem && (
         <div className="fixed inset-0 z-[250] flex flex-col items-center justify-center p-4 sm:p-6">
           <div className="absolute inset-0 bg-black/95 backdrop-blur-2xl" onClick={() => setLightboxItem(null)} />
