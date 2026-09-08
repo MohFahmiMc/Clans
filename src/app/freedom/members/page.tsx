@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Profile from '../../../components/Profile';
 
 // IMPORT ICON ROLE MINECRAFT
@@ -39,38 +39,38 @@ interface Member {
   order?: number;
 }
 
-// Sub-komponen ringan untuk menangani loading skin avatar dengan skeleton screen
+// Sub-komponen Avatar Skin yang teroptimasi cache & instant load
 function SkinAvatarItem({ currentSkinUrl, memberName }: { currentSkinUrl: string; memberName: string }) {
   const [isSkinLoaded, setIsSkinLoaded] = useState(false);
+  const imgRef = useRef<HTMLImageElement>(null);
 
   useEffect(() => {
-    const img = new Image();
-    img.src = currentSkinUrl;
-    if (img.complete) {
+    // Jika gambar sudah ada di cache browser, langsung set loaded true tanpa tunggu event
+    if (imgRef.current && imgRef.current.complete) {
       setIsSkinLoaded(true);
-    } else {
-      img.onload = () => setIsSkinLoaded(true);
-      img.onerror = () => setIsSkinLoaded(true);
     }
   }, [currentSkinUrl]);
 
   return (
-    <div className="w-14 h-14 md:w-16 md:h-16 shrink-0 rounded-xl border-2 border-white/15 group-hover:border-orange-400 transition-colors shadow-lg overflow-hidden bg-neutral-900 relative">
+    <div className="w-14 h-14 xl:w-16 xl:h-16 shrink-0 rounded-xl border-2 border-white/15 group-hover:border-orange-400 transition-colors shadow-lg overflow-hidden bg-neutral-900 relative">
       {!isSkinLoaded && (
-        <div className="absolute inset-0 bg-neutral-900 animate-pulse z-10 flex items-center justify-center">
+        <div className="absolute inset-0 bg-neutral-900 animate-pulse z-10">
           <div className="w-full h-full bg-gradient-to-br from-neutral-800 via-neutral-900 to-neutral-800" />
         </div>
       )}
       <div 
-        className={`w-full h-full relative transition-opacity duration-300 ${isSkinLoaded ? 'opacity-100' : 'opacity-0'}`}
+        className={`w-full h-full relative transition-opacity duration-200 ${isSkinLoaded ? 'opacity-100' : 'opacity-0'}`}
         style={{ imageRendering: 'pixelated' }}
       >
         {/* Base Skin Layer */}
         <img 
+          ref={imgRef}
           src={currentSkinUrl} 
           alt={memberName} 
           loading="lazy"
           decoding="async"
+          onLoad={() => setIsSkinLoaded(true)}
+          onError={() => setIsSkinLoaded(true)}
           className="absolute max-w-none"
           style={{ 
             width: '800%', 
@@ -85,7 +85,7 @@ function SkinAvatarItem({ currentSkinUrl, memberName }: { currentSkinUrl: string
           alt="" 
           loading="lazy"
           decoding="async"
-          className="absolute max-w-none"
+          className="absolute max-w-none pointer-events-none"
           style={{ 
             width: '800%', 
             height: 'auto', 
@@ -98,7 +98,7 @@ function SkinAvatarItem({ currentSkinUrl, memberName }: { currentSkinUrl: string
   );
 }
 
-// Sub-komponen ringan untuk kartu member dengan skeleton banner & tema kustom
+// Sub-komponen Kartu Member teroptimasi layout desktop & banner cache
 function MemberCardItem({ 
   member, 
   index, 
@@ -119,7 +119,7 @@ function MemberCardItem({
   const [isBannerLoaded, setIsBannerLoaded] = useState(false);
   const roleStyle = getRoleColor(member.role);
 
-  // LOGIKA TEMA KUSTOM SAMA SEPERTI DI PROFILE.TSX
+  // LOGIKA TEMA KUSTOM
   const userTheme = member.customTheme || member.themeColor || member.accentColor;
   
   const getCustomBackgroundStyle = () => {
@@ -137,63 +137,60 @@ function MemberCardItem({
     };
   };
 
-  // Prioritaskan banner custom player jika ada, jika tidak ada baru gunakan banner bawaan role
   const bannerSrc = member.bannerUrl || member.customBannerUrl || getBannerImage(member.specialRoles?.[0]);
   const currentSkinUrl = member.customSkinUrl ? member.customSkinUrl : getSrc(steveSkin);
-
-  useEffect(() => {
-    if (bannerSrc) {
-      const img = new Image();
-      img.src = bannerSrc;
-      if (img.complete) {
-        setIsBannerLoaded(true);
-      } else {
-        img.onload = () => setIsBannerLoaded(true);
-        img.onerror = () => setIsBannerLoaded(true);
-      }
-    } else {
-      setIsBannerLoaded(true);
-    }
-  }, [bannerSrc]);
 
   return (
     <div 
       key={member._id || index} 
       onClick={() => setSelectedMember(member)} 
-      className="group relative overflow-hidden p-4 md:p-5 rounded-2xl border border-white/10 hover:border-orange-500/60 transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_8px_30px_rgba(234,88,12,0.2)] cursor-pointer flex items-center gap-4"
+      className="group relative overflow-hidden p-4 lg:p-5 rounded-2xl border border-white/10 hover:border-orange-500/60 transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_8px_30px_rgba(234,88,12,0.25)] cursor-pointer flex items-center min-h-[104px]"
       style={getCustomBackgroundStyle()}
     >
-      {/* Skeleton Banner Background saat asset belum selesai terdownload */}
-      {!isBannerLoaded && (
+      {/* Hidden Banner Image untuk trigger cache/onLoad secara instan */}
+      {bannerSrc && (
+        <img 
+          src={bannerSrc} 
+          alt="" 
+          className="hidden" 
+          onLoad={() => setIsBannerLoaded(true)}
+          onError={() => setIsBannerLoaded(true)}
+        />
+      )}
+
+      {/* Skeleton Banner Background */}
+      {!isBannerLoaded && bannerSrc && (
         <div className="absolute inset-0 bg-gradient-to-r from-neutral-900 via-neutral-800 to-neutral-900 animate-pulse opacity-40" />
       )}
 
       {/* Banner Image Background Overlay */}
-      <div 
-        className={`absolute inset-0 bg-cover bg-center transition-all duration-500 ease-out ${
-          isBannerLoaded ? 'opacity-25 group-hover:opacity-45 group-hover:scale-105' : 'opacity-0'
-        }`}
-        style={{ backgroundImage: `url(${bannerSrc})` }}
-      />
+      {bannerSrc && (
+        <div 
+          className={`absolute inset-0 bg-cover bg-center transition-all duration-500 ease-out ${
+            isBannerLoaded ? 'opacity-25 group-hover:opacity-45 group-hover:scale-105' : 'opacity-0'
+          }`}
+          style={{ backgroundImage: `url(${bannerSrc})` }}
+        />
+      )}
       
-      {/* Dynamic Gradient Mask agar teks tetap terbaca dengan jelas di atas tema kustom */}
-      <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/40 to-transparent" />
+      {/* Dynamic Gradient Mask agar teks tetap sangat jelas di layar desktop */}
+      <div className="absolute inset-0 bg-gradient-to-r from-black/85 via-black/55 to-black/20" />
 
       {/* Card Content */}
-      <div className="relative z-10 flex items-center gap-4 w-full min-w-0">
+      <div className="relative z-10 flex items-center gap-3.5 lg:gap-4 w-full min-w-0">
         
-        {/* Minecraft Skin Avatar dengan skeleton handler */}
+        {/* Minecraft Skin Avatar */}
         <SkinAvatarItem currentSkinUrl={currentSkinUrl} memberName={member.name} />
         
         {/* Details Column */}
         <div className="flex-1 min-w-0 flex flex-col justify-center">
-          <div className="mb-1">
-            <span className={`text-[9px] md:text-[10px] font-black uppercase tracking-widest inline-block px-2 py-0.5 rounded-md border ${roleStyle}`}>
+          <div className="mb-1 flex items-center gap-2">
+            <span className={`text-[9px] xl:text-[10px] font-black uppercase tracking-widest inline-block px-2 py-0.5 rounded-md border shrink-0 ${roleStyle}`}>
               {member.role}
             </span>
           </div>
           
-          <h3 className="text-base md:text-lg font-black tracking-tight text-white group-hover:text-orange-400 transition-colors truncate">
+          <h3 className="text-base xl:text-lg font-black tracking-tight text-white group-hover:text-orange-400 transition-colors truncate leading-snug">
             {member.name}
           </h3>
           
@@ -206,7 +203,7 @@ function MemberCardItem({
                 return (
                   <div 
                     key={i} 
-                    className="flex items-center gap-1 bg-black/60 px-2 py-0.5 rounded-md border border-white/10 backdrop-blur-md"
+                    className="flex items-center gap-1 bg-black/70 px-2 py-0.5 rounded-md border border-white/10 backdrop-blur-md shrink-0"
                     title={role}
                   >
                     <img 
@@ -319,7 +316,7 @@ export default function MembersPage() {
 
   return (
     <>
-      <section className="max-w-7xl mx-auto py-12 md:py-20 px-4 sm:px-6 lg:px-8 w-full mb-12 animate-in fade-in slide-in-from-bottom-6 duration-700">
+      <section className="max-w-7xl mx-auto py-10 md:py-16 lg:py-20 px-4 sm:px-6 lg:px-8 w-full mb-12 animate-in fade-in slide-in-from-bottom-6 duration-700">
         
         {/* HEADER SECTION */}
         <div className="flex flex-col md:flex-row md:items-end justify-between mb-8 md:mb-12 gap-6 pb-6 border-b border-white/10">
@@ -340,7 +337,7 @@ export default function MembersPage() {
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full md:w-auto">
             
             {/* Input Cari Player */}
-            <div className="relative w-full sm:w-64">
+            <div className="relative w-full sm:w-64 md:w-72">
               <input
                 type="text"
                 placeholder="Cari nama / role..."
@@ -377,21 +374,21 @@ export default function MembersPage() {
           </div>
         </div>
 
-        {/* LOADING STATE */}
+        {/* LOADING STATE (SKELETON DB) */}
         {loadingMembers ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-4 md:gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-4 md:gap-5 lg:gap-6">
             {[...Array(8)].map((_, i) => (
               <div 
                 key={i} 
-                className="relative overflow-hidden p-4 md:p-5 rounded-2xl border border-white/10 bg-neutral-950/90 shadow-xl flex items-center gap-4"
+                className="relative overflow-hidden p-4 lg:p-5 rounded-2xl border border-white/10 bg-neutral-950/90 shadow-xl flex items-center gap-4 min-h-[104px]"
               >
                 <div className="absolute inset-0 bg-gradient-to-r from-transparent via-orange-500/5 to-transparent animate-pulse" />
-                <div className="w-14 h-14 md:w-16 md:h-16 shrink-0 rounded-xl border border-white/15 bg-neutral-900 relative overflow-hidden animate-pulse">
+                <div className="w-14 h-14 xl:w-16 xl:h-16 shrink-0 rounded-xl border border-white/15 bg-neutral-900 relative overflow-hidden animate-pulse">
                   <div className="w-full h-full bg-gradient-to-br from-neutral-800 via-neutral-900 to-neutral-800" />
                 </div>
                 <div className="flex-1 min-w-0 flex flex-col justify-center gap-2 relative z-10">
-                  <div className="w-16 h-3.5 rounded-md bg-neutral-800/80 border border-white/5 animate-pulse" />
-                  <div className="w-28 md:w-36 h-5 rounded-md bg-neutral-800 animate-pulse" />
+                  <div className="w-16 h-3 rounded-md bg-neutral-800/80 border border-white/5 animate-pulse" />
+                  <div className="w-28 xl:w-36 h-5 rounded-md bg-neutral-800 animate-pulse" />
                   <div className="flex items-center gap-1.5 mt-0.5">
                     <div className="w-16 h-4 rounded-md bg-neutral-900 border border-white/10 animate-pulse" />
                     <div className="w-12 h-4 rounded-md bg-neutral-900 border border-white/10 animate-pulse" />
@@ -424,8 +421,8 @@ export default function MembersPage() {
             </p>
           </div>
         ) : (
-          /* MEMBER GRID */
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-4 md:gap-6 animate-in fade-in duration-500">
+          /* MEMBER GRID (OPTIMIZED DESKTOP LAYOUT) */
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-4 md:gap-5 lg:gap-6 animate-in fade-in duration-500">
             {filteredMembers.map((member, index) => (
               <MemberCardItem
                 key={member._id || index}
