@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 
 interface GalleryItem {
   _id?: string;
@@ -38,6 +38,12 @@ export default function GalleryManager() {
   const [description, setDescription] = useState('');
   const [imageUrl, setImageUrl] = useState('');
   const [inputMode, setInputMode] = useState<'upload' | 'url'>('url');
+
+  // New Features States: Search, Sort, View, and Lightbox Preview
+  const [searchQuery, setSearchQuery] = useState('');
+  const [sortBy, setSortBy] = useState<'newest' | 'oldest'>('newest');
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const [previewModalItem, setPreviewModalItem] = useState<GalleryItem | null>(null);
 
   // Custom Modal & Toast States
   const [modal, setModal] = useState<ModalState>({
@@ -95,13 +101,24 @@ export default function GalleryManager() {
     fetchGallery();
   }, []);
 
+  // Format otomatis URL Imgur biasa agar langsung merujuk ke gambar mentah
+  const processImageUrl = (url: string): string => {
+    let clean = url.trim();
+    if (clean.includes('imgur.com/') && !clean.includes('i.imgur.com/')) {
+      const match = clean.match(/imgur\.com\/(?:a\/|gallery\/)?([a-zA-Z0-9]+)/);
+      if (match && match[1] && !clean.includes('/a/') && !clean.includes('/gallery/')) {
+        return `https://i.imgur.com/${match[1]}.png`;
+      }
+    }
+    return clean;
+  };
+
   // Upload handler dengan batas maksimal 1 MB
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // Batas 1 MB = 1 * 1024 * 1024 bytes
-    const MAX_SIZE = 1 * 1024 * 1024;
+    const MAX_SIZE = 1 * 1024 * 1024; // 1 MB
     if (file.size > MAX_SIZE) {
       showToast('Ukuran berkas terlalu besar! Maksimal 1 MB. Gunakan opsi Link / Imgur jika berkas > 1 MB.', 'error');
       e.target.value = '';
@@ -116,16 +133,12 @@ export default function GalleryManager() {
     reader.readAsDataURL(file);
   };
 
-  // Otomatis merapikan link jika menggunakan Imgur
   const handleUrlChange = (val: string) => {
-    let cleanUrl = val.trim();
-    
-    // Deteksi jika pengguna memasukkan link Album Imgur (contoh: https://imgur.com/a/XXXXX)
-    if (cleanUrl.includes('imgur.com/a/') || cleanUrl.includes('imgur.com/gallery/')) {
-      showToast('Link Album Imgur terdeteksi. Gambar album akan ditautkan.', 'success');
+    const formatted = processImageUrl(val);
+    if (val.includes('imgur.com/a/') || val.includes('imgur.com/gallery/')) {
+      showToast('Link Album Imgur terdeteksi. Gunakan URL gambar langsung jika thumbnail tidak tampil.', 'success');
     }
-
-    setImageUrl(cleanUrl);
+    setImageUrl(formatted);
   };
 
   const handleSaveGallery = async (e: React.FormEvent) => {
@@ -176,7 +189,6 @@ export default function GalleryManager() {
     setDescription(item.description || '');
     setImageUrl(item.imageUrl || '');
     
-    // Cek apakah data berupa base64 atau URL
     if (item.imageUrl?.startsWith('data:image')) {
       setInputMode('upload');
     } else {
@@ -220,6 +232,11 @@ export default function GalleryManager() {
     });
   };
 
+  const copyToClipboard = (text: string) => {
+    navigator.clipboard.writeText(text);
+    showToast('Tautan gambar berhasil disalin ke clipboard!', 'success');
+  };
+
   const resetForm = () => {
     setIsEditing(false);
     setCurrentItemId(null);
@@ -228,6 +245,23 @@ export default function GalleryManager() {
     setImageUrl('');
     setInputMode('url');
   };
+
+  // Filter & Sorting Logic
+  const filteredGallery = useMemo(() => {
+    return galleryList
+      .filter(item => {
+        const q = searchQuery.toLowerCase();
+        return (
+          (item.title || '').toLowerCase().includes(q) ||
+          (item.description || '').toLowerCase().includes(q)
+        );
+      })
+      .sort((a, b) => {
+        const timeA = new Date(a.createdAt || 0).getTime();
+        const timeB = new Date(b.createdAt || 0).getTime();
+        return sortBy === 'newest' ? timeB - timeA : timeA - timeB;
+      });
+  }, [galleryList, searchQuery, sortBy]);
 
   return (
     <div className="relative">
@@ -283,6 +317,65 @@ export default function GalleryManager() {
               >
                 {modal.confirmText || 'Ya, Lanjutkan'}
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* LIGHTBOX PREVIEW MODAL */}
+      {previewModalItem && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/90 backdrop-blur-md transition-all">
+          <div className="relative max-w-4xl w-full bg-[#121217] border border-white/10 rounded-2xl overflow-hidden shadow-2xl flex flex-col max-h-[90vh]">
+            <div className="p-4 border-b border-white/10 flex items-center justify-between bg-black/40">
+              <h3 className="text-sm font-bold text-white truncate pr-4">
+                {previewModalItem.title || 'Preview Dokumentasi'}
+              </h3>
+              <button
+                type="button"
+                onClick={() => setPreviewModalItem(null)}
+                className="p-1.5 text-slate-400 hover:text-white bg-white/5 rounded-lg border border-white/10 transition-all text-xs"
+              >
+                ✕ Tutup
+              </button>
+            </div>
+
+            <div className="p-4 overflow-y-auto flex-1 flex flex-col items-center justify-center bg-black/60">
+              <img
+                src={previewModalItem.imageUrl}
+                alt={previewModalItem.title}
+                className="max-h-[60vh] object-contain rounded-xl border border-white/10 shadow-xl"
+                onError={(e) => {
+                  (e.currentTarget as HTMLImageElement).src = 'https://placehold.co/800x500/121217/FFF?text=Imgur+Album+/+Preview+Tidak+Tersedia';
+                }}
+              />
+              {previewModalItem.description && (
+                <p className="mt-4 text-xs text-slate-300 text-center max-w-xl leading-relaxed bg-black/40 p-3 rounded-xl border border-white/5">
+                  {previewModalItem.description}
+                </p>
+              )}
+            </div>
+
+            <div className="p-4 border-t border-white/10 flex items-center justify-between bg-black/40 text-xs">
+              <span className="text-slate-500">
+                {previewModalItem.createdAt ? new Date(previewModalItem.createdAt).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }) : 'Tanggal tidak diketahui'}
+              </span>
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => copyToClipboard(previewModalItem.imageUrl)}
+                  className="px-3 py-1.5 bg-orange-600/20 hover:bg-orange-600/30 text-orange-400 border border-orange-500/30 rounded-lg font-semibold transition-all"
+                >
+                  Salin URL
+                </button>
+                <a
+                  href={previewModalItem.imageUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="px-3 py-1.5 bg-white/5 hover:bg-white/10 text-slate-300 border border-white/10 rounded-lg font-semibold transition-all"
+                >
+                  Buka Asli ↗
+                </a>
+              </div>
             </div>
           </div>
         </div>
@@ -384,11 +477,11 @@ export default function GalleryManager() {
                   className="bg-black/70 border border-white/10 p-3 rounded-xl text-xs text-white placeholder-slate-600 focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500 transition-all" 
                 />
                 <p className="text-[10px] text-slate-500 italic">
-                  Dukungan otomatis untuk URL langsung maupun Album Imgur.
+                  Dukungan otomatis untuk konversi URL Imgur biasa ke direktori file.
                 </p>
               </div>
             ) : (
-              /* OPSI INPUT: FILE UPLOAD (MAKS 1MB) */
+              /* OPSI INPUT: FILE UPLOAD */
               <div className="flex flex-col gap-1.5">
                 <label className="text-[10px] uppercase font-bold tracking-widest text-slate-400 flex items-center gap-1.5">
                   <span>Pilih Berkas Gambar (&le; 1 MB)</span>
@@ -403,7 +496,7 @@ export default function GalleryManager() {
               </div>
             )}
 
-            {/* PREVIEW GAMBAR */}
+            {/* PREVIEW GAMBAR LIVE */}
             {imageUrl && (
               <div className="p-3 bg-black/60 border border-white/10 rounded-xl flex flex-col items-center gap-2 group relative">
                 <img 
@@ -411,8 +504,7 @@ export default function GalleryManager() {
                   alt="Preview Documentation" 
                   className="max-h-40 w-full object-cover rounded-lg border border-white/5" 
                   onError={(e) => {
-                    // Fallback visual jika link album atau URL gambar tidak bisa di-render langsung
-                    (e.target as HTMLElement).style.display = 'none';
+                    (e.currentTarget as HTMLImageElement).src = 'https://placehold.co/600x400/121217/FFF?text=Preview+Album+/+Pratinjau+Link';
                   }}
                 />
                 <div className="flex items-center justify-between w-full pt-1">
@@ -464,17 +556,75 @@ export default function GalleryManager() {
 
         {/* SEKSI DAFTAR GALERI FOTO */}
         <div className="lg:col-span-2 bg-[#0f0f12] p-6 rounded-2xl border border-white/10 shadow-xl h-fit">
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 border-b border-white/10 pb-4 gap-3">
-            <div>
-              <h2 className="text-lg font-black text-white uppercase tracking-tight flex items-center gap-2">
-                <span>Arsip Dokumentasi Galeri</span>
-              </h2>
-              <p className="text-[11px] text-slate-400 mt-0.5">Kelola foto dokumentasi, album, serta informasi momen klan</p>
+          
+          {/* HEADER & FILTER BAR */}
+          <div className="flex flex-col gap-4 mb-6 border-b border-white/10 pb-4">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+              <div>
+                <h2 className="text-lg font-black text-white uppercase tracking-tight flex items-center gap-2">
+                  <span>Arsip Dokumentasi Galeri</span>
+                </h2>
+                <p className="text-[11px] text-slate-400 mt-0.5">Kelola foto dokumentasi, album, serta informasi momen klan</p>
+              </div>
+              
+              <span className="text-xs bg-orange-500/10 text-orange-400 font-bold px-3 py-1.5 rounded-full border border-orange-500/20 whitespace-nowrap">
+                {filteredGallery.length} / {galleryList.length} Foto
+              </span>
             </div>
-            
-            <span className="text-xs bg-orange-500/10 text-orange-400 font-bold px-3 py-1.5 rounded-full border border-orange-500/20 whitespace-nowrap">
-              Total: {galleryList.length} Foto
-            </span>
+
+            {/* TOOLBAR PENCARIAN & TAMPILAN */}
+            <div className="grid grid-cols-1 sm:grid-cols-12 gap-3 pt-2">
+              <div className="sm:col-span-6 relative">
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Cari berdasarkan judul / deskripsi..."
+                  className="w-full bg-black/70 border border-white/10 px-3.5 py-2 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:border-orange-500 transition-all"
+                />
+                {searchQuery && (
+                  <button
+                    type="button"
+                    onClick={() => setSearchQuery('')}
+                    className="absolute right-3 top-2.5 text-xs text-slate-400 hover:text-white"
+                  >
+                    ✕
+                  </button>
+                )}
+              </div>
+
+              <div className="sm:col-span-3">
+                <select
+                  value={sortBy}
+                  onChange={(e) => setSortBy(e.target.value as 'newest' | 'oldest')}
+                  className="w-full bg-black/70 border border-white/10 px-3 py-2 rounded-xl text-xs text-slate-300 focus:outline-none focus:border-orange-500 transition-all"
+                >
+                  <option value="newest">Terbaru</option>
+                  <option value="oldest">Terlama</option>
+                </select>
+              </div>
+
+              <div className="sm:col-span-3 flex bg-black/50 p-1 rounded-xl border border-white/10">
+                <button
+                  type="button"
+                  onClick={() => setViewMode('grid')}
+                  className={`flex-1 py-1 text-xs font-bold rounded-lg transition-all ${
+                    viewMode === 'grid' ? 'bg-orange-600 text-white' : 'text-slate-400 hover:text-white'
+                  }`}
+                >
+                  Grid
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setViewMode('list')}
+                  className={`flex-1 py-1 text-xs font-bold rounded-lg transition-all ${
+                    viewMode === 'list' ? 'bg-orange-600 text-white' : 'text-slate-400 hover:text-white'
+                  }`}
+                >
+                  List
+                </button>
+              </div>
+            </div>
           </div>
 
           {loadingItems ? (
@@ -482,41 +632,61 @@ export default function GalleryManager() {
               <div className="w-6 h-6 border-2 border-orange-500 border-t-transparent rounded-full animate-spin" />
               <p className="text-xs text-slate-400 animate-pulse">Memuat arsip berkas galeri...</p>
             </div>
-          ) : galleryList.length === 0 ? (
+          ) : filteredGallery.length === 0 ? (
             <div className="border border-dashed border-white/10 p-12 text-center rounded-2xl flex flex-col items-center justify-center gap-3">
               <div className="w-12 h-12 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-slate-500">
                 <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                 </svg>
               </div>
-              <p className="text-xs font-semibold text-slate-400">Belum ada foto galeri terdaftar.</p>
+              <p className="text-xs font-semibold text-slate-400">
+                {searchQuery ? 'Tidak ada hasil foto yang cocok.' : 'Belum ada foto galeri terdaftar.'}
+              </p>
               <p className="text-[11px] text-slate-500">Gunakan formulir di sebelah kiri untuk mengunggah foto baru.</p>
             </div>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-h-[680px] overflow-y-auto pr-1 custom-scrollbar">
-              {galleryList.map((item, idx) => (
-                <div key={item._id || idx} className="bg-black/50 border border-white/10 hover:border-white/20 rounded-xl overflow-hidden flex flex-col justify-between transition-all shadow-md group">
+            <div className={`max-h-[680px] overflow-y-auto pr-1 custom-scrollbar ${
+              viewMode === 'grid' 
+                ? 'grid grid-cols-1 sm:grid-cols-2 gap-4' 
+                : 'flex flex-col gap-3'
+            }`}>
+              {filteredGallery.map((item, idx) => (
+                <div 
+                  key={item._id || idx} 
+                  className={`bg-black/50 border border-white/10 hover:border-white/20 rounded-xl overflow-hidden flex transition-all shadow-md group ${
+                    viewMode === 'grid' ? 'flex-col justify-between' : 'flex-row items-center p-3 justify-between gap-4'
+                  }`}
+                >
                   
-                  <div>
+                  <div className={viewMode === 'grid' ? '' : 'flex items-center gap-3 overflow-hidden flex-1'}>
                     {/* GAMBAR PREVIEW */}
-                    <div className="relative h-44 bg-black/80 overflow-hidden border-b border-white/10">
+                    <div 
+                      onClick={() => setPreviewModalItem(item)}
+                      className={`relative cursor-pointer overflow-hidden border-white/10 group-hover:opacity-90 transition-all ${
+                        viewMode === 'grid' ? 'h-44 bg-black/80 border-b w-full' : 'w-20 h-20 rounded-lg shrink-0 border'
+                      }`}
+                    >
                       <img 
                         src={item.imageUrl} 
                         alt={item.title || 'Galeri'} 
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                         onError={(e) => {
-                          // Tampilan jika link album Imgur / broken image
-                          (e.target as HTMLElement).src = 'https://placehold.co/600x400/121217/FFF?text=Imgur+Album+/+Preview';
+                          (e.currentTarget as HTMLImageElement).src = 'https://placehold.co/600x400/121217/FFF?text=Imgur+Album+/+Preview';
                         }}
                       />
-                      <div className="absolute top-2 right-2 bg-black/80 backdrop-blur-md border border-white/10 px-2 py-0.5 rounded text-[10px] font-bold text-orange-400">
-                        #{idx + 1}
-                      </div>
+                      {viewMode === 'grid' && (
+                        <div className="absolute top-2 right-2 bg-black/80 backdrop-blur-md border border-white/10 px-2 py-0.5 rounded text-[10px] font-bold text-orange-400">
+                          #{idx + 1}
+                        </div>
+                      )}
                     </div>
 
                     {/* DETAIL DESKRIPSI */}
-                    <div className="p-4 flex flex-col gap-1">
-                      <h4 className="text-xs font-black text-white truncate">
+                    <div className={viewMode === 'grid' ? 'p-4 flex flex-col gap-1' : 'flex flex-col gap-0.5 overflow-hidden'}>
+                      <h4 
+                        onClick={() => setPreviewModalItem(item)}
+                        className="text-xs font-black text-white truncate cursor-pointer hover:text-orange-400 transition-colors"
+                      >
                         {item.title || 'Dokumentasi Freedom'}
                       </h4>
                       <p className="text-[11px] text-slate-400 line-clamp-2 leading-relaxed">
@@ -526,12 +696,25 @@ export default function GalleryManager() {
                   </div>
 
                   {/* FOOTER & BUTTON ACTION */}
-                  <div className="p-3 bg-black/40 border-t border-white/5 flex items-center justify-between gap-2">
-                    <span className="text-[10px] text-slate-500 font-medium">
-                      {item.createdAt ? new Date(item.createdAt).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' }) : 'Baru saja'}
-                    </span>
+                  <div className={`p-3 bg-black/40 border-white/5 flex items-center justify-between gap-2 ${
+                    viewMode === 'grid' ? 'border-t w-full' : 'border-0 shrink-0'
+                  }`}>
+                    {viewMode === 'grid' && (
+                      <span className="text-[10px] text-slate-500 font-medium">
+                        {item.createdAt ? new Date(item.createdAt).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' }) : 'Baru saja'}
+                      </span>
+                    )}
 
                     <div className="flex items-center gap-1.5">
+                      <button 
+                        type="button" 
+                        onClick={() => copyToClipboard(item.imageUrl)} 
+                        title="Salin Tautan Gambar"
+                        className="p-1.5 text-orange-400 hover:text-white bg-orange-500/10 hover:bg-orange-600 rounded-lg border border-orange-500/20 transition-all text-xs font-semibold px-2 flex items-center gap-1"
+                      >
+                        🔗
+                      </button>
+
                       <button 
                         type="button" 
                         onClick={() => handleEditClick(item)} 
