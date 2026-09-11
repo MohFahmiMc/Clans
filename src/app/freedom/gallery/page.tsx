@@ -19,7 +19,6 @@ interface ToastState {
 
 const CACHE_KEY = 'freedom_gallery_cache_v1';
 
-// Helper kompresi gambar HTML Canvas (800px & quality 0.6)
 const compressImage = (file: File, maxWidth = 800, maxHeight = 800, quality = 0.6): Promise<string> => {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -60,12 +59,10 @@ const compressImage = (file: File, maxWidth = 800, maxHeight = 800, quality = 0.
   });
 };
 
-// Helper otomatis konversi URL Imgur biasa/album ke Direct CDN Image
 const parseImgurUrl = (url: string): string => {
   const trimmed = url.trim();
   if (!trimmed) return '';
   
-  // Jika URL berupa Imgur biasa / album (contoh: https://imgur.com/a/XXXXX atau https://imgur.com/XXXXX)
   const imgurMatch = trimmed.match(/https?:\/\/(?:www\.)?imgur\.com\/(?:a\/|gallery\/)?([a-zA-Z0-9]+)/);
   if (imgurMatch && !trimmed.includes('i.imgur.com')) {
     const id = imgurMatch[1];
@@ -75,23 +72,10 @@ const parseImgurUrl = (url: string): string => {
 };
 
 export default function GalleryPage() {
-  const [items, setItems] = useState<GalleryItem[]>(() => {
-    if (typeof window !== 'undefined') {
-      const cached = localStorage.getItem(CACHE_KEY);
-      if (cached) {
-        try {
-          return JSON.parse(cached);
-        } catch {
-          return [];
-        }
-      }
-    }
-    return [];
-  });
-
-  const [loading, setLoading] = useState<boolean>(() => items.length === 0);
-  const [isSyncing, setIsSyncing] = useState(false);
-  const [error, setError] = useState(false);
+  const [items, setItems] = useState<GalleryItem[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [isSyncing, setIsSyncing] = useState<boolean>(false);
+  const [error, setError] = useState<boolean>(false);
 
   // Admin states
   const [showAdminPanel, setShowAdminPanel] = useState(false);
@@ -130,9 +114,9 @@ export default function GalleryPage() {
     }, 3500);
   };
 
-  // Stale-While-Revalidate Fetcher
-  const fetchGallery = async () => {
-    if (items.length > 0) {
+  // Sync / Fetcher dari API
+  const fetchGallery = async (hasLocalCache: boolean) => {
+    if (hasLocalCache) {
       setIsSyncing(true);
     } else {
       setLoading(true);
@@ -146,23 +130,40 @@ export default function GalleryPage() {
           setItems(data);
           localStorage.setItem(CACHE_KEY, JSON.stringify(data));
           setError(false);
-        } else {
-          if (items.length === 0) setError(true);
+        } else if (!hasLocalCache) {
+          setError(true);
         }
-      } else {
-        if (items.length === 0) setError(true);
+      } else if (!hasLocalCache) {
+        setError(true);
       }
     } catch (err) {
       console.error(err);
-      if (items.length === 0) setError(true);
+      if (!hasLocalCache) setError(true);
     } finally {
       setLoading(false);
       setIsSyncing(false);
     }
   };
 
+  // Load cache secara aman di Client-Side saja
   useEffect(() => {
-    fetchGallery();
+    let hasCache = false;
+    const cached = localStorage.getItem(CACHE_KEY);
+    
+    if (cached) {
+      try {
+        const parsed = JSON.parse(cached);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          setItems(parsed);
+          setLoading(false);
+          hasCache = true;
+        }
+      } catch {
+        localStorage.removeItem(CACHE_KEY);
+      }
+    }
+
+    fetchGallery(hasCache);
   }, []);
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -236,7 +237,7 @@ export default function GalleryPage() {
       if (res.ok && data.success) {
         triggerToast(data.message || 'Berhasil disimpan!', 'success');
         closeUploadModal();
-        fetchGallery();
+        fetchGallery(items.length > 0);
       } else {
         triggerToast(data.error || 'Gagal menyimpan data.', 'error');
       }
@@ -259,7 +260,7 @@ export default function GalleryPage() {
       const data = await res.json();
       if (res.ok && data.success) {
         triggerToast(data.message || 'Foto dihapus.', 'success');
-        fetchGallery();
+        fetchGallery(items.length > 0);
       } else {
         triggerToast(data.error || 'Gagal menghapus.', 'error');
       }
@@ -375,7 +376,7 @@ export default function GalleryPage() {
           <div className="text-center py-16 bg-rose-950/20 border border-rose-500/20 rounded-3xl text-rose-400 text-xs font-semibold p-6 max-w-xl mx-auto flex flex-col items-center gap-3">
             <span>Gagal menyinkronkan server. Memuat arsip dari penyimpanan internal.</span>
             <button 
-              onClick={fetchGallery}
+              onClick={() => fetchGallery(items.length > 0)}
               className="px-4 py-2 rounded-xl bg-rose-500/20 hover:bg-rose-500/30 border border-rose-500/30 text-rose-200 text-xs font-bold transition-all"
             >
               ↻ Coba Muat Ulang
@@ -476,7 +477,7 @@ export default function GalleryPage() {
         )}
       </div>
 
-      {/* MODAL UPLOAD / EDIT (DENGAN SUPPORT DUA OPSIONAL: FILE & LINK / IMGUR) */}
+      {/* MODAL UPLOAD / EDIT */}
       {showUploadModal && isAdmin && (
         <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-black/80 backdrop-blur-md" onClick={closeUploadModal} />
