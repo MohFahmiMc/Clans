@@ -12,7 +12,7 @@ let clientPromise: Promise<MongoClient> | null = null;
 function getClientPromise() {
   const uri = process.env.MONGODB_URI;
   if (!uri) {
-    throw new Error("MONGODB_URI belum dikonfigurasi di Environment Variables Vercel.");
+    throw new Error("MONGODB_URI belum dikonfigurasi di Environment Variables.");
   }
 
   if (process.env.NODE_ENV === 'development') {
@@ -51,7 +51,7 @@ export async function GET() {
     return NextResponse.json({ 
       success: false, 
       error: 'DATABASE ERROR: Gagal mengambil berkas data galeri.',
-      details: err.message 
+      details: err?.message || 'Terjadi kesalahan sistem'
     }, { status: 500 });
   }
 }
@@ -61,7 +61,13 @@ export async function GET() {
 // ==========================================
 export async function POST(request: Request) {
   try {
-    const body = await request.json();
+    let body;
+    try {
+      body = await request.json();
+    } catch {
+      return NextResponse.json({ success: false, error: 'VALIDASI ERROR: Format JSON tidak valid atau kosong.' }, { status: 400 });
+    }
+
     const { password, title, description, imageData, imageUrl } = body;
 
     const envPassword = process.env.PASSWORD;
@@ -69,18 +75,16 @@ export async function POST(request: Request) {
       return NextResponse.json({ success: false, error: 'VALIDASI ERROR: Password akses ditolak.' }, { status: 401 });
     }
 
-    // Mendukung input Base64 (imageData) maupun Link Imgur (imageUrl)
     const finalImage = imageUrl || imageData;
-
-    if (!finalImage) {
+    if (!finalImage || typeof finalImage !== 'string') {
       return NextResponse.json({ success: false, error: 'VALIDASI ERROR: Berkas gambar atau URL wajib disertakan.' }, { status: 400 });
     }
 
     const collection = await getCollection();
     const newGalleryItem = {
-      title: (title || '').trim() || 'Dokumentasi Freedom',
-      description: description || '',
-      imageUrl: finalImage,
+      title: typeof title === 'string' && title.trim() ? title.trim() : 'Dokumentasi Freedom',
+      description: typeof description === 'string' ? description : '',
+      imageUrl: finalImage.trim(),
       createdAt: new Date()
     };
 
@@ -95,7 +99,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ 
       success: false, 
       error: 'SYSTEM ERROR: Gagal menyimpan data ke MongoDB.',
-      details: err.message 
+      details: err?.message || 'Terjadi kesalahan sistem'
     }, { status: 500 });
   }
 }
@@ -105,7 +109,13 @@ export async function POST(request: Request) {
 // ==========================================
 export async function PUT(request: Request) {
   try {
-    const body = await request.json();
+    let body;
+    try {
+      body = await request.json();
+    } catch {
+      return NextResponse.json({ success: false, error: 'VALIDASI ERROR: Format JSON tidak valid atau kosong.' }, { status: 400 });
+    }
+
     const { id, password, title, description, imageData, imageUrl } = body;
 
     const envPassword = process.env.PASSWORD;
@@ -113,21 +123,22 @@ export async function PUT(request: Request) {
       return NextResponse.json({ success: false, error: 'VALIDASI ERROR: Password akses ditolak.' }, { status: 401 });
     }
 
-    if (!id) {
-      return NextResponse.json({ success: false, error: 'VALIDASI ERROR: ID dokumen wajib disertakan untuk melakukan update.' }, { status: 400 });
+    // Validasi eksistensi dan keabsahan format ObjectId
+    if (!id || typeof id !== 'string' || !ObjectId.isValid(id)) {
+      return NextResponse.json({ success: false, error: 'VALIDASI ERROR: ID dokumen tidak valid atau tidak ditemukan.' }, { status: 400 });
     }
 
     const collection = await getCollection();
     
-    const updatePayload: any = {
-      title: (title || '').trim(),
-      description: description || '',
+    const updatePayload: Record<string, any> = {
+      title: typeof title === 'string' ? title.trim() : '',
+      description: typeof description === 'string' ? description : '',
       updatedAt: new Date()
     };
 
     const finalImage = imageUrl || imageData;
-    if (finalImage) {
-      updatePayload.imageUrl = finalImage;
+    if (finalImage && typeof finalImage === 'string') {
+      updatePayload.imageUrl = finalImage.trim();
     }
 
     const result = await collection.updateOne(
@@ -148,7 +159,7 @@ export async function PUT(request: Request) {
     return NextResponse.json({ 
       success: false, 
       error: 'SYSTEM ERROR: Gagal memproses pembaruan dokumen di MongoDB.',
-      details: err.message 
+      details: err?.message || 'Terjadi kesalahan sistem'
     }, { status: 500 });
   }
 }
@@ -158,7 +169,13 @@ export async function PUT(request: Request) {
 // ==========================================
 export async function DELETE(request: Request) {
   try {
-    const body = await request.json();
+    let body;
+    try {
+      body = await request.json();
+    } catch {
+      return NextResponse.json({ success: false, error: 'VALIDASI ERROR: Format JSON tidak valid atau kosong.' }, { status: 400 });
+    }
+
     const { id, password } = body;
 
     const envPassword = process.env.PASSWORD;
@@ -166,8 +183,9 @@ export async function DELETE(request: Request) {
       return NextResponse.json({ success: false, error: 'VALIDASI ERROR: Tindakan ilegal, password akses salah.' }, { status: 401 });
     }
 
-    if (!id) {
-      return NextResponse.json({ success: false, error: 'VALIDASI ERROR: ID Dokumen wajib disertakan.' }, { status: 400 });
+    // Validasi eksistensi dan keabsahan format ObjectId
+    if (!id || typeof id !== 'string' || !ObjectId.isValid(id)) {
+      return NextResponse.json({ success: false, error: 'VALIDASI ERROR: ID Dokumen tidak valid.' }, { status: 400 });
     }
 
     const collection = await getCollection();
@@ -186,7 +204,7 @@ export async function DELETE(request: Request) {
     return NextResponse.json({ 
       success: false, 
       error: 'SYSTEM ERROR: Gagal mengeksekusi perintah penghapusan dokumen.',
-      details: err.message 
+      details: err?.message || 'Terjadi kesalahan sistem'
     }, { status: 500 });
   }
 }
