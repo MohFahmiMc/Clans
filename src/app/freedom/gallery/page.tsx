@@ -19,55 +19,23 @@ interface ToastState {
 
 const CACHE_KEY = 'freedom_gallery_cache_v1';
 
-const compressImage = (file: File, maxWidth = 800, maxHeight = 800, quality = 0.6): Promise<string> => {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.readAsDataURL(file);
-    reader.onload = (event) => {
-      const img = new Image();
-      img.src = event.target?.result as string;
-      img.onload = () => {
-        let width = img.width;
-        let height = img.height;
-
-        if (width > height) {
-          if (width > maxWidth) {
-            height = Math.round((height * maxWidth) / width);
-            width = maxWidth;
-          }
-        } else {
-          if (height > maxHeight) {
-            width = Math.round((width * maxHeight) / height);
-            height = maxHeight;
-          }
-        }
-
-        const canvas = document.createElement('canvas');
-        canvas.width = width;
-        canvas.height = height;
-        const ctx = canvas.getContext('2d');
-        if (ctx) {
-          ctx.drawImage(img, 0, 0, width, height);
-          resolve(canvas.toDataURL('image/jpeg', quality));
-        } else {
-          reject(new Error('Gagal memproses kanvas gambar'));
-        }
-      };
-      img.onerror = (err) => reject(err);
-    };
-    reader.onerror = (err) => reject(err);
-  });
-};
-
+// Parser pintar untuk menangani berbagai format URL Imgur & Link Gambar Eksternal
 const parseImgurUrl = (url: string): string => {
   const trimmed = url.trim();
   if (!trimmed) return '';
-  
+
+  // Jika sudah direct image link (i.imgur.com) atau ekstensi gambar standar
+  if (trimmed.includes('i.imgur.com') || /\.(jpg|jpeg|png|gif|webp)$/i.test(trimmed)) {
+    return trimmed;
+  }
+
+  // Deteksi tautan Imgur (Album, Gallery, atau Single Post)
   const imgurMatch = trimmed.match(/https?:\/\/(?:www\.)?imgur\.com\/(?:a\/|gallery\/)?([a-zA-Z0-9]+)/);
-  if (imgurMatch && !trimmed.includes('i.imgur.com')) {
+  if (imgurMatch) {
     const id = imgurMatch[1];
     return `https://i.imgur.com/${id}.png`;
   }
+
   return trimmed;
 };
 
@@ -77,7 +45,7 @@ export default function GalleryPage() {
   const [isSyncing, setIsSyncing] = useState<boolean>(false);
   const [error, setError] = useState<boolean>(false);
 
-  // Admin states
+  // Admin & Manager states
   const [showAdminPanel, setShowAdminPanel] = useState(false);
   const [showUploadModal, setShowUploadModal] = useState(false);
   const [password, setPassword] = useState('');
@@ -92,13 +60,11 @@ export default function GalleryPage() {
     type: 'info'
   });
 
-  // Form & Upload Source states
-  const [uploadSource, setUploadSource] = useState<'file' | 'url'>('file');
+  // Form states
   const [isEditing, setIsEditing] = useState(false);
   const [editingItemId, setEditingItemId] = useState<string | null>(null);
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
-  const [imageFile, setImageFile] = useState<string | null>(null);
   const [imageUrlInput, setImageUrlInput] = useState<string>('');
 
   // Lightbox View State
@@ -145,7 +111,7 @@ export default function GalleryPage() {
     }
   };
 
-  // Load cache secara aman di Client-Side saja
+  // Load cache Client-Side
   useEffect(() => {
     let hasCache = false;
     const cached = localStorage.getItem(CACHE_KEY);
@@ -166,25 +132,6 @@ export default function GalleryPage() {
     fetchGallery(hasCache);
   }, []);
 
-  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    if (file.size > 20 * 1024 * 1024) {
-      triggerToast('Ukuran file maksimal 20 MB!', 'error');
-      return;
-    }
-
-    try {
-      triggerToast('Mengompresi gambar...', 'info');
-      const compressedDataUrl = await compressImage(file, 800, 800, 0.6);
-      setImageFile(compressedDataUrl);
-      triggerToast('Gambar siap diunggah', 'success');
-    } catch {
-      triggerToast('Gagal memproses gambar', 'error');
-    }
-  };
-
   const handleAdminVerify = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
@@ -196,7 +143,7 @@ export default function GalleryPage() {
       if (res.ok) {
         setIsAdmin(true);
         setShowAdminPanel(false);
-        triggerToast('Mode Admin Aktif', 'success');
+        triggerToast('Mode Admin Manager Aktif', 'success');
       } else {
         triggerToast('Password salah!', 'error');
       }
@@ -208,10 +155,10 @@ export default function GalleryPage() {
   const handleFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    let finalImageUrl = uploadSource === 'file' ? imageFile : parseImgurUrl(imageUrlInput);
+    const finalImageUrl = parseImgurUrl(imageUrlInput);
 
-    if (!isEditing && !finalImageUrl) {
-      return triggerToast('Pilih file gambar atau masukkan URL gambar/Imgur!', 'info');
+    if (!finalImageUrl) {
+      return triggerToast('Masukkan URL Gambar atau Imgur yang valid!', 'info');
     }
 
     setUploading(true);
@@ -259,7 +206,7 @@ export default function GalleryPage() {
 
       const data = await res.json();
       if (res.ok && data.success) {
-        triggerToast(data.message || 'Foto dihapus.', 'success');
+        triggerToast(data.message || 'Dokumentasi dihapus.', 'success');
         fetchGallery(items.length > 0);
       } else {
         triggerToast(data.error || 'Gagal menghapus.', 'error');
@@ -277,8 +224,6 @@ export default function GalleryPage() {
     setTitle(item.title);
     setDescription(item.description || '');
     setImageUrlInput(item.imageUrl);
-    setImageFile(item.imageUrl);
-    setUploadSource('url');
     setShowUploadModal(true);
   };
 
@@ -288,7 +233,6 @@ export default function GalleryPage() {
     setEditingItemId(null);
     setTitle('');
     setDescription('');
-    setImageFile(null);
     setImageUrlInput('');
   };
 
@@ -296,7 +240,7 @@ export default function GalleryPage() {
     if (isAdmin) {
       setIsAdmin(false);
       setPassword('');
-      triggerToast('Mode admin dinonaktifkan.', 'info');
+      triggerToast('Mode Admin dinonaktifkan.', 'info');
     } else {
       setShowAdminPanel(true);
     }
@@ -338,7 +282,7 @@ export default function GalleryPage() {
               GALLERY <span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-400 via-amber-400 to-yellow-500">VAULT</span>
             </h1>
             <p className="text-slate-400 text-xs sm:text-sm mt-2 font-medium max-w-xl">
-              Dokumentasi eksklusif, momen kemenangan, dan jejak sejarah perjalanan Clan.
+              Dokumentasi eksklusif, momen kemenangan, dan arsip sejarah perjalanan Clan.
             </p>
           </div>
 
@@ -356,7 +300,7 @@ export default function GalleryPage() {
             {isAdmin && (
               <div className="flex items-center gap-2 bg-emerald-500/10 border border-emerald-500/30 px-3.5 py-1.5 rounded-xl text-emerald-400 text-xs font-bold tracking-wide uppercase shadow-[0_0_15px_rgba(16,185,129,0.2)]">
                 <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-                Mode Admin
+                Manager Mode
               </div>
             )}
           </div>
@@ -460,7 +404,7 @@ export default function GalleryPage() {
       <div className="fixed bottom-6 right-6 z-50 flex items-center gap-2 p-1.5 rounded-2xl bg-black/70 border border-white/10 backdrop-blur-2xl shadow-[0_10px_30px_rgba(0,0,0,0.8)]">
         <button
           onClick={handleMinusClick}
-          title={isAdmin ? "Matikan Mode Admin" : "Akses Admin"}
+          title={isAdmin ? "Matikan Mode Admin" : "Akses Admin Manager"}
           className={`w-12 h-12 rounded-xl flex items-center justify-center text-white text-xl font-bold transition-all ${isAdmin ? 'bg-rose-500/20 text-rose-400 border border-rose-500/30' : 'hover:bg-white/10 text-slate-300'}`}
         >
           －
@@ -469,7 +413,7 @@ export default function GalleryPage() {
         {isAdmin && (
           <button
             onClick={() => setShowUploadModal(true)}
-            title="Tambah Dokumentasi"
+            title="Tambah Dokumentasi Baru"
             className="w-12 h-12 rounded-xl bg-gradient-to-tr from-orange-600 to-amber-500 hover:from-orange-500 hover:to-amber-400 text-white text-xl font-bold flex items-center justify-center shadow-[0_0_20px_rgba(234,88,12,0.4)] transition-all"
           >
             ＋
@@ -477,14 +421,14 @@ export default function GalleryPage() {
         )}
       </div>
 
-      {/* MODAL UPLOAD / EDIT */}
+      {/* MODAL MANAGER / EDIT */}
       {showUploadModal && isAdmin && (
         <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-black/80 backdrop-blur-md" onClick={closeUploadModal} />
           <div className="relative bg-[#0c0c12] p-6 sm:p-8 rounded-3xl border border-white/10 w-full max-w-md shadow-2xl z-10">
             <div className="flex justify-between items-center mb-6 pb-3 border-b border-white/10">
               <h3 className="text-sm font-bold uppercase tracking-wider text-white">
-                {isEditing ? "Edit Dokumentasi" : "Unggah Dokumentasi Baru"}
+                {isEditing ? "Edit Dokumentasi Manager" : "Tambah Dokumentasi via Link"}
               </h3>
               <button onClick={closeUploadModal} className="text-slate-400 hover:text-white">✕</button>
             </div>
@@ -512,56 +456,38 @@ export default function GalleryPage() {
                 />
               </div>
 
-              {/* TABS METODE GAMBAR */}
+              {/* URL INPUT & EXTERNAL UPLOAD LINK */}
               <div>
-                <label className="text-[10px] uppercase tracking-widest text-slate-400 font-bold block mb-2">Metode Gambar</label>
-                <div className="grid grid-cols-2 gap-2 mb-3 bg-white/5 p-1 rounded-xl border border-white/10">
-                  <button
-                    type="button"
-                    onClick={() => setUploadSource('file')}
-                    className={`py-2 rounded-lg text-xs font-bold transition-all ${uploadSource === 'file' ? 'bg-orange-500 text-white shadow' : 'text-slate-400 hover:text-white'}`}
+                <div className="flex justify-between items-center mb-1">
+                  <label className="text-[10px] uppercase tracking-widest text-slate-400 font-bold">Link Gambar / Album Imgur</label>
+                  <a 
+                    href="https://imgur.com/upload" 
+                    target="_blank" 
+                    rel="noreferrer" 
+                    className="text-[10px] text-orange-400 hover:underline font-bold"
                   >
-                    Unggah File
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setUploadSource('url')}
-                    className={`py-2 rounded-lg text-xs font-bold transition-all ${uploadSource === 'url' ? 'bg-orange-500 text-white shadow' : 'text-slate-400 hover:text-white'}`}
-                  >
-                    URL / Imgur
-                  </button>
+                    Unggah via Imgur ↗
+                  </a>
                 </div>
-
-                {uploadSource === 'file' ? (
-                  <div className="border border-dashed border-white/20 p-4 rounded-xl text-center relative hover:border-orange-500/50 transition-colors">
-                    <input type="file" accept="image/*" onChange={handleFileChange} className="absolute inset-0 opacity-0 cursor-pointer" />
-                    <span className="text-xs text-slate-300 font-semibold block">
-                      {imageFile ? "✓ Gambar Terkompresi Siap" : "Klik untuk Pilih Gambar"}
-                    </span>
-                  </div>
-                ) : (
-                  <div>
-                    <input 
-                      type="url" 
-                      value={imageUrlInput} 
-                      onChange={e => setImageUrlInput(e.target.value)}
-                      placeholder="Tempelkan link gambar (Imgur, Imgur Album, CDN)..."
-                      className="w-full bg-white/5 border border-white/10 p-3 rounded-xl text-xs text-white focus:outline-none focus:border-orange-500"
-                      required={uploadSource === 'url'}
-                    />
-                    <p className="text-[10px] text-slate-500 mt-1">
-                      *Mendukung link Imgur album/single (`https://imgur.com/a/...` atau direct `.jpg/.png`).
-                    </p>
-                  </div>
-                )}
+                <input 
+                  type="url" 
+                  value={imageUrlInput} 
+                  onChange={e => setImageUrlInput(e.target.value)}
+                  placeholder="Tempelkan URL gambar (https://imgur.com/a/... atau direct image link)..."
+                  className="w-full bg-white/5 border border-white/10 p-3 rounded-xl text-xs text-white focus:outline-none focus:border-orange-500"
+                  required
+                />
+                <p className="text-[10px] text-slate-500 mt-1.5 leading-relaxed">
+                  *Mendukung link Album/Single Imgur (`imgur.com/a/...`), Discord CDN, atau direct `.png/.jpg/.webp`.
+                </p>
               </div>
 
               <button 
                 type="submit" 
                 disabled={uploading}
-                className="w-full bg-orange-600 hover:bg-orange-500 text-white font-bold p-3.5 rounded-xl text-xs uppercase tracking-widest transition-all shadow-lg shadow-orange-600/30"
+                className="w-full bg-orange-600 hover:bg-orange-500 text-white font-bold p-3.5 rounded-xl text-xs uppercase tracking-widest transition-all shadow-lg shadow-orange-600/30 mt-2"
               >
-                {uploading ? "Menyimpan..." : "Simpan"}
+                {uploading ? "Menyimpan..." : "Simpan Dokumentasi"}
               </button>
             </form>
           </div>
@@ -573,7 +499,7 @@ export default function GalleryPage() {
         <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-black/80 backdrop-blur-md" onClick={() => setShowAdminPanel(false)} />
           <div className="relative bg-[#0c0c12] p-6 rounded-3xl border border-white/10 w-full max-w-xs text-center shadow-2xl z-10">
-            <h3 className="text-sm font-bold uppercase tracking-wider text-white mb-2">Akses Verifikasi Admin</h3>
+            <h3 className="text-sm font-bold uppercase tracking-wider text-white mb-2">Akses Verifikasi Manager</h3>
             <form onSubmit={handleAdminVerify} className="space-y-3 mt-4">
               <input 
                 type="password" 
