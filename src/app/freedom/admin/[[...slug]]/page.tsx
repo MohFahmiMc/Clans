@@ -51,6 +51,13 @@ const TAB_REGISTRY: Record<
       loading: () => <ComponentLoader name="Alliance Manager" />,
     }),
   },
+  gallery: {
+    label: 'Manajemen Galeri',
+    slug: 'gallery',
+    component: dynamic(() => import('../components/GalleryManager'), {
+      loading: () => <ComponentLoader name="Gallery Manager" />,
+    }),
+  },
   backup: {
     label: 'Backup Database',
     slug: 'backup',
@@ -350,7 +357,7 @@ export default function AdminPortal() {
         </div>
       </header>
 
-      {/* MAIN CONTAINER: Padding disesuaikan (p-3 sm:p-6) untuk keleluasaan pengeditan */}
+      {/* MAIN CONTAINER */}
       <main className="flex-1 p-3 sm:p-6 max-w-7xl w-full mx-auto animate-in fade-in duration-200">
         <DynamicActiveComponent adminPassword={password} />
       </main>
